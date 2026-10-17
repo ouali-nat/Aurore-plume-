@@ -261,7 +261,7 @@ function renderR2StoragePanel() {
         <p class="r2-diagnostic-intro">Les événements ci-dessous distinguent la sélection locale, l’envoi réseau et la liste des fichiers déjà enregistrés.</p>
         <ol id="r2-diagnostic-log" class="r2-diagnostic-log" aria-live="polite"><li><time>—</time> Diagnostic prêt ; attente d’une sélection.</li></ol>
       </section>
-      <div class="r2-file-list" aria-live="polite"><p class="editor-hint">Chargement de vos fichiers…</p></div>
+      <div class="r2-file-list" aria-live="polite"><p class="editor-hint">Chargement de la liste des fichiers déjà enregistrés…</p></div>
     </div>
   </section>`;
 }
@@ -285,7 +285,7 @@ function renderR2FileList() {
   const container = document.querySelector('.r2-file-list');
   if (!container) return;
   if (!state.storageFiles?.length) {
-    container.innerHTML = '<p class="editor-hint">Aucun fichier enregistré pour le moment.</p>';
+    container.innerHTML = '<p class="editor-hint">Aucun fichier déjà envoyé dans le stockage. Cette liste est distincte du fichier sélectionné ci-dessus.</p>';
     return;
   }
   container.innerHTML = '<div class="r2-file-items">' + state.storageFiles.map((file) => {
@@ -398,8 +398,16 @@ async function deleteR2File(key) {
 function render() {
   // Android peut déclencher un rendu d'authentification pendant que le sélecteur
   // de fichiers est ouvert. Ne remplaçons pas le formulaire avant son retour.
-  if (state.r2PickerOpen) {
+  // Après le retour Android, conserver aussi le formulaire tant qu'un fichier
+  // est sélectionné : le remplacer détruirait l'objet File avant le clic Envoyer.
+  const uploadForm = document.querySelector('#r2-upload-form');
+  const hasSelectedR2Files = uploadForm && [...uploadForm.querySelectorAll('input[type="file"]')]
+    .some((input) => input.files?.length > 0);
+  if (state.r2PickerOpen || (state.view === 'atelier' && hasSelectedR2Files)) {
     state.r2PendingRender = true;
+    r2Diagnostic(state.r2PickerOpen
+      ? 'Rendu de page différé : le sélecteur Android est ouvert.'
+      : 'Rendu de page différé : un PDF est sélectionné et doit rester attaché au formulaire.');
     return;
   }
   if (state.view === 'atelier') renderAtelier();
