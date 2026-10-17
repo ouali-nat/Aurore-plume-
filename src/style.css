@@ -56,3 +56,7 @@
 .r2-diagnostic-error span{color:#a23f3f;font-weight:600}
 .r2-diagnostic-warn span{color:#94671f}
 @media(max-width:560px){.r2-picker-block{padding:11px}.r2-picker-block .button{width:100%;align-self:stretch}.r2-diagnostic{padding:11px}.r2-diagnostic-log{max-height:220px}}
+
+
+/* Password recovery action in the local sign-in form */
+.auth-forgot{align-self:center;border:0;background:transparent;color:var(--purple);font-size:11px;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px 6px;margin-top:-5px}.auth-forgot:hover{color:var(--purple-dark)}.auth-message:empty{display:none}.auth-form input:disabled{background:#f0ece5;color:#7f7783;opacity:1}
