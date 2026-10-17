@@ -241,7 +241,8 @@ function renderR2StoragePanel() {
       <p class="editor-hint">Vos fichiers restent privés et sont associés à votre compte. Taille maximale : 10 Mo par fichier.</p>
       <form id="r2-upload-form" class="editor-form">
         <label>Classer dans<select name="category">${R2_CATEGORIES.map((item) => `<option value="${item.value}">${item.label}</option>`).join('')}</select></label>
-        <label>Choisir un ou plusieurs fichiers<input type="file" name="files" multiple required></label>
+        <label>Choisir un ou plusieurs fichiers<input type="file" name="files" multiple required aria-describedby="r2-selected-files"></label>
+        <div id="r2-selected-files" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné.</div>
         <button class="button button-primary" type="submit">Envoyer vers mon stockage ↗</button>
       </form>
       <div class="r2-message" role="status" aria-live="polite"></div>
@@ -537,6 +538,25 @@ modalRoot.addEventListener('submit', async (event) => {
     if (message) message.textContent = error.message || 'Connexion impossible.';
     submit.disabled = false; submit.textContent = mode === 'signup' ? 'Créer mon espace ↗' : 'Me connecter ↗';
   }
+});
+
+app.addEventListener('change', (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || input.name !== 'files' || !input.closest('#r2-upload-form')) return;
+  const display = document.querySelector('#r2-selected-files');
+  const message = document.querySelector('.r2-message');
+  const files = [...(input.files || [])];
+  if (display) {
+    if (!files.length) {
+      display.textContent = 'Aucun fichier sélectionné.';
+    } else {
+      display.innerHTML = '<strong>' + files.length + (files.length > 1 ? ' fichiers sélectionnés' : ' fichier sélectionné') + '</strong><ul>' + files.map((file) => {
+        const size = file.size < 1024 * 1024 ? Math.max(1, Math.round(file.size / 1024)) + ' Ko' : (file.size / (1024 * 1024)).toFixed(2) + ' Mo';
+        return '<li>' + e(file.name) + ' <span>· ' + size + '</span></li>';
+      }).join('') + '</ul>';
+    }
+  }
+  if (message) message.textContent = files.length ? 'Fichier prêt à être envoyé.' : '';
 });
 
 app.addEventListener('submit', async (event) => {
