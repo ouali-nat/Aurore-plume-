@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#44345f">
+  <title>Diagnostic technique — Aurore Plume</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#292434;background:#f6f3ee;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;padding:24px 14px 48px}.wrap{max-width:900px;margin:auto}
+    header{background:#44345f;color:#fffaf3;border-radius:18px;padding:24px;margin-bottom:18px}
+    .eyebrow{font-size:11px;letter-spacing:1.7px;text-transform:uppercase;opacity:.8}h1{font-size:clamp(27px,5vw,42px);line-height:1.1;margin:12px 0}header p{line-height:1.6;max-width:680px;margin-bottom:0;color:#e7dfef}
+    .summary,.panel{background:#fffdf9;border:1px solid #e6ded4;border-radius:16px;padding:18px;margin:14px 0}
+    .summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    button{border:0;border-radius:10px;background:#44345f;color:white;font-weight:700;padding:12px 16px;cursor:pointer}
+    button:disabled{opacity:.6;cursor:wait}.muted{color:#776f7e;font-size:13px;line-height:1.6}
+    .table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #eee8e0;vertical-align:top;font-size:13px}th{font-size:11px;color:#756b7d;text-transform:uppercase;letter-spacing:.6px}
+    .status{display:inline-flex;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;background:#eee9e3;color:#665d6c;white-space:nowrap}
+    .ok{background:#e4f1e4;color:#28643b}.warn{background:#fff0d6;color:#855a12}.bad{background:#f9e3e1;color:#9a3934}.run{background:#e8e4f4;color:#58477c}
+    .detail{display:block;margin-top:5px;color:#7c7480;line-height:1.5;overflow-wrap:anywhere}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions a{color:#51406f}
+    footer{font-size:12px;color:#807887;padding:10px 3px;line-height:1.6}
+    @media(max-width:540px){body{padding:12px 10px 30px}header,.panel,.summary{padding:15px;border-radius:13px}th,td{padding:11px 8px}}
+  </style>
+</head>
+<body><main class="wrap">
+  <header><div class="eyebrow">Aurore Plume · Contrôle de santé</div><h1>Tableau de diagnostic</h1><p>Vérification en lecture seule de la configuration, de Supabase, de la session et du Worker de stockage. Aucun fichier n’est envoyé, modifié ou supprimé.</p></header>
+  <section class="summary"><div><strong id="overall">Diagnostic non lancé</strong><div class="muted" id="updated">Lancez les tests pour obtenir les résultats réels de cette version.</div></div><button id="refresh" type="button">Lancer les tests</button></section>
+  <section class="panel"><div class="table-wrap"><table><thead><tr><th>Composant</th><th>État</th><th>Résultat / action</th></tr></thead><tbody id="results"><tr><td colspan="3">En attente du lancement du diagnostic.</td></tr></tbody></table></div></section>
+  <section class="panel"><h2>Ce que ce diagnostic vérifie</h2><p class="muted">Les contrôles sont non destructifs. Le test de base de données lit au maximum une ligne de la table de profils. Le test du Worker vérifie la réponse de la liste privée ; si vous n’êtes pas connecté, une réponse « non autorisé » confirme seulement que le Worker répond et protège la route, pas que l’accès R2 authentifié fonctionne.</p><div class="actions"><a href="https://github.com/ouali-nat/Aurore-plume-/blob/main/README.md" target="_blank" rel="noreferrer">README du dépôt ↗</a><a href="https://supabase.com/dashboard/project/iymioasfkithmyqtpipd" target="_blank" rel="noreferrer">Projet Supabase ↗</a><a href="https://vercel.com/aurore-talents" target="_blank" rel="noreferrer">Vercel ↗</a><a href="/" >Retour au site ↗</a></div></section>
+  <footer>Ne partagez pas de clés secrètes ni de jetons de session. Ce tableau n’affiche jamais la clé Supabase, le jeton d’accès ou le contenu des fichiers.</footer>
+</main><script type="module" src="/src/diagnostic.js"></script></body></html>
