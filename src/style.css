@@ -37,3 +37,22 @@
   .r2-file-item { align-items: flex-start; flex-direction: column; }
   .r2-file-actions { width: 100%; }
 }
+
+
+/* Sélecteur alternatif et diagnostic de stockage R2 */
+.r2-picker-block{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #e4dcd2;border-radius:13px;background:#fffdf8}
+.r2-picker-secondary{background:#f8f5fb;border-color:#dcd2e8}
+.r2-picker-block input[type=file]{display:block;max-width:100%;font-size:12px;color:#625b68}
+.r2-picker-block .button{align-self:flex-start;max-width:100%;white-space:normal;text-align:center}
+.r2-diagnostic{margin-top:1rem;padding:14px;border:1px solid #dcd5e5;border-radius:13px;background:#f7f4fb;color:#383241}
+.r2-diagnostic-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.r2-diagnostic-heading .button{padding:7px 10px;font-size:10px}
+.r2-diagnostic-intro{font-size:10px;line-height:1.6;color:#7d7584;margin:8px 0 10px}
+.r2-diagnostic-log{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:7px}
+.r2-diagnostic-log li{display:flex;align-items:flex-start;gap:8px;font-size:10px;line-height:1.55;overflow-wrap:anywhere}
+.r2-diagnostic-log time{flex:0 0 auto;color:#82798e;font-variant-numeric:tabular-nums}
+.r2-diagnostic-log li span{min-width:0}
+.r2-diagnostic-success span{color:#376b3c}
+.r2-diagnostic-error span{color:#a23f3f;font-weight:600}
+.r2-diagnostic-warn span{color:#94671f}
+@media(max-width:560px){.r2-picker-block{padding:11px}.r2-picker-block .button{width:100%;align-self:stretch}.r2-diagnostic{padding:11px}.r2-diagnostic-log{max-height:220px}}
