@@ -558,22 +558,17 @@ modalRoot.addEventListener('submit', async (event) => {
   }
 });
 
-// Quand l'utilisateur annule le sélecteur Android, certains navigateurs ne
-// émettent pas d'événement change. Le retour du focus clôt alors le sélecteur.
-window.addEventListener('focus', () => {
-  window.setTimeout(() => {
-    const fileInput = document.querySelector('#r2-files-input');
-    if (fileInput instanceof HTMLInputElement && fileInput.files?.length) {
-      state.r2PickerOpen = false;
-      state.r2PendingRender = false;
-      return;
-    }
-    if (state.r2PickerOpen) state.r2PickerOpen = false;
-    if (state.r2PendingRender) {
-      state.r2PendingRender = false;
-      render();
-    }
-  }, 350);
+// Ne pas utiliser le retour de focus pour relancer render() : sur Android,
+// focus peut arriver avant change et remplacer le champ juste avant sa sélection.
+// L'événement cancel permet de libérer le rendu uniquement si le sélecteur est annulé.
+app.addEventListener('cancel', (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || input.id !== 'r2-files-input') return;
+  state.r2PickerOpen = false;
+  if (state.r2PendingRender) {
+    state.r2PendingRender = false;
+    render();
+  }
 });
 
 app.addEventListener('change', (event) => {
