@@ -453,33 +453,39 @@ function showAuth(mode = 'signin') {
     modalRoot.innerHTML = '<div class="modal-backdrop" id="auth-overlay"><section class="auth-modal"><button class="modal-close" data-action="close-modal" aria-label="Fermer">×</button><div class="auth-symbol">a.</div><h2>Encore un petit réglage.</h2><p>Les identifiants Supabase ne sont pas configurés pour cette version. Consultez le fichier README du dépôt pour terminer le raccordement.</p><button class="button button-primary full-width" data-action="close-modal">Compris</button></section></div>';
     return;
   }
+  const isSignup = mode === 'signup';
+  const isForgot = mode === 'forgot';
+  const isReset = mode === 'reset';
+  const title = isSignup ? 'Faites une place à vos idées.' : isForgot ? 'Retrouvons votre accès.' : isReset ? 'Choisissez un nouveau mot de passe.' : 'Heureux de vous retrouver.';
+  const intro = isSignup ? 'Créez votre espace privé et gardez le fil de vos textes.' : isForgot ? 'Nous vous enverrons un lien pour choisir un nouveau mot de passe.' : isReset ? 'Choisissez un mot de passe d’au moins 8 caractères pour retrouver votre atelier.' : 'Reconnectez-vous à votre atelier et à vos brouillons.';
+  const submitLabel = isSignup ? 'Créer mon espace' : isForgot ? 'Envoyer le lien' : isReset ? 'Enregistrer le mot de passe' : 'Me connecter';
   modalRoot.innerHTML = `
     <div class="modal-backdrop" id="auth-overlay">
       <section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button class="modal-close" data-action="close-modal" aria-label="Fermer">×</button>
         <div class="auth-symbol">a.</div><div class="eyebrow">VOTRE ESPACE D’ÉCRITURE</div>
-        <h2 id="auth-title">${mode === 'signup' ? 'Faites une place à vos idées.' : 'Heureux de vous retrouver.'}</h2>
-        <p>${mode === 'signup' ? 'Créez votre espace privé et gardez le fil de vos textes.' : 'Reconnectez-vous à votre atelier et à vos brouillons.'}</p>
-        <div class="sso-entry">
+        <h2 id="auth-title">${e(title)}</h2>
+        <p>${e(intro)}</p>
+        ${isForgot || isReset ? '' : `<div class="sso-entry">
           <button class="button button-sso button-large full-width" type="button" data-action="aurore-id"><span class="sso-mark">ID</span><span class="sso-label">Continuer avec Aurore ID</span><span aria-hidden="true">↗</span></button>
           <p class="sso-subtitle">Un accès unique pour les services Aurore.</p>
           <div class="sso-divider"><span>ou avec votre compte local</span></div>
-        </div>
-        <form id="auth-form" data-mode="${mode}" class="auth-form">
-          ${mode === 'signup' ? '<label>Nom d’auteur<input name="display_name" autocomplete="name" maxlength="80" required placeholder="Comment vous appeler ?"></label>' : ''}
-          <label>Adresse e-mail<input name="email" type="email" autocomplete="email" required placeholder="vous@exemple.com"></label>
-          <label>Mot de passe<input name="password" type="password" minlength="8" autocomplete="${mode === 'signup' ? 'new-password' : 'current-password'}" required placeholder="8 caractères minimum"></label>
-          <button class="button button-primary button-large full-width" type="submit">${mode === 'signup' ? 'Créer mon espace' : 'Me connecter'} <span>↗</span></button>
-          <p class="auth-message" id="auth-message"></p>
+        </div>`}
+        <form id="auth-form" data-mode="${e(mode)}" class="auth-form">
+          ${isSignup ? '<label>Nom d’auteur<input name="display_name" autocomplete="name" maxlength="80" required placeholder="Comment vous appeler ?"></label>' : ''}
+          <label>Adresse e-mail<input name="email" type="email" autocomplete="email" ${isReset ? 'disabled' : ''} required placeholder="vous@exemple.com" value="${isReset ? e(state.user?.email || '') : ''}"></label>
+          ${isForgot ? '' : '<label>Mot de passe<input name="password" type="password" minlength="8" autocomplete="' + (isSignup || isReset ? 'new-password' : 'current-password') + '" required placeholder="8 caractères minimum"></label>'}
+          <button class="button button-primary button-large full-width" type="submit">${e(submitLabel)} <span>↗</span></button>
+          ${mode === 'signin' ? '<button class="auth-forgot" type="button" data-auth-mode="forgot">Mot de passe oublié ?</button>' : ''}
+          <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
         </form>
-        <div class="auth-switch">${mode === 'signup' ? 'Vous avez déjà un espace ?' : 'Nouveau sur Aurore Plume ?'} <button data-auth-mode="${mode === 'signup' ? 'signin' : 'signup'}">${mode === 'signup' ? 'Se connecter' : 'Créer un compte'}</button></div>
-        <button class="sso-guest" type="button" data-action="close-modal">Visiter Aurore Plume sans compte</button>
+        <div class="auth-switch">${isSignup ? 'Vous avez déjà un espace ?' : isForgot || isReset ? 'Vous vous souvenez de votre mot de passe ?' : 'Nouveau sur Aurore Plume ?'} <button data-auth-mode="${isSignup ? 'signin' : 'signin'}">${isSignup ? 'Se connecter' : 'Retour à la connexion'}</button></div>
+        ${isForgot || isReset ? '' : '<button class="sso-guest" type="button" data-action="close-modal">Visiter Aurore Plume sans compte</button>'}
         <small class="auth-privacy">Vos brouillons restent privés. Aucun texte n’est publié sans validation.</small>
       </section>
     </div>`;
-  document.querySelector('#auth-overlay input')?.focus();
+  document.querySelector('#auth-overlay input:not([disabled])')?.focus();
 }
-
 async function startAuroreIdSignIn(button) {
   const message = modalRoot.querySelector('#auth-message');
   if (!supabase) {
@@ -595,14 +601,39 @@ modalRoot.addEventListener('submit', async (event) => {
   if (message) message.textContent = '';
   try {
     let result;
+    if (mode === 'forgot') {
+      const email = String(data.get('email') || '').trim();
+      result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/?reset-password=1' });
+      if (result.error) throw result.error;
+      if (message) message.textContent = 'Si cette adresse correspond à un compte, un lien de réinitialisation a été envoyé. Vérifiez aussi les courriers indésirables.';
+      submit.disabled = false; submit.textContent = 'Envoyer le lien ↗';
+      return;
+    }
+    if (mode === 'reset') {
+      const password = String(data.get('password') || '');
+      result = await supabase.auth.updateUser({ password });
+      if (result.error) throw result.error;
+      await supabase.auth.signOut();
+      state.user = null;
+      state.myWorks = [];
+      showAuth('signin');
+      const resetMessage = modalRoot.querySelector('#auth-message');
+      if (resetMessage) resetMessage.textContent = 'Mot de passe mis à jour. Vous pouvez vous connecter.';
+      return;
+    }
     if (mode === 'signup') {
-      result = await supabase.auth.signUp({ email: String(data.get('email')), password: String(data.get('password')), options: { data: { display_name: String(data.get('display_name') || '').trim() } } });
+      result = await supabase.auth.signUp({ email: String(data.get('email')).trim(), password: String(data.get('password')), options: { data: { display_name: String(data.get('display_name') || '').trim() } } });
     } else {
-      result = await supabase.auth.signInWithPassword({ email: String(data.get('email')), password: String(data.get('password')) });
+      result = await supabase.auth.signInWithPassword({ email: String(data.get('email')).trim(), password: String(data.get('password')) });
     }
     if (result.error) throw result.error;
+    if (mode === 'signup' && result.data.user && Array.isArray(result.data.user.identities) && result.data.user.identities.length === 0) {
+      if (message) message.textContent = 'Cette adresse semble déjà associée à un compte. Essayez de vous connecter ou utilisez « Mot de passe oublié ? ».';
+      submit.disabled = false; submit.textContent = 'Créer mon espace ↗';
+      return;
+    }
     if (mode === 'signup' && !result.data.session) {
-      if (message) message.textContent = 'Compte créé. Vérifiez votre boîte e-mail pour confirmer l’adresse, puis revenez vous connecter.';
+      if (message) message.textContent = 'Compte créé. Vérifiez votre boîte e-mail pour confirmer l’adresse, puis revenez vous connecter. Si aucun message n’arrive, utilisez « Mot de passe oublié ? » ou vérifiez la configuration e-mail.';
       submit.disabled = false; submit.textContent = 'Créer mon espace ↗';
       return;
     }
@@ -614,7 +645,7 @@ modalRoot.addEventListener('submit', async (event) => {
     toast(mode === 'signup' ? 'Votre espace est prêt. Bienvenue !' : 'Vous voilà de retour.');
   } catch (error) {
     if (message) message.textContent = error.message || 'Connexion impossible.';
-    submit.disabled = false; submit.textContent = mode === 'signup' ? 'Créer mon espace ↗' : 'Me connecter ↗';
+    submit.disabled = false; submit.textContent = mode === 'signup' ? 'Créer mon espace ↗' : mode === 'forgot' ? 'Envoyer le lien ↗' : mode === 'reset' ? 'Enregistrer le mot de passe ↗' : 'Me connecter ↗';
   }
 });
 
@@ -698,7 +729,11 @@ app.addEventListener('submit', async (event) => {
 });
 
 if (supabase) {
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showAuth('reset');
+      return;
+    }
     state.user = session?.user || null;
     render();
     Promise.resolve().then(async () => {
