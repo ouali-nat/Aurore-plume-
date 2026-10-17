@@ -279,6 +279,11 @@ function showAuth(mode = 'signin') {
         <div class="auth-symbol">a.</div><div class="eyebrow">VOTRE ESPACE D’ÉCRITURE</div>
         <h2 id="auth-title">${mode === 'signup' ? 'Faites une place à vos idées.' : 'Heureux de vous retrouver.'}</h2>
         <p>${mode === 'signup' ? 'Créez votre espace privé et gardez le fil de vos textes.' : 'Reconnectez-vous à votre atelier et à vos brouillons.'}</p>
+        <div class="sso-entry">
+          <button class="button button-sso button-large full-width" type="button" data-action="aurore-id"><span class="sso-mark">ID</span><span class="sso-label">Continuer avec Aurore ID</span><span aria-hidden="true">↗</span></button>
+          <p class="sso-subtitle">Un accès unique pour les services Aurore.</p>
+          <div class="sso-divider"><span>ou avec votre compte local</span></div>
+        </div>
         <form id="auth-form" data-mode="${mode}" class="auth-form">
           ${mode === 'signup' ? '<label>Nom d’auteur<input name="display_name" autocomplete="name" maxlength="80" required placeholder="Comment vous appeler ?"></label>' : ''}
           <label>Adresse e-mail<input name="email" type="email" autocomplete="email" required placeholder="vous@exemple.com"></label>
@@ -287,10 +292,30 @@ function showAuth(mode = 'signin') {
           <p class="auth-message" id="auth-message"></p>
         </form>
         <div class="auth-switch">${mode === 'signup' ? 'Vous avez déjà un espace ?' : 'Nouveau sur Aurore Plume ?'} <button data-auth-mode="${mode === 'signup' ? 'signin' : 'signup'}">${mode === 'signup' ? 'Se connecter' : 'Créer un compte'}</button></div>
+        <button class="sso-guest" type="button" data-action="close-modal">Visiter Aurore Plume sans compte</button>
         <small class="auth-privacy">Vos brouillons restent privés. Aucun texte n’est publié sans validation.</small>
       </section>
     </div>`;
   document.querySelector('#auth-overlay input')?.focus();
+}
+
+async function startAuroreIdSignIn(button) {
+  const message = modalRoot.querySelector('#auth-message');
+  if (!supabase) {
+    if (message) message.textContent = 'La connexion Aurore ID n’est pas disponible pour le moment. Réessayez plus tard.';
+    return;
+  }
+  const label = button.querySelector('.sso-label');
+  button.disabled = true;
+  if (label) label.textContent = 'Redirection vers Aurore ID…';
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'custom:aurore-id' });
+    if (error) throw error;
+  } catch (error) {
+    if (message) message.textContent = error?.message || 'La connexion avec Aurore ID n’a pas abouti. Vérifiez la configuration du fournisseur.';
+    button.disabled = false;
+    if (label) label.textContent = 'Continuer avec Aurore ID';
+  }
 }
 
 function openRead(id) {
@@ -344,6 +369,8 @@ app.addEventListener('click', async (event) => {
 });
 
 modalRoot.addEventListener('click', (event) => {
+  const auroreIdButton = event.target.closest('[data-action="aurore-id"]');
+  if (auroreIdButton) { startAuroreIdSignIn(auroreIdButton); return; }
   if (event.target.closest('[data-action="close-modal"]')) { modalRoot.innerHTML = ''; return; }
   const modeButton = event.target.closest('[data-auth-mode]');
   if (modeButton) { showAuth(modeButton.dataset.authMode); return; }
