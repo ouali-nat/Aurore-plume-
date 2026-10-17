@@ -317,7 +317,7 @@ app.addEventListener('click', async (event) => {
     state.editing = null;
     render();
     if (state.view === 'atelier' && state.user) { await loadMyWorks(); render(); }
-    if (state.view === 'library') await loadPublicWorks();
+    if (state.view === 'library') { await loadPublicWorks(); render(); }
     return;
   }
   const action = event.target.closest('[data-action]')?.dataset.action;
@@ -344,6 +344,9 @@ app.addEventListener('click', async (event) => {
 });
 
 modalRoot.addEventListener('click', (event) => {
+  if (event.target.closest('[data-action="close-modal"]')) { modalRoot.innerHTML = ''; return; }
+  const modeButton = event.target.closest('[data-auth-mode]');
+  if (modeButton) { showAuth(modeButton.dataset.authMode); return; }
   if (event.target === modalRoot.firstElementChild) modalRoot.innerHTML = '';
 });
 
@@ -405,7 +408,7 @@ app.addEventListener('submit', async (event) => {
   try {
     let query;
     if (id) query = supabase.from('plume_works').update(payload).eq('id', id).eq('author_id', state.user.id);
-    else query = supabase.from('plume_works').insert({ ...payload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}) });
+    else { const { updated_at, ...insertPayload } = payload; query = supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}) }); }
     const { error } = await query;
     if (error) throw error;
     toast(intent === 'review' ? 'Texte envoyé à la file de relecture.' : 'Brouillon enregistré.');
