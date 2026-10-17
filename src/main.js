@@ -241,8 +241,10 @@ function renderR2StoragePanel() {
       <p class="editor-hint">Vos fichiers restent privés et sont associés à votre compte. Taille maximale : 10 Mo par fichier.</p>
       <form id="r2-upload-form" class="editor-form">
         <label>Classer dans<select name="category">${R2_CATEGORIES.map((item) => `<option value="${item.value}">${item.label}</option>`).join('')}</select></label>
-        <label>Choisir un ou plusieurs fichiers<input type="file" name="files" multiple required aria-describedby="r2-selected-files"></label>
-        <div id="r2-selected-files" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné.</div>
+        <label for="r2-files-input">Fichiers à envoyer</label>
+        <button class="button button-secondary" id="r2-pick-files" type="button">Parcourir les fichiers de mon téléphone</button>
+        <input id="r2-files-input" type="file" name="files" multiple required aria-describedby="r2-selected-files">
+        <div id="r2-selected-files" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné. Appuyez sur « Parcourir » puis validez le choix dans le sélecteur Android.</div>
         <button class="button button-primary" type="submit">Envoyer vers mon stockage ↗</button>
       </form>
       <div class="r2-message" role="status" aria-live="polite"></div>
@@ -459,6 +461,12 @@ function openRead(id) {
 }
 
 app.addEventListener('click', async (event) => {
+  const pickFilesButton = event.target.closest('#r2-pick-files');
+  if (pickFilesButton) {
+    const fileInput = document.querySelector('#r2-files-input');
+    if (fileInput instanceof HTMLInputElement) fileInput.click();
+    return;
+  }
   const r2Download = event.target.closest('[data-r2-download]');
   if (r2Download) { try { await openR2File(r2Download.dataset.r2Download); } catch (error) { toast(error.message || 'Ouverture impossible.', 'error'); } return; }
   const r2Delete = event.target.closest('[data-r2-delete]');
