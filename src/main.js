@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], editing: null, search: '', storageFiles: [] };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], editing: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -354,6 +354,12 @@ async function deleteR2File(key) {
 }
 
 function render() {
+  // Android peut déclencher un rendu d'authentification pendant que le sélecteur
+  // de fichiers est ouvert. Ne remplaçons pas le formulaire avant son retour.
+  if (state.r2PickerOpen) {
+    state.r2PendingRender = true;
+    return;
+  }
   if (state.view === 'atelier') renderAtelier();
   else if (state.view === 'library') renderLibrary();
   else renderDiscover();
@@ -464,7 +470,11 @@ app.addEventListener('click', async (event) => {
   const pickFilesButton = event.target.closest('#r2-pick-files');
   if (pickFilesButton) {
     const fileInput = document.querySelector('#r2-files-input');
-    if (fileInput instanceof HTMLInputElement) fileInput.click();
+    if (fileInput instanceof HTMLInputElement) {
+      state.r2PickerOpen = true;
+      state.r2PendingRender = false;
+      fileInput.click();
+    }
     return;
   }
   const r2Download = event.target.closest('[data-r2-download]');
@@ -548,12 +558,34 @@ modalRoot.addEventListener('submit', async (event) => {
   }
 });
 
+// Quand l'utilisateur annule le sélecteur Android, certains navigateurs ne
+// émettent pas d'événement change. Le retour du focus clôt alors le sélecteur.
+window.addEventListener('focus', () => {
+  window.setTimeout(() => {
+    const fileInput = document.querySelector('#r2-files-input');
+    if (fileInput instanceof HTMLInputElement && fileInput.files?.length) {
+      state.r2PickerOpen = false;
+      state.r2PendingRender = false;
+      return;
+    }
+    if (state.r2PickerOpen) state.r2PickerOpen = false;
+    if (state.r2PendingRender) {
+      state.r2PendingRender = false;
+      render();
+    }
+  }, 350);
+});
+
 app.addEventListener('change', (event) => {
   const input = event.target;
   if (!(input instanceof HTMLInputElement) || input.name !== 'files' || !input.closest('#r2-upload-form')) return;
+  state.r2PickerOpen = false;
+  const files = [...(input.files || [])];
+  // Si un fichier a été choisi, on annule tout rendu en attente : il effacerait
+  // le champ file et ferait croire que la sélection Android a échoué.
+  if (files.length) state.r2PendingRender = false;
   const display = document.querySelector('#r2-selected-files');
   const message = document.querySelector('.r2-message');
-  const files = [...(input.files || [])];
   if (display) {
     if (!files.length) {
       display.textContent = 'Aucun fichier sélectionné.';
