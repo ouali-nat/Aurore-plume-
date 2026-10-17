@@ -241,16 +241,44 @@ function renderR2StoragePanel() {
       <p class="editor-hint">Vos fichiers restent privés et sont associés à votre compte. Taille maximale : 10 Mo par fichier.</p>
       <form id="r2-upload-form" class="editor-form">
         <label>Classer dans<select name="category">${R2_CATEGORIES.map((item) => `<option value="${item.value}">${item.label}</option>`).join('')}</select></label>
-        <label for="r2-files-input">Fichiers à envoyer</label>
-        <button class="button button-secondary" id="r2-pick-files" type="button">Parcourir les fichiers de mon téléphone</button>
-        <input id="r2-files-input" type="file" name="files" multiple required aria-describedby="r2-selected-files">
-        <div id="r2-selected-files" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné. Appuyez sur « Parcourir » puis validez le choix dans le sélecteur Android.</div>
+        <div class="r2-picker-block">
+          <label for="r2-files-input">Sélecteur 1 — fichiers à envoyer</label>
+          <button class="button button-secondary" id="r2-pick-files" type="button">Parcourir les fichiers de mon téléphone</button>
+          <input id="r2-files-input" type="file" name="files" multiple aria-describedby="r2-selected-files">
+          <div id="r2-selected-files" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné. Vous pouvez utiliser l’un ou l’autre des deux sélecteurs.</div>
+        </div>
+        <div class="r2-picker-block r2-picker-secondary">
+          <label for="r2-files-input-secondary">Sélecteur 2 — solution alternative</label>
+          <button class="button button-outline" id="r2-pick-files-secondary" type="button">Choisir un PDF avec le second sélecteur</button>
+          <input id="r2-files-input-secondary" type="file" name="files-secondary" multiple aria-describedby="r2-selected-files-secondary">
+          <div id="r2-selected-files-secondary" class="r2-selected-files" role="status" aria-live="polite">Aucun fichier sélectionné dans le second sélecteur.</div>
+        </div>
         <button class="button button-primary" type="submit">Envoyer vers mon stockage ↗</button>
       </form>
       <div class="r2-message" role="status" aria-live="polite"></div>
+      <section class="r2-diagnostic" aria-labelledby="r2-diagnostic-title">
+        <div class="r2-diagnostic-heading"><strong id="r2-diagnostic-title">Diagnostic en temps réel</strong><button type="button" class="button button-quiet" id="r2-diagnostic-clear">Effacer</button></div>
+        <p class="r2-diagnostic-intro">Les événements ci-dessous distinguent la sélection locale, l’envoi réseau et la liste des fichiers déjà enregistrés.</p>
+        <ol id="r2-diagnostic-log" class="r2-diagnostic-log" aria-live="polite"><li><time>—</time> Diagnostic prêt ; attente d’une sélection.</li></ol>
+      </section>
       <div class="r2-file-list" aria-live="polite"><p class="editor-hint">Chargement de vos fichiers…</p></div>
     </div>
   </section>`;
+}
+
+function r2Diagnostic(message, level = 'info') {
+  const log = document.querySelector('#r2-diagnostic-log');
+  if (!log) return;
+  const item = document.createElement('li');
+  item.className = 'r2-diagnostic-' + level;
+  const time = document.createElement('time');
+  time.textContent = new Date().toLocaleTimeString();
+  const detail = document.createElement('span');
+  detail.textContent = message;
+  item.append(time, detail);
+  log.append(item);
+  while (log.children.length > 30) log.firstElementChild?.remove();
+  log.scrollTop = log.scrollHeight;
 }
 
 function renderR2FileList() {
@@ -288,12 +316,15 @@ async function r2Request(path, options = {}) {
 async function loadR2Files() {
   const container = document.querySelector('.r2-file-list');
   if (!container || !state.user) return;
+  r2Diagnostic('Vérification de la liste des fichiers déjà enregistrés dans R2…');
   try {
     const response = await r2Request('/api/storage/list');
     const result = await response.json();
     state.storageFiles = Array.isArray(result.objects) ? result.objects : [];
+    r2Diagnostic('Réponse de la liste R2 : ' + state.storageFiles.length + ' fichier(s) déjà enregistré(s).');
     renderR2FileList();
   } catch (error) {
+    r2Diagnostic('Échec du chargement de la liste R2 : ' + (error?.message || 'erreur inconnue'), 'error');
     container.innerHTML = '<p class="editor-hint">Impossible de charger les fichiers : ' + e(error.message) + '</p>';
   }
 }
@@ -303,29 +334,40 @@ async function uploadR2Files(form) {
   const submit = form.querySelector('button[type="submit"]');
   try {
     const data = new FormData(form);
-    const files = [...(form.querySelector('[name="files"]')?.files || [])];
+    const files = [
+      ...(form.querySelector('[name="files"]')?.files || []),
+      ...(form.querySelector('[name="files-secondary"]')?.files || [])
+    ];
+    r2Diagnostic('Clic sur « Envoyer » : ' + files.length + ' fichier(s) trouvé(s) dans les deux sélecteurs.');
     if (message) message.textContent = 'Préparation de l’envoi…';
-    if (!files.length) throw new Error('Choisissez au moins un fichier.');
+    if (!files.length) throw new Error('Choisissez au moins un fichier avec l’un des deux sélecteurs.');
     if (files.some((file) => file.size > 10 * 1024 * 1024)) {
       throw new Error('Chaque fichier doit faire 10 Mo maximum.');
     }
+    files.forEach((file, index) => r2Diagnostic('Fichier ' + (index + 1) + ' prêt : ' + file.name + ' (' + Math.round(file.size / 1024) + ' Ko).'));
     if (submit) submit.disabled = true;
     if (message) message.textContent = 'Envoi des fichiers…';
     for (let index = 0; index < files.length; index++) {
       const file = files[index];
       const safeName = file.name.normalize('NFKC').replace(/[^\\p{L}\\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(-160) || 'fichier';
       const key = String(data.get('category') || 'autres') + '/' + Date.now() + '-' + index + '-' + safeName;
+      r2Diagnostic('Début de l’envoi réseau du fichier ' + (index + 1) + '/' + files.length + '…');
       await r2Request('/api/storage?key=' + encodeURIComponent(key), {
         method: 'POST',
         headers: { 'Content-Type': file.type || 'application/octet-stream' },
         body: file
       });
+      r2Diagnostic('Le serveur a accepté la requête d’envoi du fichier ' + (index + 1) + '/' + files.length + '.', 'success');
     }
     form.reset();
+    document.querySelector('#r2-selected-files').textContent = 'Aucun fichier sélectionné.';
+    document.querySelector('#r2-selected-files-secondary').textContent = 'Aucun fichier sélectionné dans le second sélecteur.';
     if (message) message.textContent = 'Fichier(s) envoyé(s) dans votre espace privé.';
+    r2Diagnostic('Envoi terminé ; vérification de la présence des fichiers dans la liste R2…', 'success');
     await loadR2Files();
   } catch (error) {
     console.error('Aurore Plume R2 upload', error);
+    r2Diagnostic('ÉCHEC : ' + (error?.message || 'erreur inconnue pendant l’envoi.'), 'error');
     if (message) message.textContent = error?.message || 'Envoi impossible.';
   } finally {
     if (submit) submit.disabled = false;
@@ -467,14 +509,24 @@ function openRead(id) {
 }
 
 app.addEventListener('click', async (event) => {
-  const pickFilesButton = event.target.closest('#r2-pick-files');
+  const pickFilesButton = event.target.closest('#r2-pick-files, #r2-pick-files-secondary');
   if (pickFilesButton) {
-    const fileInput = document.querySelector('#r2-files-input');
+    const inputId = pickFilesButton.id === 'r2-pick-files-secondary' ? '#r2-files-input-secondary' : '#r2-files-input';
+    const fileInput = document.querySelector(inputId);
     if (fileInput instanceof HTMLInputElement) {
       state.r2PickerOpen = true;
       state.r2PendingRender = false;
+      r2Diagnostic('Ouverture du ' + (inputId.includes('secondary') ? 'second' : 'premier') + ' sélecteur Android…');
       fileInput.click();
+    } else {
+      r2Diagnostic('Impossible de trouver le champ de sélection du fichier.', 'error');
     }
+    return;
+  }
+  if (event.target.closest('#r2-diagnostic-clear')) {
+    const log = document.querySelector('#r2-diagnostic-log');
+    if (log) log.innerHTML = '';
+    r2Diagnostic('Journal effacé manuellement.');
     return;
   }
   const r2Download = event.target.closest('[data-r2-download]');
@@ -563,8 +615,9 @@ modalRoot.addEventListener('submit', async (event) => {
 // L'événement cancel permet de libérer le rendu uniquement si le sélecteur est annulé.
 app.addEventListener('cancel', (event) => {
   const input = event.target;
-  if (!(input instanceof HTMLInputElement) || input.id !== 'r2-files-input') return;
+  if (!(input instanceof HTMLInputElement) || !['r2-files-input', 'r2-files-input-secondary'].includes(input.id)) return;
   state.r2PickerOpen = false;
+  r2Diagnostic('Sélecteur Android fermé sans confirmer de nouveau fichier.');
   if (state.r2PendingRender) {
     state.r2PendingRender = false;
     render();
@@ -573,17 +626,18 @@ app.addEventListener('cancel', (event) => {
 
 app.addEventListener('change', (event) => {
   const input = event.target;
-  if (!(input instanceof HTMLInputElement) || input.name !== 'files' || !input.closest('#r2-upload-form')) return;
+  if (!(input instanceof HTMLInputElement) || !['files', 'files-secondary'].includes(input.name) || !input.closest('#r2-upload-form')) return;
   state.r2PickerOpen = false;
   const files = [...(input.files || [])];
   // Si un fichier a été choisi, on annule tout rendu en attente : il effacerait
   // le champ file et ferait croire que la sélection Android a échoué.
   if (files.length) state.r2PendingRender = false;
-  const display = document.querySelector('#r2-selected-files');
+  const secondary = input.name === 'files-secondary';
+  const display = document.querySelector(secondary ? '#r2-selected-files-secondary' : '#r2-selected-files');
   const message = document.querySelector('.r2-message');
   if (display) {
     if (!files.length) {
-      display.textContent = 'Aucun fichier sélectionné.';
+      display.textContent = secondary ? 'Aucun fichier sélectionné dans le second sélecteur.' : 'Aucun fichier sélectionné.';
     } else {
       display.innerHTML = '<strong>' + files.length + (files.length > 1 ? ' fichiers sélectionnés' : ' fichier sélectionné') + '</strong><ul>' + files.map((file) => {
         const size = file.size < 1024 * 1024 ? Math.max(1, Math.round(file.size / 1024)) + ' Ko' : (file.size / (1024 * 1024)).toFixed(2) + ' Mo';
@@ -591,6 +645,10 @@ app.addEventListener('change', (event) => {
       }).join('') + '</ul>';
     }
   }
+  r2Diagnostic(files.length
+    ? (secondary ? 'Second sélecteur : ' : 'Premier sélecteur : ') + files.length + ' fichier(s) remis par Android ; ' + files.map((file) => file.name + ' (' + Math.round(file.size / 1024) + ' Ko)').join(', ')
+    : (secondary ? 'Second sélecteur' : 'Premier sélecteur') + ' : aucun fichier retourné par Android.',
+    files.length ? 'success' : 'warn');
   if (message) message.textContent = files.length ? 'Fichier prêt à être envoyé.' : '';
 });
 
