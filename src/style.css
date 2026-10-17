@@ -21,3 +21,18 @@
 
 /* Aurore ID single-sign-on entry; no unconfigured social providers are shown. */
 .sso-entry{margin:0 0 18px}.button-sso{width:100%;justify-content:space-between;gap:10px;background:#fffaf4;color:var(--ink);border-color:var(--line)}.button-sso:hover{background:#fbf8ff;border-color:#c9bedf}.sso-mark{display:grid;place-items:center;width:29px;height:29px;flex:0 0 29px;border-radius:9px;background:var(--purple);color:#fffaf4;font-size:11px;font-weight:800;letter-spacing:.4px}.sso-label{flex:1;text-align:left}.sso-subtitle{text-align:center;color:var(--muted);font-size:10px;line-height:1.6;margin:8px 0 17px}.sso-divider{display:flex;align-items:center;gap:11px;color:var(--muted);font-size:10px}.sso-divider:before,.sso-divider:after{content:"";height:1px;background:var(--line);flex:1}.sso-guest{display:block;margin:17px auto 0;border:0;background:transparent;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:3px}.sso-guest:hover{color:var(--purple)}
+
+
+/* Private Cloudflare R2 file library */
+.r2-storage-panel { margin: 2rem auto 4rem; }
+.r2-storage-panel .side-card { padding: clamp(1rem, 3vw, 1.75rem); }
+.r2-file-items { display: grid; gap: .25rem; margin-top: 1.25rem; }
+.r2-file-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 0; border-bottom: 1px solid rgba(100, 100, 100, .2); }
+.r2-file-copy { display: grid; gap: .25rem; min-width: 0; overflow-wrap: anywhere; }
+.r2-file-copy small { opacity: .72; }
+.r2-file-actions { display: flex; flex-wrap: wrap; gap: .5rem; flex-shrink: 0; }
+.r2-message { margin-top: .75rem; font-size: .92rem; }
+@media (max-width: 600px) {
+  .r2-file-item { align-items: flex-start; flex-direction: column; }
+  .r2-file-actions { width: 100%; }
+}
