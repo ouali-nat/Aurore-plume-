@@ -297,17 +297,20 @@ async function loadR2Files() {
 
 async function uploadR2Files(form) {
   const message = form.querySelector('.r2-message') || document.querySelector('.r2-message');
-  const data = new FormData(form);
-  const files = [...(form.querySelector('[name="files"]')?.files || [])];
-  if (!files.length) throw new Error('Choisissez au moins un fichier.');
-  if (files.some((file) => file.size > 10 * 1024 * 1024)) throw new Error('Chaque fichier doit faire 10 Mo maximum.');
   const submit = form.querySelector('button[type="submit"]');
-  submit.disabled = true;
-  if (message) message.textContent = 'Envoi des fichiers…';
   try {
+    const data = new FormData(form);
+    const files = [...(form.querySelector('[name="files"]')?.files || [])];
+    if (message) message.textContent = 'Préparation de l’envoi…';
+    if (!files.length) throw new Error('Choisissez au moins un fichier.');
+    if (files.some((file) => file.size > 10 * 1024 * 1024)) {
+      throw new Error('Chaque fichier doit faire 10 Mo maximum.');
+    }
+    if (submit) submit.disabled = true;
+    if (message) message.textContent = 'Envoi des fichiers…';
     for (let index = 0; index < files.length; index++) {
       const file = files[index];
-      const safeName = file.name.normalize('NFKC').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(-160) || 'fichier';
+      const safeName = file.name.normalize('NFKC').replace(/[^\\p{L}\\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(-160) || 'fichier';
       const key = String(data.get('category') || 'autres') + '/' + Date.now() + '-' + index + '-' + safeName;
       await r2Request('/api/storage?key=' + encodeURIComponent(key), {
         method: 'POST',
@@ -319,9 +322,10 @@ async function uploadR2Files(form) {
     if (message) message.textContent = 'Fichier(s) envoyé(s) dans votre espace privé.';
     await loadR2Files();
   } catch (error) {
-    if (message) message.textContent = error.message || 'Envoi impossible.';
+    console.error('Aurore Plume R2 upload', error);
+    if (message) message.textContent = error?.message || 'Envoi impossible.';
   } finally {
-    submit.disabled = false;
+    if (submit) submit.disabled = false;
   }
 }
 
