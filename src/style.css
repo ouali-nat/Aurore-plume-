@@ -72,3 +72,13 @@
 .video-list-panel .my-work-copy a{display:inline-block;margin-top:5px;color:var(--purple);font-size:12px;font-weight:700;text-decoration:none}
 .video-list-panel .my-work-copy a:hover{text-decoration:underline}
 @media(max-width:680px){.workspace-tabs{gap:6px;padding:9px}.workspace-tab{padding:10px 12px}.workspace-tabs-wide .button{flex:1}.video-workspace{padding-left:18px;padding-right:18px}}
+
+
+/* Le rail de navigation remplace les onglets simples dans l’espace personnel. */
+.video-workspace{padding-top:30px}
+.workspace-grid{padding-top:30px}
+.my-works-panel .panel-top .button{flex:0 0 auto;white-space:nowrap}
+@media(max-width:560px){
+  .my-works-panel .panel-top{align-items:flex-start}
+  .my-works-panel .panel-top .button{font-size:10px;padding:10px 11px}
+}
