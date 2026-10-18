@@ -986,7 +986,7 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
-    state.workspaceTab = 'textes'; state.editorOpen = true; state.showDraftCreate = false; state.editorTab = 'cover'; state.showCreateForm = false;
+    state.workspaceTab = 'textes'; state.editorOpen = true; state.showDraftCreate = false; state.editorTab = 'manuscript'; state.showCreateForm = false;
     if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
     state.editorCoverPreview = null;
     state.view = 'atelier';
