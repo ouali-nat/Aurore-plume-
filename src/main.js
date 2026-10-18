@@ -1,3 +1,4 @@
+import './aurore-pdf-reader.css';
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -997,50 +998,61 @@ function downloadBlob(blob,filename) {
   window.setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 let plumePdfDocument=null, plumePdfScale=1, plumePdfPage=1, plumePdfBlob=null;
-async function openPdfReader(blob,title='Lecture du document') {
-  plumePdfBlob=blob;
-  const url=URL.createObjectURL(blob);
-  modalRoot.innerHTML='<div class="plume-pdf-reader-overlay" id="pdfViewerOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfViewerTitre"><div class="pdf-reader-shell"><div class="pdf-reader-topbar"><button type="button" class="pdf-reader-menu-toggle pdf-reader-back" data-pdf-reader-close aria-label="Fermer le lecteur">×</button><strong id="pdfViewerTitre" class="pdf-reader-title plume-pdf-reader-title">'+e(title)+'</strong><span class="pdf-reader-badge">LECTURE</span><div class="pdf-reader-top-actions pdf-reader-toolbar pdf-toolbar-group"><button type="button" data-pdf-zoom-out aria-label="Réduire le zoom">−</button><span data-pdf-zoom-label>100%</span><button type="button" data-pdf-zoom-in aria-label="Agrandir le zoom">+</button><button type="button" data-pdf-download>↓ Télécharger</button></div></div><div class="pdf-reader-pages" id="plume-pdf-reader-pages"><p class="plume-pdf-loading">Préparation du document…</p></div><div class="pdf-reader-bottombar"><button type="button" data-pdf-prev>Précédent</button><span data-pdf-page-count>— / —</span><button type="button" data-pdf-next>Suivant</button></div></div></div>';
-  try {
-    const pdfjs=await import('pdfjs-dist');
-    pdfjs.GlobalWorkerOptions.workerSrc=pdfWorkerUrl;
-    plumePdfDocument=await pdfjs.getDocument({data:await blob.arrayBuffer()}).promise;
-    const pages=document.querySelector('#plume-pdf-reader-pages');
-    pages.innerHTML='';
-    for(let number=1;number<=plumePdfDocument.numPages;number++){
-      const page=await plumePdfDocument.getPage(number);
-      const viewport=page.getViewport({scale:1});
-      const canvas=document.createElement('canvas');canvas.className='plume-pdf-reader-page';canvas.dataset.page=String(number);
-      const context=canvas.getContext('2d');
-      canvas.width=Math.floor(viewport.width*1.35);canvas.height=Math.floor(viewport.height*1.35);
-      canvas.style.width='min(100%, 620px)';canvas.style.height='auto';
-      pages.appendChild(canvas);
-      await page.render({canvasContext:context,viewport:page.getViewport({scale:1.35})}).promise;
-    }
-    plumePdfPage=1;updatePlumePdfReader();
-  } catch(error) {
-    const pages=document.querySelector('#plume-pdf-reader-pages');
-    if(pages)pages.innerHTML='<div class="plume-pdf-loading">Le lecteur PDF n’a pas pu ouvrir ce document. Vous pouvez tout de même le télécharger.</div>';
-    console.error('Lecteur PDF Aurore Plume',error);
-  }
-  modalRoot.querySelector('[data-pdf-reader-close]')?.addEventListener('click',closePdfReader);
-  modalRoot.querySelector('[data-pdf-download]')?.addEventListener('click',()=>downloadBlob(plumePdfBlob,(title||'aurore-plume').replace(/[^a-z0-9_-]+/gi,'-')+'.pdf'));
-  modalRoot.querySelector('[data-pdf-zoom-in]')?.addEventListener('click',()=>{plumePdfScale=Math.min(2.5,plumePdfScale+0.15);modalRoot.querySelectorAll('.plume-pdf-reader-page').forEach(c=>{c.style.width=(100*plumePdfScale)+'%';});const l=modalRoot.querySelector('[data-pdf-zoom-label]');if(l)l.textContent=Math.round(plumePdfScale*100)+'%';});
-  modalRoot.querySelector('[data-pdf-zoom-out]')?.addEventListener('click',()=>{plumePdfScale=Math.max(.55,plumePdfScale-.15);modalRoot.querySelectorAll('.plume-pdf-reader-page').forEach(c=>{c.style.width=(Math.min(100,100*plumePdfScale))+'%';});const l=modalRoot.querySelector('[data-pdf-zoom-label]');if(l)l.textContent=Math.round(plumePdfScale*100)+'%';});
-  modalRoot.querySelector('[data-pdf-prev]')?.addEventListener('click',()=>{plumePdfPage=Math.max(1,plumePdfPage-1);updatePlumePdfReader();});
-  modalRoot.querySelector('[data-pdf-next]')?.addEventListener('click',()=>{plumePdfPage=Math.min(plumePdfDocument?.numPages||1,plumePdfPage+1);updatePlumePdfReader();});
-  URL.revokeObjectURL(url);
+async function openPdfReader(blob,title='Lecture du document',workId=null) {
+  if (!(blob instanceof Blob)) throw new Error('Le document PDF est indisponible.');
+  closePdfReader();
+  plumePdfBlob=blob; plumePdfScale=1; plumePdfPage=1;
+  const recentKey='aurore_plume_pdf_recents_v1';
+  let recent=[]; try { recent=JSON.parse(localStorage.getItem(recentKey)||'[]'); if(!Array.isArray(recent))recent=[]; } catch {}
+  recent=[{id:workId,title:String(title||'Document'),openedAt:Date.now()},...recent.filter(x=>x.id!==workId)].slice(0,8);
+  try { localStorage.setItem(recentKey,JSON.stringify(recent)); } catch {}
+  const titleHtml=e(title||'Lecture du document');
+  modalRoot.innerHTML = "<div class='plume-pdf-reader-overlay' id='pdfViewerOverlay' role='dialog' aria-modal='true' aria-labelledby='pdfViewerTitre'><div class='pdf-reader-shell'><div class='pdf-reader-topbar'><button type='button' class='pdf-reader-back' data-pdf-reader-close>← Retour</button><strong id='pdfViewerTitre' class='pdf-reader-title'>" + titleHtml + "</strong><span class='pdf-reader-badge'>LECTURE</span><button type='button' class='pdf-reader-menu-toggle' data-pdf-menu-toggle aria-expanded='false' aria-label='Outils du lecteur'>⋮</button><div class='pdf-reader-menu-panel plume-pdf-menu' data-pdf-menu hidden><div class='pdf-menu-section'><span class='pdf-menu-section-title'>Zoom</span><div class='pdf-menu-zoom-row'><button type='button' data-pdf-zoom-out>−</button><span data-pdf-zoom-label>100%</span><button type='button' data-pdf-zoom-in>+</button></div><button type='button' class='pdf-menu-item' data-pdf-fit>↔ Ajuster à la largeur</button></div><div class='pdf-menu-divider'></div><button type='button' class='pdf-menu-item' data-pdf-mode aria-pressed='false'>⇄ Lecture horizontale</button><button type='button' class='pdf-menu-item' data-pdf-recent-toggle aria-expanded='false'>◷ Documents récents</button><div class='pdf-recent-panel' data-pdf-recent hidden><div class='pdf-recent-panel-title'>Documents précédemment ouverts</div><div class='pdf-recent-list' data-pdf-recent-list></div></div><div class='pdf-menu-divider'></div><button type='button' class='pdf-menu-item' data-pdf-download>↓ Télécharger le PDF</button></div></div><div class='pdf-load-progress-dock is-visible' data-pdf-progress><div class='pdf-load-progress-head'><span data-pdf-progress-stage>Préparation du document…</span><strong data-pdf-progress-percent>0%</strong></div><div class='pdf-load-progress-speed' data-pdf-progress-speed>Ouverture du fichier</div><div class='pdf-load-progress-track'><div class='pdf-load-progress-bar' data-pdf-progress-bar></div></div></div><div class='pdf-reader-zone-wrap'><div class='pdf-reader-zone' data-pdf-zone tabindex='0' aria-label='Pages du document PDF'><div class='pdf-reader-loading' data-pdf-loading><div class='pdf-spinner'></div><p>Préparation du document…</p></div><div class='pdf-reader-erreur' data-pdf-error hidden role='alert'></div><div class='pdf-reader-pages' data-pdf-pages></div></div></div><div class='pdf-reader-bottombar'><button type='button' data-pdf-prev>← Précédent</button><div class='pdf-page-jump-wrap'><button type='button' data-pdf-page-toggle aria-expanded='false'><span data-pdf-page-count>1 / —</span> ▾</button><div class='pdf-page-jump-panel' data-pdf-page-panel hidden><input type='number' min='1' inputmode='numeric' placeholder='N° de page' aria-label='Numéro de page' data-pdf-page-input><button type='button' data-pdf-page-go>Aller</button></div></div><button type='button' data-pdf-next>Suivant →</button></div></div><button type='button' class='pdf-load-progress-sphere' data-pdf-progress-sphere aria-label='État du chargement'><span data-pdf-sphere-percent>100%</span></button></div>";
+  const overlay=modalRoot.querySelector('#pdfViewerOverlay'), zone=overlay.querySelector('[data-pdf-zone]'), pages=overlay.querySelector('[data-pdf-pages]');
+  const progress=(pct,label,detail)=>{overlay.querySelector('[data-pdf-progress-bar]').style.width=pct+'%';overlay.querySelector('[data-pdf-progress-percent]').textContent=Math.round(pct)+'%';overlay.querySelector('[data-pdf-progress-stage]').textContent=label;overlay.querySelector('[data-pdf-progress-speed]').textContent=detail||'';overlay.querySelector('[data-pdf-sphere-percent]').textContent=Math.round(pct)+'%';};
+  const changeScale=async delta=>{plumePdfScale=Math.max(.5,Math.min(3,Math.round((plumePdfScale+delta)*100)/100));overlay.querySelector('[data-pdf-zoom-label]').textContent=Math.round(plumePdfScale*100)+'%';await renderPages(true);};
+  const goPage=n=>{if(!plumePdfDocument)return;plumePdfPage=Math.max(1,Math.min(plumePdfDocument.numPages,Math.round(n)||1));pages.querySelector('[data-page="'+plumePdfPage+'"]')?.scrollIntoView({behavior:'smooth',block:'start',inline:'center'});overlay.querySelector('[data-pdf-page-count]').textContent=plumePdfPage+' / '+plumePdfDocument.numPages;overlay.querySelector('[data-pdf-page-input]').value=String(plumePdfPage);overlay.querySelector('[data-pdf-prev]').disabled=plumePdfPage<=1;overlay.querySelector('[data-pdf-next]').disabled=plumePdfPage>=plumePdfDocument.numPages;};
+  let observer=null, rendering=new Set();
+  async function renderPage(n,force=false){if(!plumePdfDocument||n<1||n>plumePdfDocument.numPages||rendering.has(n))return;const canvas=pages.querySelector('canvas[data-page="'+n+'"]');if(!canvas||canvas.dataset.rendered==='true'&&!force)return;rendering.add(n);try{const page=await plumePdfDocument.getPage(n);const base=page.getViewport({scale:1});const fit=Math.max(.5,Math.min(3,(zone.clientWidth-28)/base.width));const viewport=page.getViewport({scale:fit*plumePdfScale});const ratio=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.floor(viewport.width*ratio);canvas.height=Math.floor(viewport.height*ratio);canvas.style.width=Math.floor(viewport.width)+'px';canvas.style.height=Math.floor(viewport.height)+'px';await page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport,transform:ratio===1?null:[ratio,0,0,ratio,0,0],background:'#fff'}).promise;canvas.dataset.rendered='true';}finally{rendering.delete(n);}}
+  async function renderPages(force=false){if(!plumePdfDocument)return;const visible=[...pages.querySelectorAll('canvas[data-page]')].filter(c=>{const r=c.getBoundingClientRect(),z=zone.getBoundingClientRect();return r.bottom>=z.top-600&&r.top<=z.bottom+600;}).map(c=>Number(c.dataset.page));await Promise.all([...new Set([plumePdfPage,...visible])].map(n=>renderPage(n,force).catch(()=>{})));}
+  overlay.querySelector('[data-pdf-reader-close]').addEventListener('click',closePdfReader);
+  overlay.addEventListener('click',ev=>{if(ev.target===overlay)closePdfReader();});
+  overlay.querySelector('[data-pdf-menu-toggle]').addEventListener('click',ev=>{const m=overlay.querySelector('[data-pdf-menu]');m.hidden=!m.hidden;ev.currentTarget.setAttribute('aria-expanded',String(!m.hidden));});
+  overlay.querySelector('[data-pdf-zoom-in]').addEventListener('click',()=>changeScale(.15));overlay.querySelector('[data-pdf-zoom-out]').addEventListener('click',()=>changeScale(-.15));
+  overlay.querySelector('[data-pdf-fit]').addEventListener('click',()=>{plumePdfScale=1;overlay.querySelector('[data-pdf-zoom-label]').textContent='100%';renderPages(true);});
+  overlay.querySelector('[data-pdf-mode]').addEventListener('click',ev=>{const horizontal=zone.classList.toggle('pdf-reading-horizontal');ev.currentTarget.setAttribute('aria-pressed',String(horizontal));ev.currentTarget.textContent=horizontal?'⇵ Lecture verticale':'⇄ Lecture horizontale';});
+  overlay.querySelector('[data-pdf-download]').addEventListener('click',()=>downloadBlob(plumePdfBlob,(String(title||'aurore-plume').replace(/[^a-z0-9_-]+/gi,'-')||'aurore-plume')+'.pdf'));
+  overlay.querySelector('[data-pdf-prev]').addEventListener('click',()=>goPage(plumePdfPage-1));overlay.querySelector('[data-pdf-next]').addEventListener('click',()=>goPage(plumePdfPage+1));
+  overlay.querySelector('[data-pdf-page-toggle]').addEventListener('click',()=>{const p=overlay.querySelector('[data-pdf-page-panel]');p.hidden=!p.hidden;overlay.querySelector('[data-pdf-page-toggle]').setAttribute('aria-expanded',String(!p.hidden));});
+  overlay.querySelector('[data-pdf-page-go]').addEventListener('click',()=>goPage(Number(overlay.querySelector('[data-pdf-page-input]').value)));
+  overlay.querySelector('[data-pdf-page-input]').addEventListener('keydown',ev=>{if(ev.key==='Enter')goPage(Number(ev.currentTarget.value));});
+  overlay.querySelector('[data-pdf-recent-toggle]').addEventListener('click',()=>{const p=overlay.querySelector('[data-pdf-recent]');p.hidden=!p.hidden;overlay.querySelector('[data-pdf-recent-toggle]').setAttribute('aria-expanded',String(!p.hidden));});
+  const recentList=overlay.querySelector('[data-pdf-recent-list]');recentList.innerHTML=recent.map(x=>"<button type='button' class='pdf-recent-item' data-reopen-work='"+e(x.id||'')+"'>"+e(x.title||'Document')+"</button>").join('')||"<p class='pdf-recent-empty'>Aucun document récent.</p>";
+  recentList.addEventListener('click',ev=>{const b=ev.target.closest('[data-reopen-work]');if(b&&b.dataset.reopenWork){const id=b.dataset.reopenWork;closePdfReader();openRead(id);}});
+  const onKey=ev=>{if(!modalRoot.querySelector('#pdfViewerOverlay')){document.removeEventListener('keydown',onKey);return;}if(ev.key==='Escape')closePdfReader();else if(ev.key==='ArrowRight')goPage(plumePdfPage+1);else if(ev.key==='ArrowLeft')goPage(plumePdfPage-1);};
+  document.addEventListener('keydown',onKey);
+  try{
+    progress(10,'Préparation du document…','Lecture du fichier PDF');
+    const pdfjs=await import('pdfjs-dist');pdfjs.GlobalWorkerOptions.workerSrc=pdfWorkerUrl;
+    const bytes=await blob.arrayBuffer();progress(38,'Ouverture du document…','Préparation des pages');
+    plumePdfDocument=await pdfjs.getDocument({data:bytes,stopAtErrors:false}).promise;
+    if(!plumePdfDocument.numPages)throw new Error('Le PDF ne contient aucune page lisible.');
+    for(let n=1;n<=plumePdfDocument.numPages;n++){const wrap=document.createElement('div');wrap.className='pdf-reader-page-wrap';wrap.dataset.page=String(n);const canvas=document.createElement('canvas');canvas.className='pdf-reader-page';canvas.dataset.page=String(n);wrap.appendChild(canvas);pages.appendChild(wrap);}
+    overlay.querySelector('[data-pdf-loading]').hidden=true;overlay.querySelector('[data-pdf-progress]').classList.remove('is-visible');overlay.querySelector('[data-pdf-progress-sphere]').classList.add('is-visible');
+    progress(100,'Document prêt','Vous pouvez commencer la lecture');
+    observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)renderPage(Number(entry.target.dataset.page)).catch(()=>{});}),{root:zone,rootMargin:'600px 0px'});
+    pages.querySelectorAll('.pdf-reader-page-wrap').forEach(el=>observer.observe(el));
+    zone.addEventListener('scroll',()=>{const mid=zone.getBoundingClientRect().top+zone.clientHeight*.35;const all=[...pages.querySelectorAll('.pdf-reader-page-wrap')].map(el=>({n:Number(el.dataset.page),r:el.getBoundingClientRect()}));const found=all.find(x=>x.r.top<=mid&&x.r.bottom>=mid);if(found)goPage(found.n);renderPages(false);},{passive:true});
+    await renderPage(1);goPage(1);
+    window.addEventListener('resize',()=>renderPages(true),{passive:true});
+  }catch(error){console.error('Lecteur PDF Aurore Plume',error);overlay.querySelector('[data-pdf-loading]').hidden=true;const box=overlay.querySelector('[data-pdf-error]');box.hidden=false;box.textContent='Le lecteur PDF n’a pas pu ouvrir ce document. Vérifiez la connexion puis réessayez.';progress(0,'Ouverture impossible',error?.message||'Erreur PDF');}
 }
-function updatePlumePdfReader(){
-  const canvas=modalRoot.querySelector('.plume-pdf-reader-page[data-page="'+plumePdfPage+'"]');
-  if(canvas)canvas.scrollIntoView({behavior:'smooth',block:'start'});
-  const count=modalRoot.querySelector('[data-pdf-page-count]');if(count)count.textContent=plumePdfPage+' / '+(plumePdfDocument?.numPages||'—');
-}
-function closePdfReader(){modalRoot.innerHTML='';plumePdfDocument=null;plumePdfBlob=null;}
+function updatePlumePdfReader(){ }
+function closePdfReader(){modalRoot.innerHTML='';plumePdfDocument=null;plumePdfBlob=null;plumePdfPage=1;plumePdfScale=1;}
 async function openRead(id) {
   const work = state.publicWorks.find((item) => item.id === id) || state.myWorks.find((item) => item.id === id);
   if (!work) return;
-  try { toast('Préparation du PDF de lecture…'); const blob=await buildWorkPdfBlob(work); await openPdfReader(blob,work.title||'Lecture'); }
+  try { toast('Préparation du PDF de lecture…'); const blob=await buildWorkPdfBlob(work); await openPdfReader(blob,work.title||'Lecture',work.id); }
   catch(error){console.error('PDF lecture Aurore Plume',error);toast(error.message||'Le PDF ne peut pas être préparé.','error');}
 }
 
