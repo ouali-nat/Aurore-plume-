@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -209,6 +209,50 @@ function renderVideoWorkspace() {
 }
 
 
+
+const EDITOR_DOCUMENT_PREFIX = '__AURORE_PLUME_PAGES_V1__';
+function parseEditorPages(body = '') {
+  const raw = String(body || '');
+  if (raw.startsWith(EDITOR_DOCUMENT_PREFIX)) { try { const pages = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length)); if (Array.isArray(pages) && pages.length) return pages.map((page) => ({ blocks: Array.isArray(page.blocks) ? page.blocks : [] })); } catch {} }
+  return [{ blocks: raw ? [{ id: 'text-' + Date.now(), type: 'text', x: 9, y: 10, w: 82, h: 34, text: raw, font: 'Georgia', size: 18, color: '#302a35', align: 'left', bold: false, italic: false }] : [] }];
+}
+function editorPagesToBody() { return EDITOR_DOCUMENT_PREFIX + JSON.stringify(state.editorPages.length ? state.editorPages : [{ blocks: [] }]); }
+function editorCanvasMarkup() {
+  const page = state.editorPages[state.editorPageIndex] || { blocks: [] };
+  return page.blocks.map((b) => {
+    const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';';
+    const selected = b.id === state.editorSelectedBlock ? ' is-selected' : '';
+    if (b.type === 'image') return '<div class="plume-canvas-block plume-canvas-image'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><img alt="Image ajoutée" src="'+e(b.src||'')+'"><button type="button" class="plume-block-resize" aria-label="Redimensionner"></button></div>';
+    if (b.type === 'shape') return '<div class="plume-canvas-block plume-canvas-shape shape-'+e(b.shape||'round')+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><span>'+e(b.label||'')+'</span><button type="button" class="plume-block-resize" aria-label="Redimensionner"></button></div>';
+    return '<div class="plume-canvas-block plume-canvas-text'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><div class="plume-canvas-text-content" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div><button type="button" class="plume-block-resize" aria-label="Redimensionner"></button></div>';
+  }).join('');
+}
+function updateEditorCanvas() {
+  const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) canvas.innerHTML=editorCanvasMarkup();
+  const count=document.getElementById('editor-page-count'); if(count&&state.editorTab==='manuscript') count.textContent=String(state.editorPageIndex+1).padStart(2,'0')+' / '+String(state.editorPages.length).padStart(2,'0');
+  const prev=document.querySelector('[data-editor-page-prev]'); const next=document.querySelector('[data-editor-page-next]');
+  if(prev&&state.editorTab==='manuscript') prev.disabled=state.editorPageIndex===0;
+  if(next&&state.editorTab==='manuscript') next.disabled=false;
+}
+function syncEditorCanvas() {
+  const field=document.querySelector('#work-form [name="body"]'); if(field) field.value=editorPagesToBody();
+  updateEditorPreviews(); const label=document.querySelector('#editor-save-label'); if(label) label.textContent='Modifications à enregistrer';
+}
+function addEditorBlock(type, shape='round') {
+  if(!state.editorPages.length) state.editorPages=[{blocks:[]}];
+  const page=state.editorPages[state.editorPageIndex]||(state.editorPages[state.editorPageIndex]={blocks:[]});
+  const id='block-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const block=type==='shape'?{id,type,shape,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}:{id,type:'text',x:10,y:12+(page.blocks.length%5)*7,w:78,h:24,text:'',font:'Georgia',size:18,color:'#302a35',align:'left',bold:false,italic:false};
+  page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas();
+  if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
+}
+function navigateCanvasPage(direction) {
+  if(!state.editorPages.length) state.editorPages=[{blocks:[]}];
+  const next=state.editorPageIndex+direction; if(next<0)return;
+  if(next>=state.editorPages.length) state.editorPages.push({blocks:[]});
+  state.editorPageIndex=next; state.editorSelectedBlock=null; updateEditorCanvas();
+}
+
 const DEFAULT_EDITORIAL_SETTINGS = { page_format: 'A5', body_font: 'Georgia', font_size: 12, line_height: 1.7, margins: 'standard' };
 
 function manuscriptPreviewHtml(value = '') {
@@ -280,7 +324,8 @@ function updateEditorPreviews() {
     if (node) node.textContent = genre;
   });
   const previewBody = document.getElementById('editor-preview-body');
-  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(body) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
+  const printableBody = body.startsWith(EDITOR_DOCUMENT_PREFIX) ? (() => { try { return JSON.parse(body.slice(EDITOR_DOCUMENT_PREFIX.length)).map((page) => (page.blocks || []).map((block) => block.type === 'text' ? block.text : block.type === 'shape' ? block.label : '').filter(Boolean).join('\\n\\n')).filter(Boolean).join('\\n\\n'); } catch { return ''; } })() : body;
+  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(printableBody) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
   const previewSummary = document.getElementById('editor-preview-summary');
   if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
   const counter = document.getElementById('word-count');
@@ -398,7 +443,7 @@ function renderTextEditor() {
             <div class="editor-paper-ruler"><span>MANUSCRIT · PAGE DE TRAVAIL</span><span>MODIFIABLE</span></div>
             <div class="editor-paper-sheet">
               <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
-              <label class="manuscript-body-label"><span class="editor-paper-label">Votre texte</span><textarea class="body-editor dedicated-body-editor" name="body" rows="20" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
+              <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable">${editorCanvasMarkup()}</div></div><aside class="plume-elements-panel" id="plume-elements-panel" hidden><div class="plume-elements-heading"><strong>Éléments</strong><button type="button" data-elements-close aria-label="Fermer">×</button></div><p>Ajoutez des formes à la page, puis déplacez-les ou redimensionnez-les.</p><div class="plume-elements-grid"><button type="button" data-add-shape="round"><span class="shape-preview round"></span>Bloc arrondi</button><button type="button" data-add-shape="circle"><span class="shape-preview circle"></span>Cercle</button><button type="button" data-add-shape="square"><span class="shape-preview square"></span>Rectangle</button><button type="button" data-add-shape="line"><span class="shape-preview line"></span>Ligne</button><button type="button" data-add-shape="quote"><span class="shape-preview quote">“</span>Citation</button><button type="button" data-add-shape="label"><span class="shape-preview label">Aa</span>Étiquette</button></div></aside></div>
               <div class="editor-paper-footer"><span>Une phrase après l’autre.</span><span id="editor-paper-word-count">${words(work.body || '')} mots</span></div>
             </div>
           </div>
@@ -442,6 +487,7 @@ function renderTextEditor() {
           </div>
           <p class="editor-hint"><span>✳</span> L’aperçu est un premier rendu éditorial. Vérifiez toujours le PDF final avant de le partager ou de l’imprimer.</p>
         </section>
+        <div class="plume-typography-bar" aria-label="Mise en forme du texte"><label>Police<select data-text-style="font"><option>Georgia</option><option>Arial</option><option>Times New Roman</option><option>Verdana</option><option>Courier New</option></select></label><label>Taille<select data-text-style="size"><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18" selected>18</option><option value="22">22</option><option value="28">28</option><option value="36">36</option><option value="48">48</option></select></label><button type="button" data-text-style="bold" aria-label="Gras"><b>B</b></button><button type="button" data-text-style="italic" aria-label="Italique"><i>I</i></button><label>Couleur<input type="color" value="#302a35" data-text-style="color"></label><button type="button" data-text-style="align-left">☰</button><button type="button" data-text-style="align-center">≡</button><button type="button" data-text-style="align-right">☷</button><button type="button" data-block-delete>Supprimer l’élément</button></div>
         <div class="editor-actionbar">
           <button class="button button-primary" name="intent" value="draft" type="submit">Enregistrer le brouillon <span>↗</span></button>
           <button class="button button-outline" name="intent" value="review" type="submit">Proposer à la relecture</button>
@@ -451,7 +497,8 @@ function renderTextEditor() {
       <style id="editor-print-page-style"></style>
     </section>
   `);
-  updateEditorPreviews();
+  state.editorPages = parseEditorPages(work.body || ''); state.editorPageIndex = 0; state.editorSelectedBlock = null;
+  updateEditorCanvas(); updateEditorPreviews();
   const workForm = document.querySelector('#work-form');
   const markEditorDirty = () => {
     updateEditorPreviews();
@@ -851,24 +898,23 @@ function openRead(id) {
 app.addEventListener('click', async (event) => {
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
-  if (event.target.closest('[data-editor-page-prev]')) { navigateEditorPage(-1); return; }
-  if (event.target.closest('[data-editor-page-next]')) { navigateEditorPage(1); return; }
+  if (event.target.closest('[data-editor-page-prev]')) { if(state.editorTab==='manuscript')navigateCanvasPage(-1);else navigateEditorPage(-1); return; }
+  if (event.target.closest('[data-editor-page-next]')) { if(state.editorTab==='manuscript')navigateCanvasPage(1);else navigateEditorPage(1); return; }
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
-    const tool = editorTool.dataset.editorTool;
-    if (tool === 'text') {
-      activateEditorTab('manuscript');
-      const field = document.querySelector('#work-form [name="body"]');
-      if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); }
-    } else if (tool === 'elements') {
-      activateEditorTab('manuscript');
-      insertEditorToken('divider');
-    } else if (tool === 'images') {
-      activateEditorTab('cover');
-      document.querySelector('#editor-cover-file')?.click();
-    } else if (tool === 'page') activateEditorTab('layout');
+    const tool=editorTool.dataset.editorTool;
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}
+    else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-panel');if(panel)panel.hidden=!panel.hidden;}
+    else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
+    else if(tool==='page')activateEditorTab('layout');
     return;
   }
+  if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-panel');if(panel)panel.hidden=true;return;}
+  const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){addEditorBlock('shape',shapeButton.dataset.addShape);return;}
+  if(event.target.closest('[data-block-delete]')){const page=state.editorPages[state.editorPageIndex];if(page&&state.editorSelectedBlock)page.blocks=page.blocks.filter((b)=>b.id!==state.editorSelectedBlock);state.editorSelectedBlock=null;updateEditorCanvas();syncEditorCanvas();return;}
+  const styleButton=event.target.closest('[data-text-style]');
+  if(styleButton){const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===state.editorSelectedBlock);if(!block||block.type!=='text'){toast('Sélectionnez une zone de texte.');return;}const kind=styleButton.dataset.textStyle;if(kind==='font')block.font=styleButton.value;else if(kind==='size')block.size=Number(styleButton.value);else if(kind==='color')block.color=styleButton.value;else if(kind==='bold')block.bold=!block.bold;else if(kind==='italic')block.italic=!block.italic;else if(kind.startsWith('align-'))block.align=kind.slice(6);updateEditorCanvas();syncEditorCanvas();return;}
+
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
   if (event.target.closest('[data-draft-cancel]')) { state.showDraftCreate = false; render(); return; }
@@ -945,6 +991,18 @@ app.addEventListener('click', async (event) => {
   if (event.target.id === 'auth-overlay' || event.target.id === 'read-overlay') modalRoot.innerHTML = '';
 });
 
+let plumeBlockDrag=null;
+app.addEventListener('pointerdown',(event)=>{
+ const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');
+ if(!node||!canvas||event.target.closest('[contenteditable="true"]'))return;
+ const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;
+ state.editorSelectedBlock=block.id;updateEditorCanvas();
+ plumeBlockDrag={id:block.id,startX:event.clientX,startY:event.clientY,x:Number(block.x),y:Number(block.y),w:Number(block.w),h:Number(block.h),cw:canvas.clientWidth,ch:canvas.clientHeight,resizing:Boolean(event.target.closest('.plume-block-resize'))};event.preventDefault();
+});
+app.addEventListener('pointermove',(event)=>{if(!plumeBlockDrag)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===plumeBlockDrag.id);if(!b)return;const dx=(event.clientX-plumeBlockDrag.startX)/Math.max(1,plumeBlockDrag.cw)*100,dy=(event.clientY-plumeBlockDrag.startY)/Math.max(1,plumeBlockDrag.ch)*100;if(plumeBlockDrag.resizing){b.w=Math.max(12,Math.min(95-b.x,plumeBlockDrag.w+dx));b.h=Math.max(7,Math.min(95-b.y,plumeBlockDrag.h+dy));}else{b.x=Math.max(0,Math.min(95-b.w,plumeBlockDrag.x+dx));b.y=Math.max(0,Math.min(95-b.h,plumeBlockDrag.y+dy));}const n=document.querySelector('.plume-canvas-block.is-selected');if(n){n.style.left=b.x+'%';n.style.top=b.y+'%';n.style.width=b.w+'%';n.style.height=b.h+'%';}});
+app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();}});
+app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){b.text=n.innerText;const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';}});
+app.addEventListener('click',(event)=>{const n=event.target.closest('.plume-canvas-block');if(!n)return;state.editorSelectedBlock=n.dataset.blockId;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===state.editorSelectedBlock));});
 let editorTouchStartX = null;
 let editorTouchStartY = null;
 let editorTouchStartedOnControl = false;
@@ -1059,6 +1117,13 @@ app.addEventListener('cancel', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  const imageInput=event.target;
+  if(imageInput instanceof HTMLInputElement&&imageInput.id==='plume-image-file'){
+    const file=imageInput.files?.[0];if(!file)return;
+    if(!file.type.startsWith('image/')){toast('Choisissez une image.','error');imageInput.value='';return;}
+    if(file.size>1500000){toast('Image limitée à 1,5 Mo pour garder le brouillon léger.','error');imageInput.value='';return;}
+    const reader=new FileReader();reader.onload=()=>{const page=state.editorPages[state.editorPageIndex];if(page){const id='image-'+Date.now();page.blocks.push({id,type:'image',src:String(reader.result),x:12,y:12,w:58,h:32});state.editorSelectedBlock=id;updateEditorCanvas();syncEditorCanvas();}};reader.readAsDataURL(file);imageInput.value='';return;
+  }
   const coverInput = event.target;
   if (coverInput instanceof HTMLInputElement && coverInput.name === 'cover_file') {
     const file = coverInput.files?.[0];
@@ -1199,7 +1264,7 @@ app.addEventListener('submit', async (event) => {
     subtitle: String(data.get('subtitle') || '').trim(),
     genre: String(data.get('genre') || 'Texte libre'),
     summary: String(data.get('summary') || '').trim(),
-    body: String(data.get('body') || ''),
+    body: state.editorPages.length ? editorPagesToBody() : String(data.get('body') || ''),
     editorial_settings: editorialSettings,
     cover_media_key: previousCoverKey || null,
     updated_at: new Date().toISOString()
