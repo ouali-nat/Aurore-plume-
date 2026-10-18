@@ -348,7 +348,7 @@
 .plume-canvas-paper{position:relative;width:100%;max-width:900px;aspect-ratio:210/297;margin:auto;overflow:hidden;background:#fff;border:1px solid #eee9f0;box-shadow:0 14px 35px #2e253515;touch-action:pan-y}
 .plume-canvas-block{position:absolute;z-index:1;box-sizing:border-box;min-width:30px;min-height:24px;padding:5px;border:1px solid transparent;border-radius:5px;cursor:move;overflow:visible;touch-action:none}
 .plume-canvas-block.is-selected{z-index:3;border:1px dashed #9479b6;outline:2px solid #e8def4}
-.plume-canvas-text-content{width:100%;height:100%;min-height:20px;overflow:auto;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text;line-height:1.35}
+.plume-canvas-text-content{width:100%;height:100%;min-height:20px;overflow:auto;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text;line-height:inherit}
 .plume-canvas-text-content:empty:before{content:"Saisissez votre texte…";color:#b0a8b7;font-style:italic}
 .plume-block-resize{position:absolute;right:-7px;bottom:-7px;width:15px;height:15px;border:2px solid #fff;border-radius:50%;background:#7d6597;box-shadow:0 0 0 1px #7d6597;cursor:nwse-resize}
 .plume-canvas-image img{width:100%;height:100%;object-fit:contain;pointer-events:none;display:block}
