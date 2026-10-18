@@ -192,7 +192,7 @@ async function loadMyVideos() {
 function renderVideoWorkspace() {
   const video = state.editingVideo || {};
   shell('<section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Mes vidéos.</h1><p>Réunissez vos vidéos et partagez un lien quand vous le souhaitez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>' +
-  '<section class="container video-workspace"><nav class="workspace-tabs" aria-label="Mon atelier"><button class="workspace-tab" data-workspace-tab="textes">Mes textes</button><button class="workspace-tab active" data-workspace-tab="videos">Mes vidéos</button></nav>' +
+  '<section class="container video-workspace">' +
   '<div class="editor-panel video-editor-panel"><div class="panel-top"><div><span class="eyebrow">' + (video.id ? 'MODIFIER UNE VIDÉO' : 'NOUVELLE VIDÉO') + '</span><h2>' + (video.id ? 'Modifier ma vidéo' : 'Ajouter une vidéo') + '</h2></div><span class="editor-icon">▶</span></div>' +
   '<form id="video-form" class="editor-form"><input type="hidden" name="id" value="' + e(video.id || '') + '">' +
   '<label>Titre<input name="title" required maxlength="140" placeholder="Le titre de votre vidéo…" value="' + e(video.title || '') + '"></label>' +
@@ -224,7 +224,7 @@ function renderAtelier() {
   shell(`
     <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Bonjour, ${e((state.user.user_metadata?.display_name || state.user.email?.split('@')[0] || 'auteur').split(' ')[0])}.</h1><p>Chaque texte avance à son rythme. Reprenez là où vous en étiez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
     <section class="container workspace-grid">
-      <nav class="workspace-tabs workspace-tabs-wide" aria-label="Mon atelier"><button class="workspace-tab active" data-workspace-tab="textes">Mes textes</button><button class="workspace-tab" data-workspace-tab="videos">Mes vidéos</button><button class="button button-primary" data-action="new-text">Nouveau texte +</button><button class="button button-outline" data-action="new-video">Nouvelle vidéo +</button></nav>
+      
       <div class="editor-panel">
         <div class="panel-top"><div><span class="eyebrow">${editing.id ? 'REPRENDRE UN TEXTE' : 'UNE NOUVELLE PAGE'}</span><h2>${editing.id ? 'Continuer mon texte' : 'Commencer à écrire'}</h2></div><span class="editor-icon">✎</span></div>
         <form id="work-form" class="editor-form">
@@ -239,7 +239,7 @@ function renderAtelier() {
         </form>
       </div>
       <aside class="my-works-panel">
-        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Mes textes <span class="count-pill">${state.myWorks.length}</span></h2></div><span class="little-spark">✦</span></div>
+        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Mes textes <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
         ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="icon-button" data-edit-id="${e(work.id)}" title="Modifier le texte" aria-label="Modifier ${e(work.title)}">↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
