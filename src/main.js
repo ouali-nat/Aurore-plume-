@@ -1574,8 +1574,24 @@ app.addEventListener('submit', async (event) => {
       payload.cover_media_key = uploadedCoverKey;
     }
     if (id) {
-      const result = await supabase.from('plume_works').update(payload).eq('id', id).eq('author_id', state.user.id);
+      // Demander les lignes réellement modifiées : PostgREST peut sinon renvoyer
+      // aucune erreur même si le filtre/RLS n'a modifié aucune œuvre.
+      const result = await supabase.from('plume_works')
+        .update(payload)
+        .eq('id', id)
+        .eq('author_id', state.user.id)
+        .select('id,title,publication_status,is_public,published_at')
+        .maybeSingle();
       if (result.error) throw result.error;
+      if (!result.data) {
+        throw new Error('La publication n’a pas été confirmée : aucune œuvre n’a été modifiée. Rechargez votre atelier puis réessayez.');
+      }
+      if (intent === 'publish') {
+        const expectedPublic = publishVisibility === 'public';
+        if ((result.data.publication_status === 'published') !== expectedPublic || result.data.is_public !== expectedPublic) {
+          throw new Error('La base n’a pas confirmé le mode de publication choisi. Votre texte reste dans votre atelier.');
+        }
+      }
     } else {
       const { updated_at, ...insertPayload } = payload;
       const result = await supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}), ...(intent === 'publish' ? { publication_status: publishVisibility === 'public' ? 'published' : 'draft', is_public: publishVisibility === 'public', ...(publishVisibility === 'public' ? { published_at: new Date().toISOString() } : {}) } : {}) }).select('id').single();
