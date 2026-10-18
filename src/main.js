@@ -1322,7 +1322,9 @@ modalRoot.addEventListener('click', (event) => {
   form.querySelector('[name="publish_visibility"]').value=choice.dataset.publishVisibility;
   form.dataset.submitIntent='publish';
   modalRoot.innerHTML='';
-  form.requestSubmit();
+  // Déclencher explicitement le gestionnaire applicatif : sur certains navigateurs
+  // mobiles, requestSubmit() peut ne pas lancer le flux attendu depuis la modale.
+  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 });
 modalRoot.addEventListener('submit', async (event) => {
   if (event.target.id !== 'auth-form') return;
