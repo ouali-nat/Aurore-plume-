@@ -47,6 +47,7 @@ function personalNavMarkup() {
       ${personalChannels.map(c => `<button class="creative-tab ${activeId === c.id ? 'is-active' : ''}" role="tab" aria-selected="${activeId === c.id}" data-workspace-tab="${c.id}"><span class="creative-tab-icon">${c.icon}</span><span>${c.label}</span></button>`).join('')}
     </div>
   </nav>`;
+}
 
 function navMarkup() {
   if (isPersonalWorkspace()) return personalNavMarkup();
