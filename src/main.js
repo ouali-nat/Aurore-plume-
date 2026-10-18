@@ -545,6 +545,13 @@ function openRead(id) {
 }
 
 app.addEventListener('click', async (event) => {
+  const workspaceTabButton = event.target.closest('[data-workspace-tab]');
+  if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editingVideo = null; if (state.workspaceTab === 'videos') await loadMyVideos(); render(); return; }
+  if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  const editVideoButton = event.target.closest('[data-edit-video]');
+  if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; render(); return; }
+  if (event.target.closest('[data-video-cancel]')) { state.editingVideo = null; render(); return; }
   const pickFilesButton = event.target.closest('#r2-pick-files, #r2-pick-files-secondary');
   if (pickFilesButton) {
     const inputId = pickFilesButton.id === 'r2-pick-files-secondary' ? '#r2-files-input-secondary' : '#r2-files-input';
@@ -715,6 +722,20 @@ app.addEventListener('change', (event) => {
 
 app.addEventListener('submit', async (event) => {
   if (event.target.id === 'r2-upload-form') { event.preventDefault(); await uploadR2Files(event.target); return; }
+  if (event.target.id === 'video-form') {
+    event.preventDefault();
+    if (!supabase || !state.user) { showAuth('signin'); return; }
+    const form = event.target; const data = new FormData(form); const id = String(data.get('id') || '');
+    const payload = { title: String(data.get('title') || '').trim(), video_url: String(data.get('video_url') || '').trim(), category: String(data.get('category') || 'Création'), description: String(data.get('description') || '').trim(), updated_at: new Date().toISOString() };
+    if (!/^https?:\\/\\//i.test(payload.video_url)) { toast('Le lien doit commencer par https:// ou http://.', 'error'); return; }
+    const button = form.querySelector('button[type="submit"]'); if (button) button.disabled = true;
+    try {
+      const result = id ? await supabase.from('plume_videos').update(payload).eq('id', id).eq('author_id', state.user.id) : await supabase.from('plume_videos').insert({ ...payload, author_id: state.user.id });
+      if (result.error) throw result.error;
+      toast(id ? 'Vidéo mise à jour.' : 'Vidéo enregistrée.'); state.editingVideo = null; await loadMyVideos(); render();
+    } catch (error) { console.error('Aurore Plume video save', error); toast(error.message || 'La vidéo n’a pas pu être enregistrée. Appliquez la migration SQL plume_videos.', 'error'); if (button) button.disabled = false; }
+    return;
+  }
   if (event.target.id !== 'work-form') return;
   event.preventDefault();
   if (!supabase || !state.user) { showAuth('signin'); return; }
