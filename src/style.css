@@ -448,3 +448,17 @@
 .plume-opacity-control{display:flex;align-items:center;gap:6px;font-size:10px;color:#756980}
 .plume-opacity-control input{width:78px;accent-color:#76578f}
 @media(max-width:760px){.plume-page-thumb{flex-basis:70px}.plume-page-thumb-preview{width:38px;height:51px}.plume-typography-bar .plume-opacity-control{flex:1;min-width:120px}.plume-opacity-control input{flex:1;min-width:50px}}
+
+/* Palette complète et réglage fin au millimètre */
+.plume-color-popover{width:min(330px,calc(100vw - 24px));max-height:min(66vh,470px);overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:13px;border:1px solid #e8dced;border-radius:16px;background:#fff;box-shadow:0 16px 40px #34243d2b}
+.plume-color-popover[hidden]{display:none}
+.plume-palette-scroll{display:grid;grid-template-columns:repeat(8,minmax(22px,1fr));gap:5px;overflow-y:auto;overscroll-behavior:contain;max-height:270px;padding:3px 3px 7px}
+.plume-palette-scroll button{width:100%;aspect-ratio:1;border:1px solid #00000018;border-radius:7px;background:var(--swatch);min-width:0;min-height:22px;padding:0}
+.plume-palette-scroll button:focus-visible{outline:2px solid #6f4b91;outline-offset:2px}
+.plume-color-popover label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.plume-color-popover input[type=color]{width:48px;height:34px;border:0;background:transparent;padding:0}
+.plume-nudge{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;padding:5px 7px;border:1px solid #e4dce9;border-radius:10px;background:#fbf9fc}
+.plume-nudge span{font-size:11px;font-weight:600;color:#6d5b79;margin-right:3px}
+.plume-nudge button{width:32px;height:32px;min-width:32px;border:1px solid #e0d4e9;border-radius:8px;background:#fff;color:#5c4374;font-size:18px;touch-action:manipulation}
+.plume-nudge select{height:30px;border:1px solid #ded4e7;border-radius:7px;background:#fff;color:#5e4a6f;font-size:12px}
+@media(max-width:760px){.plume-color-popover{max-height:55vh;padding:10px}.plume-palette-scroll{grid-template-columns:repeat(8,minmax(20px,1fr));gap:4px;max-height:210px}.plume-nudge button{width:36px;height:36px;min-width:36px}}
