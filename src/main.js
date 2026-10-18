@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -29,6 +29,10 @@ function toast(message, kind = 'success') {
 }
 
 function shell(content) {
+  if (state.editorOpen) {
+    app.innerHTML = `<main class="editor-only-shell">${content}</main>`;
+    return;
+  }
   const nav = [
     ['discover', 'Découvrir'],
     ['library', 'La bibliothèque'],
@@ -354,18 +358,11 @@ function renderTextEditor() {
   shell(`
     <section class="text-editor-shell">
       <div class="text-editor-top">
-        <button type="button" class="editor-back-link" data-editor-back>← Retour à mon carnet</button>
         <div class="text-editor-heading">
-          <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${e(work.title || (work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'))}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
+          <h1 class="editor-document-title">${e(work.title || 'Sans titre')}</h1>
           <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
         </div>
       </div>
-      <nav class="editor-tabs" role="tablist" aria-label="Espaces de l’éditeur">
-        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>01</span> Couverture</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>02</span> Manuscrit</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'layout' ? 'is-active' : ''}" data-editor-tab="layout" role="tab" aria-selected="${state.editorTab === 'layout'}"><span>03</span> Mise en page</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'preview' ? 'is-active' : ''}" data-editor-tab="preview" role="tab" aria-selected="${state.editorTab === 'preview'}"><span>04</span> Aperçu PDF</button>
-      </nav>
       <div class="editor-commandbar" aria-label="Outils de l’atelier">
         <div class="editor-command-group">
           <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button>
@@ -483,6 +480,7 @@ function renderAtelier() {
   }
   if (state.workspaceTab === 'videos') { renderVideoWorkspace(); return; }
   if (state.editorOpen && state.workspaceTab === 'textes') { renderTextEditor(); return; }
+  if (state.showDraftCreate && state.workspaceTab === 'textes') { renderDraftCreate(); return; }
   const editing = state.editing || {};
   if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) { renderGenericCreationWorkspace(); return; }
   shell(`
@@ -857,13 +855,13 @@ app.addEventListener('click', async (event) => {
   }
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
-  if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
+  if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.showDraftCreate = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
   if (event.target.closest('[data-editor-print]')) { activateEditorTab('preview'); window.setTimeout(() => window.print(), 120); return; }
   if (event.target.closest('[data-editor-preview-refresh]')) { updateEditorPreviews(); toast('Aperçu de la couverture actualisé.'); return; }
   const workspaceTabButton = event.target.closest('[data-workspace-tab]');
   if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editorOpen = false; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
   if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; state.showCreateForm = true; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
-  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = false; state.showDraftCreate = true; state.showCreateForm = false; render(); document.querySelector('#draft-create-form [name="title"]')?.focus(); return; }
   const editVideoButton = event.target.closest('[data-edit-video]');
   if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; state.showCreateForm = true; render(); return; }
   if (event.target.closest('[data-action="new-creation"]')) { state.editingCreation = null; state.showCreateForm = true; render(); document.querySelector('#creation-form [name="title"]')?.focus(); return; }
@@ -916,7 +914,7 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
-    state.workspaceTab = 'textes'; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false;
+    state.workspaceTab = 'textes'; state.editorOpen = true; state.showDraftCreate = false; state.editorTab = 'cover'; state.showCreateForm = false;
     if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
     state.editorCoverPreview = null;
     state.view = 'atelier';
