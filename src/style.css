@@ -382,3 +382,29 @@
 .editor-only-shell .plume-editor-workspace{width:100%;margin:0}
 .editor-only-shell .plume-canvas-desk{width:100%;box-sizing:border-box}
 .editor-only-shell .editor-page-nav button:disabled{opacity:.45}
+
+/* Manipulation directe de tous les éléments du manuscrit */
+.plume-canvas-block{touch-action:none;user-select:none}
+.plume-canvas-text-content{user-select:text;touch-action:pan-y}
+.plume-block-move{position:absolute;z-index:8;top:-13px;left:-13px;width:25px;height:25px;display:none;place-items:center;padding:0;border:2px solid #fff;border-radius:50%;background:#72578e;color:#fff;box-shadow:0 2px 8px #30213b35;font-size:15px;cursor:grab;touch-action:none}
+.plume-canvas-block.is-selected .plume-block-move{display:grid}
+.plume-block-resize{position:absolute;z-index:9;display:none;width:12px;height:12px;min-width:12px;min-height:12px;padding:0;border:2px solid #fff;border-radius:50%;background:#7d6597;box-shadow:0 0 0 1px #7d6597;touch-action:none}
+.plume-canvas-block.is-selected .plume-block-resize{display:block}
+.plume-block-resize.resize-nw{left:-6px;top:-6px;cursor:nwse-resize}
+.plume-block-resize.resize-n{left:calc(50% - 6px);top:-6px;cursor:ns-resize}
+.plume-block-resize.resize-ne{right:-6px;top:-6px;cursor:nesw-resize}
+.plume-block-resize.resize-e{right:-6px;top:calc(50% - 6px);cursor:ew-resize}
+.plume-block-resize.resize-se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.plume-block-resize.resize-s{left:calc(50% - 6px);bottom:-6px;cursor:ns-resize}
+.plume-block-resize.resize-sw{left:-6px;bottom:-6px;cursor:nesw-resize}
+.plume-block-resize.resize-w{left:-6px;top:calc(50% - 6px);cursor:ew-resize}
+.plume-color-popover{position:fixed;z-index:999;display:grid;gap:10px;width:196px;padding:12px;border:1px solid #e1d6e9;border-radius:14px;background:#fffdfb;box-shadow:0 12px 36px #2d203c25;color:#51445f}
+.plume-color-popover[hidden]{display:none!important}
+.plume-color-popover strong{font-size:12px}
+.plume-color-swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.plume-color-swatches button{width:29px;height:29px;min-width:29px;min-height:29px;padding:0;border:1px solid #d8cfdd;border-radius:50%;background:var(--swatch);box-shadow:inset 0 0 0 2px #fff}
+.plume-color-popover label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px}
+.plume-color-popover input[type=color]{width:38px;height:30px;padding:2px;border:1px solid #ded4e6;border-radius:7px;background:#fff}
+.editor-cover-shortcut{background:#f4edf9!important;border-color:#d9c9e7!important}
+.editor-only-shell .editor-commandbar{overflow:visible}
+@media(max-width:760px){.plume-color-popover{width:184px}.plume-block-resize{width:15px;height:15px;min-width:15px;min-height:15px}.plume-block-move{width:29px;height:29px}}
