@@ -481,7 +481,7 @@ function renderTextEditor() {
           <button type="button" data-editor-page-next aria-label="Étape suivante">→</button>
         </div>
       </div>
-      <form id="work-form" class="dedicated-work-form" method="post" action="/">
+      <form id="work-form" class="dedicated-work-form" method="post" action="/" onsubmit="return false">
         <input type="hidden" name="id" value="${e(work.id || '')}">
         <input type="hidden" name="existing_cover_media_key" value="${e(coverKey)}">
         <section class="editor-tab-panel manuscript-panel" id="editor-panel-manuscript" role="tabpanel" ${state.editorTab === 'manuscript' ? '' : 'hidden'}>
