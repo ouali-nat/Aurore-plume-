@@ -1553,7 +1553,9 @@ app.addEventListener('submit', async (event) => {
   if (!supabase || !state.user) { showAuth('signin'); return; }
   const form = event.target;
   const data = new FormData(form);
-  const intent = event.submitter?.value || form.dataset.submitIntent || 'draft';
+  // L’intention posée par la boîte de publication est prioritaire : certains WebView Android
+  // exposent encore la valeur initiale « draft » dans event.submitter après requestSubmit().
+  const intent = form.dataset.submitIntent || event.submitter?.value || 'draft';
   delete form.dataset.submitIntent;
   const publishVisibility = String(data.get('publish_visibility') || 'private');
   const id = String(data.get('id') || '');
