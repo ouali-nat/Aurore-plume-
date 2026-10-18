@@ -358,3 +358,16 @@
 .plume-typography-bar{position:sticky;bottom:78px;z-index:11;display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:12px auto 0;padding:9px;border:1px solid #e1d8e6;border-radius:13px;background:#fffdf9f5;box-shadow:0 8px 22px #32263c0c}.plume-typography-bar label{display:flex;align-items:center;gap:5px;color:#756980;font-size:10px}.plume-typography-bar select{max-width:130px;min-height:33px;padding:5px 7px;border:1px solid #e5dce9;border-radius:8px;background:#fff;color:#4d405c;font-size:11px}.plume-typography-bar input[type=color]{width:31px;height:31px;padding:2px;border:1px solid #e5dce9;border-radius:8px;background:#fff}.plume-typography-bar button{min-height:32px;padding:0 9px;border:1px solid #e5dce9;border-radius:8px;background:#fff;color:#554663;font-size:11px}.plume-typography-bar button[data-block-delete]{margin-left:auto;color:#95515a}
 .editor-only-shell .editor-paper-desk,.editor-only-shell .editor-paper-sheet{display:none}
 @media(max-width:760px){.plume-editor-workspace{grid-template-columns:minmax(0,1fr)}.plume-canvas-desk{padding:8px;border-radius:10px}.plume-canvas-paper{width:100%;aspect-ratio:210/297}.plume-elements-panel{position:static}.plume-elements-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.plume-typography-bar{position:sticky;bottom:74px;gap:5px;padding:7px}.plume-typography-bar label{font-size:9px}.plume-typography-bar select{max-width:100px;font-size:10px}.plume-typography-bar button[data-block-delete]{margin-left:0}}
+
+
+.plume-rendered-page{position:relative;width:100%;aspect-ratio:210/297;min-height:520px;max-width:690px;margin:0 auto 22px;overflow:hidden;background:#fff;border:1px solid #eee9f0;break-after:page;page-break-after:always}
+.plume-rendered-block{position:absolute;box-sizing:border-box;overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.35}
+.plume-rendered-image img{display:block;width:100%;height:100%;object-fit:contain}
+.plume-rendered-shape{display:flex;align-items:center;justify-content:center;padding:5px;border:1px solid #bba8d0;border-radius:12px;background:#eee6f7;color:#5d4776;text-align:center}
+.plume-rendered-shape.shape-circle{border-radius:50%;background:#e2ece4;border-color:#b2cbb8;color:#46654d}
+.plume-rendered-shape.shape-square{border-radius:4px;background:#f4eadb;border-color:#d9c39d;color:#745b37}
+.plume-rendered-shape.shape-line{height:5px!important;min-height:5px;padding:0;border:0;border-top:3px solid #88709f;background:transparent;border-radius:0}
+.plume-rendered-shape.shape-line:empty{display:block}
+.plume-rendered-shape.shape-quote{border-radius:14px;background:#f7f2e9;border-left:5px solid #c7ad82}
+.plume-rendered-shape.shape-label{border-radius:7px;background:#f7e8ec;border-color:#d9b7c1;color:#8b5264}
+@media print{.plume-rendered-page{width:100%;max-width:none;min-height:0;margin:0;border:0;break-after:page;page-break-after:always}}
