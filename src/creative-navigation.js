@@ -122,7 +122,7 @@ function enhance() {
     }
   });
   const header = root.querySelector('.site-header');
-  if (!header || root.querySelector('.creative-rail')) return;
+  if (!header || root.querySelector('.creative-rail') || root.querySelector('.text-editor-shell')) return;
   header.insertAdjacentHTML('afterend', navMarkup());
   lastRoot = root;
   // The normal vertical page scroll never changes the selected creative universe.
@@ -152,6 +152,7 @@ document.addEventListener('touchstart', event => {
 
 document.addEventListener('touchend', event => {
   if (touchStartX === null || !event.changedTouches?.length) return;
+  if (event.target.closest?.('.text-editor-shell')) { touchStartX = null; touchStartY = null; gestureStartTarget = null; return; }
   const dx = event.changedTouches[0].clientX - touchStartX;
   const dy = event.changedTouches[0].clientY - touchStartY;
   const startedOnControl = gestureStartTarget?.closest?.('button, a, input, textarea, select');

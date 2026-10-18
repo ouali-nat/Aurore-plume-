@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, editorOpen: false, editorTab: 'manuscript', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -223,8 +223,8 @@ function manuscriptPreviewHtml(value = '') {
 }
 
 function activateEditorTab(tab) {
-  const allowed = ['manuscript', 'cover', 'layout', 'preview'];
-  state.editorTab = allowed.includes(tab) ? tab : 'manuscript';
+  const allowed = ['cover', 'manuscript', 'layout', 'preview'];
+  state.editorTab = allowed.includes(tab) ? tab : 'cover';
   document.querySelectorAll('[data-editor-tab]').forEach((button) => {
     const active = button.dataset.editorTab === state.editorTab;
     button.classList.toggle('is-active', active);
@@ -233,7 +233,23 @@ function activateEditorTab(tab) {
   document.querySelectorAll('.editor-tab-panel').forEach((panel) => {
     panel.hidden = panel.id !== 'editor-panel-' + state.editorTab;
   });
+  const pageOrder = ['cover', 'manuscript', 'layout', 'preview'];
+  const pageIndex = pageOrder.indexOf(state.editorTab);
+  const pageCount = document.getElementById('editor-page-count');
+  if (pageCount) pageCount.textContent = String(pageIndex + 1).padStart(2, '0') + ' / ' + String(pageOrder.length).padStart(2, '0');
+  const previous = document.querySelector('[data-editor-page-prev]');
+  const next = document.querySelector('[data-editor-page-next]');
+  if (previous) previous.disabled = pageIndex <= 0;
+  if (next) next.disabled = pageIndex >= pageOrder.length - 1;
   updateEditorPreviews();
+}
+
+function navigateEditorPage(direction) {
+  const pages = ['cover', 'manuscript', 'layout', 'preview'];
+  const index = pages.indexOf(state.editorTab);
+  const next = Math.max(0, Math.min(pages.length - 1, index + direction));
+  activateEditorTab(pages[next]);
+  document.querySelector('.editor-tabs .is-active')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 
 function updateEditorPreviews() {
@@ -245,6 +261,8 @@ function updateEditorPreviews() {
   const genre = value('genre', 'Texte libre');
   const body = value('body');
   const summary = value('summary').trim();
+  const paperTitle = document.getElementById('editor-paper-title');
+  if (paperTitle) paperTitle.textContent = title;
   ['editor-cover-title', 'editor-print-cover-title', 'editor-preview-title'].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.textContent = title;
@@ -263,6 +281,8 @@ function updateEditorPreviews() {
   if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
   const counter = document.getElementById('word-count');
   if (counter) counter.textContent = words(body);
+  const paperCounter = document.getElementById('editor-paper-word-count');
+  if (paperCounter) paperCounter.textContent = words(body) + ' mots';
   const settings = {
     page_format: value('page_format', DEFAULT_EDITORIAL_SETTINGS.page_format),
     body_font: value('body_font', DEFAULT_EDITORIAL_SETTINGS.body_font),
@@ -336,16 +356,29 @@ function renderTextEditor() {
       <div class="text-editor-top">
         <button type="button" class="editor-back-link" data-editor-back>← Retour à mon carnet</button>
         <div class="text-editor-heading">
-          <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
-          <span class="editor-save-state"><span class="save-state-dot"></span>Brouillon privé</span>
+          <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${e(work.title || (work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'))}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
+          <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
         </div>
       </div>
       <nav class="editor-tabs" role="tablist" aria-label="Espaces de l’éditeur">
-        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>01</span> Manuscrit</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>02</span> Couverture</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>01</span> Couverture</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>02</span> Manuscrit</button>
         <button type="button" class="editor-tab ${state.editorTab === 'layout' ? 'is-active' : ''}" data-editor-tab="layout" role="tab" aria-selected="${state.editorTab === 'layout'}"><span>03</span> Mise en page</button>
         <button type="button" class="editor-tab ${state.editorTab === 'preview' ? 'is-active' : ''}" data-editor-tab="preview" role="tab" aria-selected="${state.editorTab === 'preview'}"><span>04</span> Aperçu PDF</button>
       </nav>
+      <div class="editor-commandbar" aria-label="Outils de l’atelier">
+        <div class="editor-command-group">
+          <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button>
+          <button type="button" class="editor-command" data-editor-tool="elements"><span aria-hidden="true">◇</span><b>Éléments</b></button>
+          <button type="button" class="editor-command" data-editor-tool="images"><span aria-hidden="true">▧</span><b>Images</b></button>
+          <button type="button" class="editor-command" data-editor-tool="page"><span aria-hidden="true">▤</span><b>Page</b></button>
+        </div>
+        <div class="editor-page-nav">
+          <button type="button" data-editor-page-prev ${state.editorTab === 'cover' ? 'disabled' : ''} aria-label="Étape précédente">←</button>
+          <span id="editor-page-count">01 / 04</span>
+          <button type="button" data-editor-page-next aria-label="Étape suivante">→</button>
+        </div>
+      </div>
       <form id="work-form" class="dedicated-work-form">
         <input type="hidden" name="id" value="${e(work.id || '')}">
         <input type="hidden" name="existing_cover_media_key" value="${e(coverKey)}">
@@ -360,11 +393,18 @@ function renderTextEditor() {
             <label class="editor-summary-field">Description <span class="optional">facultatif</span><textarea name="summary" maxlength="1200" rows="2" placeholder="Quelle idée traverse cette œuvre ?">${e(work.summary || '')}</textarea></label>
           </div>
           <div class="manuscript-tools">
-            <div><span class="eyebrow">OUTILS D’ÉCRITURE</span><p>Insérez des éléments éditoriaux sans perdre votre texte.</p></div>
-            <div class="editor-tool-list"><button type="button" class="editor-tool" data-insert-token="bold"><b>B</b> Gras</button><button type="button" class="editor-tool" data-insert-token="italic"><i>I</i> Italique</button><button type="button" class="editor-tool" data-insert-token="heading">Titre de section</button><button type="button" class="editor-tool" data-insert-token="quote">Citation</button><button type="button" class="editor-tool" data-insert-token="chapter">Nouveau chapitre</button><button type="button" class="editor-tool" data-insert-token="divider">Séparateur</button></div>
+            <div><span class="eyebrow">OUTILS D’ÉCRITURE</span><p>Ajoutez des titres, citations et séparateurs à votre manuscrit.</p></div>
+            <div class="editor-tool-list"><button type="button" class="editor-tool" data-insert-token="bold"><b>B</b> Gras</button><button type="button" class="editor-tool" data-insert-token="italic"><i>I</i> Italique</button><button type="button" class="editor-tool" data-insert-token="heading">Titre</button><button type="button" class="editor-tool" data-insert-token="quote">Citation</button><button type="button" class="editor-tool" data-insert-token="chapter">Chapitre</button><button type="button" class="editor-tool" data-insert-token="divider">Séparateur</button></div>
           </div>
-          <label class="manuscript-body-label">Votre manuscrit<textarea class="body-editor dedicated-body-editor" name="body" rows="17" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
-          <p class="editor-hint"><span>✳</span> La mise en forme simple est reprise dans l’aperçu. Pensez à enregistrer votre brouillon avant de quitter l’atelier.</p>
+          <div class="editor-paper-desk">
+            <div class="editor-paper-ruler"><span>MANUSCRIT · PAGE DE TRAVAIL</span><span>MODIFIABLE</span></div>
+            <div class="editor-paper-sheet">
+              <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
+              <label class="manuscript-body-label"><span class="editor-paper-label">Votre texte</span><textarea class="body-editor dedicated-body-editor" name="body" rows="20" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
+              <div class="editor-paper-footer"><span>Une phrase après l’autre.</span><span id="editor-paper-word-count">${words(work.body || '')} mots</span></div>
+            </div>
+          </div>
+          <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
         <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
           <div class="editor-panel-intro"><div><span class="eyebrow">IDENTITÉ VISUELLE</span><h2>Donnez un visage à votre œuvre.</h2><p>Importez une couverture image. Elle restera privée dans votre espace de stockage.</p></div></div>
@@ -415,8 +455,14 @@ function renderTextEditor() {
     </section>
   `);
   updateEditorPreviews();
-  document.querySelector('#work-form')?.addEventListener('input', updateEditorPreviews);
-  document.querySelector('#work-form')?.addEventListener('change', updateEditorPreviews);
+  const workForm = document.querySelector('#work-form');
+  const markEditorDirty = () => {
+    updateEditorPreviews();
+    const saveLabel = document.querySelector('#editor-save-label');
+    if (saveLabel) saveLabel.textContent = 'Modifications à enregistrer';
+  };
+  workForm?.addEventListener('input', markEditorDirty);
+  workForm?.addEventListener('change', markEditorDirty);
   if (coverKey) loadEditorCoverPreview(coverKey);
 }
 
@@ -440,12 +486,12 @@ function renderAtelier() {
   const editing = state.editing || {};
   if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) { renderGenericCreationWorkspace(); return; }
   shell(`
-    <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Bonjour, ${e((state.user.user_metadata?.display_name || state.user.email?.split('@')[0] || 'auteur').split(' ')[0])}.</h1><p>Chaque texte avance à son rythme. Reprenez là où vous en étiez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
+    <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Mon atelier éditorial.</h1><p>Vos œuvres en cours, réunies dans un espace privé. Reprenez chaque manuscrit là où vous l’avez laissé.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
     <section class="container workspace-grid workspace-grid-single">
       
       <aside class="my-works-panel">
-        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Mes textes <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
+        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillon privé <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
+        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
@@ -791,6 +837,24 @@ function openRead(id) {
 app.addEventListener('click', async (event) => {
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
+  if (event.target.closest('[data-editor-page-prev]')) { navigateEditorPage(-1); return; }
+  if (event.target.closest('[data-editor-page-next]')) { navigateEditorPage(1); return; }
+  const editorTool = event.target.closest('[data-editor-tool]');
+  if (editorTool) {
+    const tool = editorTool.dataset.editorTool;
+    if (tool === 'text') {
+      activateEditorTab('manuscript');
+      const field = document.querySelector('#work-form [name="body"]');
+      if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); }
+    } else if (tool === 'elements') {
+      activateEditorTab('manuscript');
+      insertEditorToken('divider');
+    } else if (tool === 'images') {
+      activateEditorTab('cover');
+      document.querySelector('#editor-cover-file')?.click();
+    } else if (tool === 'page') activateEditorTab('layout');
+    return;
+  }
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
   if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
@@ -799,7 +863,7 @@ app.addEventListener('click', async (event) => {
   const workspaceTabButton = event.target.closest('[data-workspace-tab]');
   if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editorOpen = false; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
   if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; state.showCreateForm = true; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
-  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = true; state.editorTab = 'manuscript'; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
   const editVideoButton = event.target.closest('[data-edit-video]');
   if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; state.showCreateForm = true; render(); return; }
   if (event.target.closest('[data-action="new-creation"]')) { state.editingCreation = null; state.showCreateForm = true; render(); document.querySelector('#creation-form [name="title"]')?.focus(); return; }
@@ -852,7 +916,7 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
-    state.workspaceTab = 'textes'; state.editorOpen = true; state.editorTab = 'manuscript'; state.showCreateForm = false;
+    state.workspaceTab = 'textes'; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false;
     if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
     state.editorCoverPreview = null;
     state.view = 'atelier';
@@ -865,6 +929,35 @@ app.addEventListener('click', async (event) => {
   if (modeButton) showAuth(modeButton.dataset.authMode);
   if (event.target.id === 'auth-overlay' || event.target.id === 'read-overlay') modalRoot.innerHTML = '';
 });
+
+let editorTouchStartX = null;
+let editorTouchStartY = null;
+let editorTouchStartedOnControl = false;
+app.addEventListener('touchstart', (event) => {
+  if (!state.editorOpen || !event.target.closest('.text-editor-shell') || !event.changedTouches?.length) return;
+  editorTouchStartX = event.changedTouches[0].clientX;
+  editorTouchStartY = event.changedTouches[0].clientY;
+  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, select'));
+}, { passive: true });
+app.addEventListener('touchend', (event) => {
+  if (editorTouchStartX === null || !event.changedTouches?.length) return;
+  const dx = event.changedTouches[0].clientX - editorTouchStartX;
+  const dy = event.changedTouches[0].clientY - editorTouchStartY;
+  const inEditor = event.target.closest('.text-editor-shell');
+  if (inEditor && !editorTouchStartedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) {
+    navigateEditorPage(dx < 0 ? 1 : -1);
+  }
+  editorTouchStartX = null;
+  editorTouchStartY = null;
+  editorTouchStartedOnControl = false;
+}, { passive: true });
+document.addEventListener('keydown', (event) => {
+  if (!state.editorOpen || !document.querySelector('.text-editor-shell')) return;
+  if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  if (event.key === 'ArrowRight') navigateEditorPage(1);
+  if (event.key === 'ArrowLeft') navigateEditorPage(-1);
+});
+
 
 modalRoot.addEventListener('click', (event) => {
   const auroreIdButton = event.target.closest('[data-action="aurore-id"]');
