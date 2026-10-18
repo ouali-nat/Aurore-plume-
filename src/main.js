@@ -294,7 +294,7 @@ function activateEditorTab(tab) {
   const pageOrder = ['cover', 'manuscript', 'layout', 'preview'];
   const pageIndex = pageOrder.indexOf(state.editorTab);
   const pageCount = document.getElementById('editor-page-count');
-  if (pageCount) pageCount.textContent = String(pageIndex + 1).padStart(2, '0') + ' / ' + String(pageOrder.length).padStart(2, '0');
+  if (pageCount) pageCount.textContent = state.editorTab === 'manuscript' ? String(state.editorPageIndex + 1).padStart(2, '0') + ' / ' + String(state.editorPages.length).padStart(2, '0') : String(pageIndex + 1).padStart(2, '0') + ' / ' + String(pageOrder.length).padStart(2, '0');
   const previous = document.querySelector('[data-editor-page-prev]');
   const next = document.querySelector('[data-editor-page-next]');
   if (previous) previous.disabled = pageIndex <= 0;
@@ -907,8 +907,8 @@ function openRead(id) {
 app.addEventListener('click', async (event) => {
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
-  if (event.target.closest('[data-editor-page-prev]')) { if(state.editorTab==='manuscript')navigateCanvasPage(-1);else navigateEditorPage(-1); return; }
-  if (event.target.closest('[data-editor-page-next]')) { if(state.editorTab==='manuscript')navigateCanvasPage(1);else navigateEditorPage(1); return; }
+  if (event.target.closest('[data-editor-page-prev]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(-1);return; }
+  if (event.target.closest('[data-editor-page-next]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(1);return; }
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
