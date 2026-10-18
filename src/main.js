@@ -930,6 +930,35 @@ app.addEventListener('click', async (event) => {
   if (event.target.id === 'auth-overlay' || event.target.id === 'read-overlay') modalRoot.innerHTML = '';
 });
 
+let editorTouchStartX = null;
+let editorTouchStartY = null;
+let editorTouchStartedOnControl = false;
+app.addEventListener('touchstart', (event) => {
+  if (!state.editorOpen || !event.target.closest('.text-editor-shell') || !event.changedTouches?.length) return;
+  editorTouchStartX = event.changedTouches[0].clientX;
+  editorTouchStartY = event.changedTouches[0].clientY;
+  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, textarea, select, label'));
+}, { passive: true });
+app.addEventListener('touchend', (event) => {
+  if (editorTouchStartX === null || !event.changedTouches?.length) return;
+  const dx = event.changedTouches[0].clientX - editorTouchStartX;
+  const dy = event.changedTouches[0].clientY - editorTouchStartY;
+  const inEditor = event.target.closest('.text-editor-shell');
+  if (inEditor && !editorTouchStartedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) {
+    navigateEditorPage(dx < 0 ? 1 : -1);
+  }
+  editorTouchStartX = null;
+  editorTouchStartY = null;
+  editorTouchStartedOnControl = false;
+}, { passive: true });
+document.addEventListener('keydown', (event) => {
+  if (!state.editorOpen || !document.querySelector('.text-editor-shell')) return;
+  if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  if (event.key === 'ArrowRight') navigateEditorPage(1);
+  if (event.key === 'ArrowLeft') navigateEditorPage(-1);
+});
+
+
 modalRoot.addEventListener('click', (event) => {
   const auroreIdButton = event.target.closest('[data-action="aurore-id"]');
   if (auroreIdButton) { startAuroreIdSignIn(auroreIdButton); return; }
