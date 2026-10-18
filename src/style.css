@@ -489,3 +489,10 @@
 .plume-object-tools button[aria-expanded="true"]{background:#e9e0f4;border-color:#9d88b9;}
 .plume-rounding-control[hidden],.plume-palette-scroll[hidden],#plume-palette-title[hidden]{display:none!important;}
 .plume-compact-color input[type=color][hidden]{display:none!important;}
+
+
+/* Compacte unique de couleur : mini-échantillon noir, palette sur demande */
+.plume-color-trigger{display:inline-flex;align-items:center;gap:7px;border:1px solid #ded4e8;border-radius:9px;padding:6px 9px;background:#fff;color:#302a35;font:inherit;cursor:pointer;}
+.plume-color-trigger-swatch{display:inline-block;width:17px;height:17px;min-width:17px;border:1px solid #aaa;border-radius:4px;background:#000;}
+.plume-object-tools [data-editor-rounding][hidden]{display:none!important;}
+.plume-rounding-control[hidden],.plume-palette-scroll[hidden],#plume-palette-title[hidden]{display:none!important;}
