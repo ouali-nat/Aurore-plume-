@@ -60,3 +60,15 @@
 
 /* Password recovery action in the local sign-in form */
 .auth-forgot{align-self:center;border:0;background:transparent;color:var(--purple);font-size:11px;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px 6px;margin-top:-5px}.auth-forgot:hover{color:var(--purple-dark)}.auth-message:empty{display:none}.auth-form input:disabled{background:#f0ece5;color:#7f7783;opacity:1}
+
+/* Atelier production: navigation textes / vidéos */
+.workspace-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 22px;padding:12px;background:#fffdf8;border:1px solid var(--line);border-radius:18px}
+.workspace-tabs-wide{grid-column:1/-1;margin-bottom:0}
+.workspace-tab{border:0;border-radius:999px;padding:11px 17px;background:transparent;color:var(--muted);font-size:13px;font-weight:700}
+.workspace-tab:hover,.workspace-tab.active{background:var(--lilac);color:var(--purple)}
+.video-workspace{padding-top:24px;padding-bottom:64px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.video-editor-panel,.video-list-panel{min-width:0}
+.video-list-panel .panel-top{gap:16px;flex-wrap:wrap}
+.video-list-panel .my-work-copy a{display:inline-block;margin-top:5px;color:var(--purple);font-size:12px;font-weight:700;text-decoration:none}
+.video-list-panel .my-work-copy a:hover{text-decoration:underline}
+@media(max-width:680px){.workspace-tabs{gap:6px;padding:9px}.workspace-tab{padding:10px 12px}.workspace-tabs-wide .button{flex:1}.video-workspace{padding-left:18px;padding-right:18px}}
