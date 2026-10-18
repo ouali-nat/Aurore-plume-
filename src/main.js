@@ -837,6 +837,24 @@ function openRead(id) {
 app.addEventListener('click', async (event) => {
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
+  if (event.target.closest('[data-editor-page-prev]')) { navigateEditorPage(-1); return; }
+  if (event.target.closest('[data-editor-page-next]')) { navigateEditorPage(1); return; }
+  const editorTool = event.target.closest('[data-editor-tool]');
+  if (editorTool) {
+    const tool = editorTool.dataset.editorTool;
+    if (tool === 'text') {
+      activateEditorTab('manuscript');
+      const field = document.querySelector('#work-form [name="body"]');
+      if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); }
+    } else if (tool === 'elements') {
+      activateEditorTab('manuscript');
+      insertEditorToken('divider');
+    } else if (tool === 'images') {
+      activateEditorTab('cover');
+      document.querySelector('#editor-cover-file')?.click();
+    } else if (tool === 'page') activateEditorTab('layout');
+    return;
+  }
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
   if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
