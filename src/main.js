@@ -727,7 +727,7 @@ app.addEventListener('submit', async (event) => {
     if (!supabase || !state.user) { showAuth('signin'); return; }
     const form = event.target; const data = new FormData(form); const id = String(data.get('id') || '');
     const payload = { title: String(data.get('title') || '').trim(), video_url: String(data.get('video_url') || '').trim(), category: String(data.get('category') || 'Création'), description: String(data.get('description') || '').trim(), updated_at: new Date().toISOString() };
-    if (!/^https?:\\/\\//i.test(payload.video_url)) { toast('Le lien doit commencer par https:// ou http://.', 'error'); return; }
+    if (!(payload.video_url.startsWith('https://') || payload.video_url.startsWith('http://'))) { toast('Le lien doit commencer par https:// ou http://.', 'error'); return; }
     const button = form.querySelector('button[type="submit"]'); if (button) button.disabled = true;
     try {
       const result = id ? await supabase.from('plume_videos').update(payload).eq('id', id).eq('author_id', state.user.id) : await supabase.from('plume_videos').insert({ title: payload.title, video_url: payload.video_url, category: payload.category, description: payload.description, author_id: state.user.id });
