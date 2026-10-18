@@ -1203,10 +1203,12 @@ app.addEventListener('click', async (event) => {
           return;
         }
         visibilityField.value = visibility;
+        const previousSubmitValue = submitButton.value;
         submitButton.value = 'publish';
         form.dataset.submitIntent = 'publish';
         modalRoot.innerHTML = '';
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        submitButton.value = previousSubmitValue;
       });
     });
     return;
