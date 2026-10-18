@@ -526,3 +526,28 @@ html:has(.editor-only-shell),body:has(.editor-only-shell){height:auto;min-height
 .plume-customizer-color-wrap .plume-palette-scroll .plume-palette-close{grid-column:1/-1;width:100%;min-height:34px;margin-bottom:3px;border:1px solid #e3d9e9;border-radius:8px;background:#f8f4fb;color:#5d4b6c;font-size:12px;font-weight:600;touch-action:manipulation;}
 .plume-typography-bar .plume-compact-color{display:none!important;}
 @media(max-width:760px){.plume-customizer-color-wrap .plume-palette-scroll{grid-template-columns:repeat(8,minmax(20px,1fr));max-height:35vh;overflow-y:auto;overscroll-behavior:contain;}}
+
+
+/* Suppression définitive du panneau Arrondi contextuel qui gênait la sélection du texte. */
+.plume-rounding-toolbar,.plume-rounding-control{display:none!important;}
+.editor-actionbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.editor-actionbar button{min-height:40px;}
+.plume-pdf-export-stage{font-family:Georgia,serif;}
+.plume-pdf-title-page{box-sizing:border-box;width:794px;height:1123px;padding:130px 86px 90px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;background:#fff;color:#302a35;border:0;}
+.plume-pdf-title-page .pdf-title-brand{font:700 19px/1.2 system-ui,sans-serif;letter-spacing:.08em;color:#80639e;}
+.plume-pdf-title-page .pdf-title-rule{width:80px;height:3px;background:#80639e;margin:42px 0;}
+.plume-pdf-title-page h1{font:700 44px/1.15 Georgia,serif;margin:0 0 22px;overflow-wrap:anywhere;}
+.plume-pdf-title-page .pdf-title-subtitle{font:italic 23px/1.45 Georgia,serif;color:#76677f;margin:0 0 36px;}
+.plume-pdf-title-page .pdf-title-meta{font:14px/1.6 system-ui,sans-serif;color:#76677f;}
+.plume-pdf-title-page .pdf-title-bottom{margin-top:auto;font:10px system-ui,sans-serif;letter-spacing:.2em;color:#95889d;}
+.plume-pdf-reader-overlay{position:fixed;inset:0;z-index:10020;background:#090812f5;color:#fff;display:flex;align-items:stretch;justify-content:center;padding:0;}
+.plume-pdf-reader-overlay .pdf-reader-shell{width:min(100%,1000px);height:100dvh;display:flex;flex-direction:column;min-height:0;background:#17151d;border:1px solid #3b3545;}
+.plume-pdf-reader-overlay .pdf-reader-topbar,.plume-pdf-reader-overlay .pdf-reader-bottombar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#211e29;border-bottom:1px solid #3a3444;flex-shrink:0;}
+.plume-pdf-reader-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.plume-pdf-reader-overlay button{min-height:36px;border:1px solid #554a61;border-radius:8px;background:#2c2735;color:#fff;padding:6px 10px;}
+.plume-pdf-reader-overlay .pdf-reader-top-actions{display:flex;align-items:center;gap:5px;}
+.plume-pdf-reader-overlay .pdf-reader-pages{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 8px;overscroll-behavior:contain;}
+.plume-pdf-reader-page{display:block;max-width:100%;height:auto;background:#fff;box-shadow:0 6px 28px #0006;}
+.plume-pdf-loading{margin:auto;padding:24px;color:#eee;}
+.plume-pdf-reader-overlay .pdf-reader-bottombar{border-top:1px solid #3a3444;border-bottom:0;}
+@media(max-width:700px){.plume-pdf-reader-overlay .pdf-reader-topbar{flex-wrap:wrap;padding:8px}.plume-pdf-reader-overlay .pdf-reader-title{order:2;flex-basis:100%}.plume-pdf-reader-overlay .pdf-reader-top-actions{margin-left:auto}.plume-pdf-reader-overlay .pdf-reader-pages{padding:8px 3px}.editor-actionbar{position:sticky;bottom:0;z-index:20;background:#fffdf9f5;padding:8px;border-radius:12px;box-shadow:0 -4px 18px #32263c12;}}
