@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -213,10 +213,35 @@ function renderVideoWorkspace() {
 const EDITOR_DOCUMENT_PREFIX = '__AURORE_PLUME_PAGES_V1__';
 function parseEditorPages(body = '') {
   const raw = String(body || '');
-  if (raw.startsWith(EDITOR_DOCUMENT_PREFIX)) { try { const pages = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length)); if (Array.isArray(pages) && pages.length) return pages.map((page) => ({ blocks: Array.isArray(page.blocks) ? page.blocks : [] })); } catch {} }
+  if (raw.startsWith(EDITOR_DOCUMENT_PREFIX)) { try { const saved = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length)); const pages = Array.isArray(saved) ? saved : saved.pages; state.editorPageIndex = Math.max(0, Math.min(Number(saved.currentPageIndex || 0), Math.max(0, (pages || []).length - 1))); if (Array.isArray(pages) && pages.length) return pages.map((page) => ({ blocks: Array.isArray(page.blocks) ? page.blocks : [] })); } catch {} }
+  state.editorPageIndex = 0;
   return [{ blocks: raw ? [{ id: 'text-' + Date.now(), type: 'text', x: 9, y: 10, w: 82, h: 34, text: raw, font: 'Georgia', size: 18, color: '#302a35', align: 'left', bold: false, italic: false }] : [] }];
 }
-function editorPagesToBody() { return EDITOR_DOCUMENT_PREFIX + JSON.stringify(state.editorPages.length ? state.editorPages : [{ blocks: [] }]); }
+function editorPagesToBody() { return EDITOR_DOCUMENT_PREFIX + JSON.stringify({ currentPageIndex: state.editorPageIndex, pages: state.editorPages.length ? state.editorPages : [{ blocks: [] }] }); }
+function recordEditorHistory() {
+  if (!state.editorPages) return;
+  const snapshot = JSON.stringify({ pages: state.editorPages, pageIndex: state.editorPageIndex });
+  const history = state.editorHistory || [];
+  if (history[state.editorHistoryIndex] === snapshot) return;
+  state.editorHistory = history.slice(0, state.editorHistoryIndex + 1);
+  state.editorHistory.push(snapshot);
+  if (state.editorHistory.length > 80) state.editorHistory.shift();
+  state.editorHistoryIndex = state.editorHistory.length - 1;
+  const undo = document.querySelector('[data-editor-undo]'), redo = document.querySelector('[data-editor-redo]');
+  if (undo) undo.disabled = state.editorHistoryIndex <= 0;
+  if (redo) redo.disabled = state.editorHistoryIndex >= state.editorHistory.length - 1;
+}
+function travelEditorHistory(direction) {
+  const next = state.editorHistoryIndex + direction;
+  if (next < 0 || next >= state.editorHistory.length) return;
+  state.editorHistoryIndex = next;
+  const saved = JSON.parse(state.editorHistory[next]);
+  state.editorPages = saved.pages || [{ blocks: [] }]; state.editorPageIndex = Math.max(0, Math.min(saved.pageIndex || 0, state.editorPages.length - 1)); state.editorSelectedBlock = null;
+  updateEditorCanvas(); syncEditorCanvas();
+  const undo = document.querySelector('[data-editor-undo]'), redo = document.querySelector('[data-editor-redo]');
+  if (undo) undo.disabled = state.editorHistoryIndex <= 0;
+  if (redo) redo.disabled = state.editorHistoryIndex >= state.editorHistory.length - 1;
+}
 function editorCanvasMarkup() {
   const page = state.editorPages[state.editorPageIndex] || { blocks: [] };
   return page.blocks.map((b) => {
@@ -244,14 +269,14 @@ function addEditorBlock(type, shape='round') {
   const page=state.editorPages[state.editorPageIndex]||(state.editorPages[state.editorPageIndex]={blocks:[]});
   const id='block-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
   const block=type==='shape'?{id,type,shape,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}:{id,type:'text',x:10,y:12+(page.blocks.length%5)*7,w:78,h:24,text:'',font:'Georgia',size:18,color:'#302a35',align:'left',bold:false,italic:false};
-  page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas();
+  page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory();
   if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
 }
 function navigateCanvasPage(direction) {
   if(!state.editorPages.length) state.editorPages=[{blocks:[]}];
   const next=state.editorPageIndex+direction; if(next<0)return;
   if(next>=state.editorPages.length) state.editorPages.push({blocks:[]});
-  state.editorPageIndex=next; state.editorSelectedBlock=null; updateEditorCanvas();
+  state.editorPageIndex=next; state.editorSelectedBlock=null; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory();
 }
 
 const DEFAULT_EDITORIAL_SETTINGS = { page_format: 'A5', body_font: 'Georgia', font_size: 12, line_height: 1.7, margins: 'standard' };
@@ -260,7 +285,8 @@ function manuscriptPreviewHtml(value = '') {
   const raw = String(value || '');
   if (raw.startsWith(EDITOR_DOCUMENT_PREFIX)) {
     try {
-      const pages = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
+      const saved = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
+      const pages = Array.isArray(saved) ? saved : saved.pages;
       return pages.map((page) => '<section class="plume-rendered-page">' + (page.blocks || []).map((b) => {
         const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';';
         if (b.type === 'image') return '<div class="plume-rendered-block plume-rendered-image" style="'+style+'"><img alt="" src="'+e(b.src||'')+'"></div>';
@@ -426,6 +452,7 @@ function renderTextEditor() {
           <button type="button" class="editor-command" data-editor-tool="images"><span aria-hidden="true">▧</span><b>Images</b></button>
           <button type="button" class="editor-command" data-editor-tool="page"><span aria-hidden="true">▤</span><b>Page</b></button><button type="button" class="editor-command editor-cover-shortcut" data-editor-tab="cover"><span aria-hidden="true">▧</span><b>Couverture</b></button>
         </div>
+        <div class="editor-history-nav" aria-label="Historique des modifications"><button type="button" data-editor-undo disabled aria-label="Annuler la modification" title="Annuler">↶</button><button type="button" data-editor-redo disabled aria-label="Rétablir la modification" title="Rétablir">↷</button></div>
         <div class="editor-page-nav">
           <button type="button" data-editor-page-prev ${state.editorTab === 'cover' ? 'disabled' : ''} aria-label="Étape précédente">←</button>
           <span id="editor-page-count">01 / 04</span>
@@ -453,7 +480,7 @@ function renderTextEditor() {
             <div class="editor-paper-ruler"><span>MANUSCRIT · PAGE DE TRAVAIL</span><span>MODIFIABLE</span></div>
             <div class="editor-paper-sheet">
               <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
-              <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable">${editorCanvasMarkup()}</div><div class="plume-color-popover" id="plume-color-popover" hidden><strong>Couleur du bloc</strong><div class="plume-color-swatches"><button data-block-color="#67527f" style="--swatch:#67527f"></button><button data-block-color="#d9c7ef" style="--swatch:#d9c7ef"></button><button data-block-color="#e7b8c4" style="--swatch:#e7b8c4"></button><button data-block-color="#e9d5b0" style="--swatch:#e9d5b0"></button><button data-block-color="#b9d9c1" style="--swatch:#b9d9c1"></button><button data-block-color="#a9c9e8" style="--swatch:#a9c9e8"></button><button data-block-color="#ffffff" style="--swatch:#ffffff"></button><button data-block-color="#302a35" style="--swatch:#302a35"></button></div><label>Personnaliser <input type="color" id="plume-custom-color" value="#67527f"></label></div></div><aside class="plume-elements-panel" id="plume-elements-panel" hidden><div class="plume-elements-heading"><strong>Éléments</strong><button type="button" data-elements-close aria-label="Fermer">×</button></div><p>Ajoutez des formes à la page, puis déplacez-les ou redimensionnez-les.</p><div class="plume-elements-grid"><button type="button" data-add-shape="round"><span class="shape-preview round"></span>Bloc arrondi</button><button type="button" data-add-shape="circle"><span class="shape-preview circle"></span>Cercle</button><button type="button" data-add-shape="square"><span class="shape-preview square"></span>Rectangle</button><button type="button" data-add-shape="line"><span class="shape-preview line"></span>Ligne</button><button type="button" data-add-shape="quote"><span class="shape-preview quote">“</span>Citation</button><button type="button" data-add-shape="label"><span class="shape-preview label">Aa</span>Étiquette</button></div></aside></div>
+              <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable">${editorCanvasMarkup()}</div><div class="plume-color-popover" id="plume-color-popover" hidden><strong>Couleur du bloc</strong><div class="plume-color-swatches"><button type="button" data-block-color="#67527f" style="--swatch:#67527f"></button><button type="button" data-block-color="#d9c7ef" style="--swatch:#d9c7ef"></button><button type="button" data-block-color="#e7b8c4" style="--swatch:#e7b8c4"></button><button type="button" data-block-color="#e9d5b0" style="--swatch:#e9d5b0"></button><button type="button" data-block-color="#b9d9c1" style="--swatch:#b9d9c1"></button><button type="button" data-block-color="#a9c9e8" style="--swatch:#a9c9e8"></button><button type="button" data-block-color="#ffffff" style="--swatch:#ffffff"></button><button type="button" data-block-color="#302a35" style="--swatch:#302a35"></button></div><label>Personnaliser <input type="color" id="plume-custom-color" value="#67527f"></label></div></div><aside class="plume-elements-panel" id="plume-elements-panel" hidden><div class="plume-elements-heading"><strong>Éléments</strong><button type="button" data-elements-close aria-label="Fermer">×</button></div><p>Ajoutez des formes à la page, puis déplacez-les ou redimensionnez-les.</p><div class="plume-elements-grid"><button type="button" data-add-shape="round"><span class="shape-preview round"></span>Bloc arrondi</button><button type="button" data-add-shape="circle"><span class="shape-preview circle"></span>Cercle</button><button type="button" data-add-shape="square"><span class="shape-preview square"></span>Rectangle</button><button type="button" data-add-shape="line"><span class="shape-preview line"></span>Ligne</button><button type="button" data-add-shape="quote"><span class="shape-preview quote">“</span>Citation</button><button type="button" data-add-shape="label"><span class="shape-preview label">Aa</span>Étiquette</button></div></aside></div>
               <div class="editor-paper-footer"><span>Une phrase après l’autre.</span><span id="editor-paper-word-count">${words(work.body || '')} mots</span></div>
             </div>
           </div>
@@ -507,8 +534,8 @@ function renderTextEditor() {
       <style id="editor-print-page-style"></style>
     </section>
   `);
-  state.editorPages = parseEditorPages(work.body || ''); state.editorPageIndex = 0; state.editorSelectedBlock = null;
-  updateEditorCanvas(); updateEditorPreviews();
+  state.editorPages = parseEditorPages(work.body || ''); state.editorPageIndex = Math.max(0, Math.min(state.editorPageIndex, state.editorPages.length - 1)); state.editorSelectedBlock = null; state.editorHistory = []; state.editorHistoryIndex = -1;
+  updateEditorCanvas(); updateEditorPreviews(); recordEditorHistory();
   const workForm = document.querySelector('#work-form');
   const markEditorDirty = () => {
     updateEditorPreviews();
@@ -908,6 +935,8 @@ function openRead(id) {
 app.addEventListener('click', async (event) => {
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
+  if (event.target.closest('[data-editor-undo]')) { travelEditorHistory(-1); return; }
+  if (event.target.closest('[data-editor-redo]')) { travelEditorHistory(1); return; }
   if (event.target.closest('[data-editor-page-prev]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(-1);return; }
   if (event.target.closest('[data-editor-page-next]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(1);return; }
   const editorTool = event.target.closest('[data-editor-tool]');
@@ -1004,10 +1033,10 @@ app.addEventListener('click', async (event) => {
 let plumeBlockDrag=null;
 app.addEventListener('pointerdown',(event)=>{const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');if(!node||!canvas)return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;const resize=event.target.closest('[data-resize-dir]'),moveGrip=event.target.closest('.plume-block-move');if(event.target.closest('[contenteditable="true"]')&&!resize&&!moveGrip)return;state.editorSelectedBlock=block.id;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===block.id));const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=!(block.type==='shape'||block.type==='image');if(!pop.hidden){pop.style.left=Math.min(Math.max(8,event.clientX+12),window.innerWidth-220)+'px';pop.style.top=Math.min(Math.max(8,event.clientY+12),window.innerHeight-170)+'px';const custom=document.querySelector('#plume-custom-color');if(custom)custom.value=block.fill||block.color||'#67527f';}}plumeBlockDrag={id:block.id,startX:event.clientX,startY:event.clientY,x:Number(block.x),y:Number(block.y),w:Number(block.w),h:Number(block.h),cw:canvas.clientWidth,ch:canvas.clientHeight,dir:resize?.dataset.resizeDir||'',moving:Boolean(moveGrip)||(!resize&&!event.target.closest('[contenteditable="true"]'))};if(plumeBlockDrag.moving||plumeBlockDrag.dir)event.preventDefault();});
 app.addEventListener('pointermove',(event)=>{if(!plumeBlockDrag)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===plumeBlockDrag.id);if(!b)return;const dx=(event.clientX-plumeBlockDrag.startX)/Math.max(1,plumeBlockDrag.cw)*100,dy=(event.clientY-plumeBlockDrag.startY)/Math.max(1,plumeBlockDrag.ch)*100;if(plumeBlockDrag.dir){const d=plumeBlockDrag.dir;let x=plumeBlockDrag.x,y=plumeBlockDrag.y,w=plumeBlockDrag.w,h=plumeBlockDrag.h;if(d.includes('e'))w=Math.max(4,plumeBlockDrag.w+dx);if(d.includes('s'))h=Math.max(3,plumeBlockDrag.h+dy);if(d.includes('w')){w=Math.max(4,plumeBlockDrag.w-dx);x=plumeBlockDrag.x+dx;}if(d.includes('n')){h=Math.max(3,plumeBlockDrag.h-dy);y=plumeBlockDrag.y+dy;}b.x=Math.max(0,Math.min(96,x));b.y=Math.max(0,Math.min(96,y));b.w=Math.max(4,Math.min(100-b.x,w));b.h=Math.max(3,Math.min(100-b.y,h));}else if(plumeBlockDrag.moving){b.x=Math.max(0,Math.min(100-b.w,plumeBlockDrag.x+dx));b.y=Math.max(0,Math.min(100-b.h,plumeBlockDrag.y+dy));}const n=document.querySelector('.plume-canvas-block.is-selected');if(n){n.style.left=b.x+'%';n.style.top=b.y+'%';n.style.width=b.w+'%';n.style.height=b.h+'%';}});
-app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();}});
+app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();recordEditorHistory();}});
 app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){b.text=n.innerText;const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();updateEditorPreviews();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';}});
-app.addEventListener('click',(event)=>{const swatch=event.target.closest('[data-block-color]');if(swatch){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b){if(b.type==='image'||b.type==='shape')b.fill=swatch.dataset.blockColor;else b.color=swatch.dataset.blockColor;syncEditorCanvas();}return;}const n=event.target.closest('.plume-canvas-block');if(n){state.editorSelectedBlock=n.dataset.blockId;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===state.editorSelectedBlock));const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=!(b&&(b.type==='shape'||b.type==='image'));if(!pop.hidden){const rect=n.getBoundingClientRect();pop.style.left=Math.min(Math.max(8,rect.left),window.innerWidth-220)+'px';pop.style.top=Math.min(Math.max(8,rect.bottom+8),window.innerHeight-170)+'px';const custom=document.querySelector('#plume-custom-color');if(custom)custom.value=b.fill||b.color||'#67527f';}}}});
-app.addEventListener('input',(event)=>{if(event.target.id!=='plume-custom-color')return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(!b)return;if(b.type==='image'||b.type==='shape')b.fill=event.target.value;else b.color=event.target.value;syncEditorCanvas();});
+app.addEventListener('click',(event)=>{const swatch=event.target.closest('[data-block-color]');if(swatch){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b){if(b.type==='image'||b.type==='shape')b.fill=swatch.dataset.blockColor;else b.color=swatch.dataset.blockColor;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();}return;}const n=event.target.closest('.plume-canvas-block');if(n){state.editorSelectedBlock=n.dataset.blockId;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===state.editorSelectedBlock));const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=!(b&&(b.type==='shape'||b.type==='image'));if(!pop.hidden){const rect=n.getBoundingClientRect();pop.style.left=Math.min(Math.max(8,rect.left),window.innerWidth-220)+'px';pop.style.top=Math.min(Math.max(8,rect.bottom+8),window.innerHeight-170)+'px';const custom=document.querySelector('#plume-custom-color');if(custom)custom.value=b.fill||b.color||'#67527f';}}}});
+app.addEventListener('input',(event)=>{if(event.target.id!=='plume-custom-color')return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(!b)return;if(b.type==='image'||b.type==='shape')b.fill=event.target.value;else b.color=event.target.value;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();});
 let editorTouchStartX = null;
 let editorTouchStartY = null;
 let editorTouchStartedOnControl = false;
