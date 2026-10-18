@@ -614,12 +614,15 @@ function renderAtelier() {
   shell(`
     <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Mon atelier éditorial.</h1><p>Vos œuvres en cours, réunies dans un espace privé. Reprenez chaque manuscrit là où vous l’avez laissé.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
     <section class="container workspace-grid workspace-grid-single">
-      
       <aside class="my-works-panel">
-        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillon privé <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><p class="draft-card-meta">${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
-        <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
+        <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillons privés <span class="count-pill">${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
+        ${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).length ? `<div class="my-work-list">${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><p class="draft-card-meta">${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Aucun brouillon privé.</h3><p>Créez un texte ou continuez une œuvre déjà commencée.</p></div>'}
+        <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Les brouillons ne sont visibles que par vous.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
+      </aside>
+      <aside class="my-works-panel plume-published-panel">
+        <div class="panel-top"><div><span class="eyebrow">VOTRE BIBLIOTHÈQUE</span><h2>Mes publications <span class="count-pill">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).length}</span></h2></div></div>
+        ${state.myWorks.some((work)=>work.publication_status==='published'&&work.is_public) ? `<div class="my-work-list">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).map((work)=>`<article class="my-work-item published-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary||'Votre texte publié sur Aurore Plume.')}</p><p class="draft-card-meta">${e(work.genre||'Texte libre')} · Publié le ${e(formatDate(work.published_at||work.updated_at))}</p><span class="status-pill status-published">Publié · public</span></div><button class="button button-primary" data-read-id="${e(work.id)}">Lire ↗</button><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}">Éditer</button></article>`).join('')}</div>` : '<div class="empty-state empty-works"><span>↗</span><h3>Aucune publication pour le moment.</h3><p>Choisissez « Publier » dans l’éditeur lorsqu’un texte est prêt.</p></div>'}
       </aside>
     </section>
   `);
@@ -1019,7 +1022,7 @@ function updatePlumePdfReader(){
 }
 function closePdfReader(){modalRoot.innerHTML='';plumePdfDocument=null;plumePdfBlob=null;}
 async function openRead(id) {
-  const work = state.publicWorks.find((item) => item.id === id) || demoWorks.find((item) => item.id === id);
+  const work = state.publicWorks.find((item) => item.id === id) || state.myWorks.find((item) => item.id === id) || demoWorks.find((item) => item.id === id);
   if (!work) return;
   try { toast('Préparation du PDF de lecture…'); const blob=await buildWorkPdfBlob(work); await openPdfReader(blob,work.title||'Lecture'); }
   catch(error){console.error('PDF lecture Aurore Plume',error);toast(error.message||'Le PDF ne peut pas être préparé.','error');}
@@ -1307,6 +1310,16 @@ modalRoot.addEventListener('click', (event) => {
   if (event.target === modalRoot.firstElementChild) modalRoot.innerHTML = '';
 });
 
+modalRoot.addEventListener('click', (event) => {
+  if(event.target.closest('[data-publish-cancel]')){modalRoot.innerHTML='';return;}
+  const choice=event.target.closest('[data-publish-visibility]');
+  if(!choice)return;
+  const form=document.querySelector('#work-form');
+  if(!form)return;
+  form.querySelector('[name="publish_visibility"]').value=choice.dataset.publishVisibility;
+  modalRoot.innerHTML='';
+  form.requestSubmit(form.querySelector('#plume-publish-submit'));
+});
 modalRoot.addEventListener('submit', async (event) => {
   if (event.target.id !== 'auth-form') return;
   event.preventDefault();
