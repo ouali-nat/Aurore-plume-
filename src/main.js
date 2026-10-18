@@ -337,15 +337,28 @@ function renderTextEditor() {
         <button type="button" class="editor-back-link" data-editor-back>← Retour à mon carnet</button>
         <div class="text-editor-heading">
           <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${e(work.title || (work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'))}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
-          <span class="editor-save-state"><span class="save-state-dot"></span>Brouillon privé</span>
+          <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
         </div>
       </div>
       <nav class="editor-tabs" role="tablist" aria-label="Espaces de l’éditeur">
-        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>01</span> Manuscrit</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>02</span> Couverture</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>01</span> Couverture</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>02</span> Manuscrit</button>
         <button type="button" class="editor-tab ${state.editorTab === 'layout' ? 'is-active' : ''}" data-editor-tab="layout" role="tab" aria-selected="${state.editorTab === 'layout'}"><span>03</span> Mise en page</button>
         <button type="button" class="editor-tab ${state.editorTab === 'preview' ? 'is-active' : ''}" data-editor-tab="preview" role="tab" aria-selected="${state.editorTab === 'preview'}"><span>04</span> Aperçu PDF</button>
       </nav>
+      <div class="editor-commandbar" aria-label="Outils de l’atelier">
+        <div class="editor-command-group">
+          <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button>
+          <button type="button" class="editor-command" data-editor-tool="elements"><span aria-hidden="true">◇</span><b>Éléments</b></button>
+          <button type="button" class="editor-command" data-editor-tool="images"><span aria-hidden="true">▧</span><b>Images</b></button>
+          <button type="button" class="editor-command" data-editor-tool="page"><span aria-hidden="true">▤</span><b>Page</b></button>
+        </div>
+        <div class="editor-page-nav">
+          <button type="button" data-editor-page-prev aria-label="Étape précédente">←</button>
+          <span id="editor-page-count">01 / 04</span>
+          <button type="button" data-editor-page-next aria-label="Étape suivante">→</button>
+        </div>
+      </div>
       <form id="work-form" class="dedicated-work-form">
         <input type="hidden" name="id" value="${e(work.id || '')}">
         <input type="hidden" name="existing_cover_media_key" value="${e(coverKey)}">
