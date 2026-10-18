@@ -730,7 +730,7 @@ app.addEventListener('submit', async (event) => {
     if (!/^https?:\\/\\//i.test(payload.video_url)) { toast('Le lien doit commencer par https:// ou http://.', 'error'); return; }
     const button = form.querySelector('button[type="submit"]'); if (button) button.disabled = true;
     try {
-      const result = id ? await supabase.from('plume_videos').update(payload).eq('id', id).eq('author_id', state.user.id) : await supabase.from('plume_videos').insert({ ...payload, author_id: state.user.id });
+      const result = id ? await supabase.from('plume_videos').update(payload).eq('id', id).eq('author_id', state.user.id) : await supabase.from('plume_videos').insert({ title: payload.title, video_url: payload.video_url, category: payload.category, description: payload.description, author_id: state.user.id });
       if (result.error) throw result.error;
       toast(id ? 'Vidéo mise à jour.' : 'Vidéo enregistrée.'); state.editingVideo = null; await loadMyVideos(); render();
     } catch (error) { console.error('Aurore Plume video save', error); toast(error.message || 'La vidéo n’a pas pu être enregistrée. Appliquez la migration SQL plume_videos.', 'error'); if (button) button.disabled = false; }
