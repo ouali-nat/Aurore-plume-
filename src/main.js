@@ -223,8 +223,8 @@ function manuscriptPreviewHtml(value = '') {
 }
 
 function activateEditorTab(tab) {
-  const allowed = ['manuscript', 'cover', 'layout', 'preview'];
-  state.editorTab = allowed.includes(tab) ? tab : 'manuscript';
+  const allowed = ['cover', 'manuscript', 'layout', 'preview'];
+  state.editorTab = allowed.includes(tab) ? tab : 'cover';
   document.querySelectorAll('[data-editor-tab]').forEach((button) => {
     const active = button.dataset.editorTab === state.editorTab;
     button.classList.toggle('is-active', active);
@@ -233,7 +233,23 @@ function activateEditorTab(tab) {
   document.querySelectorAll('.editor-tab-panel').forEach((panel) => {
     panel.hidden = panel.id !== 'editor-panel-' + state.editorTab;
   });
+  const pageOrder = ['cover', 'manuscript', 'layout', 'preview'];
+  const pageIndex = pageOrder.indexOf(state.editorTab);
+  const pageCount = document.getElementById('editor-page-count');
+  if (pageCount) pageCount.textContent = String(pageIndex + 1).padStart(2, '0') + ' / ' + String(pageOrder.length).padStart(2, '0');
+  const previous = document.querySelector('[data-editor-page-prev]');
+  const next = document.querySelector('[data-editor-page-next]');
+  if (previous) previous.disabled = pageIndex <= 0;
+  if (next) next.disabled = pageIndex >= pageOrder.length - 1;
   updateEditorPreviews();
+}
+
+function navigateEditorPage(direction) {
+  const pages = ['cover', 'manuscript', 'layout', 'preview'];
+  const index = pages.indexOf(state.editorTab);
+  const next = Math.max(0, Math.min(pages.length - 1, index + direction));
+  activateEditorTab(pages[next]);
+  document.querySelector('.editor-tabs .is-active')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 
 function updateEditorPreviews() {
@@ -245,6 +261,8 @@ function updateEditorPreviews() {
   const genre = value('genre', 'Texte libre');
   const body = value('body');
   const summary = value('summary').trim();
+  const paperTitle = document.getElementById('editor-paper-title');
+  if (paperTitle) paperTitle.textContent = title;
   ['editor-cover-title', 'editor-print-cover-title', 'editor-preview-title'].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.textContent = title;
@@ -263,6 +281,8 @@ function updateEditorPreviews() {
   if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
   const counter = document.getElementById('word-count');
   if (counter) counter.textContent = words(body);
+  const paperCounter = document.getElementById('editor-paper-word-count');
+  if (paperCounter) paperCounter.textContent = words(body) + ' mots';
   const settings = {
     page_format: value('page_format', DEFAULT_EDITORIAL_SETTINGS.page_format),
     body_font: value('body_font', DEFAULT_EDITORIAL_SETTINGS.body_font),
@@ -435,8 +455,14 @@ function renderTextEditor() {
     </section>
   `);
   updateEditorPreviews();
-  document.querySelector('#work-form')?.addEventListener('input', updateEditorPreviews);
-  document.querySelector('#work-form')?.addEventListener('change', updateEditorPreviews);
+  const workForm = document.querySelector('#work-form');
+  const markEditorDirty = () => {
+    updateEditorPreviews();
+    const saveLabel = document.querySelector('#editor-save-label');
+    if (saveLabel) saveLabel.textContent = 'Modifications à enregistrer';
+  };
+  workForm?.addEventListener('input', markEditorDirty);
+  workForm?.addEventListener('change', markEditorDirty);
   if (coverKey) loadEditorCoverPreview(coverKey);
 }
 
