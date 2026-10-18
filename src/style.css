@@ -1125,3 +1125,10 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   .discover-intro-row>.button{width:100%}
   .home-library{padding-top:28px;padding-bottom:52px}
 }
+
+
+/* Keep selected image resize handles outside the image viewport and above the image itself. */
+.plume-canvas-image{overflow:visible!important;isolation:isolate}
+.plume-canvas-image img{overflow:hidden;border-radius:inherit;pointer-events:none}
+.plume-canvas-image .plume-block-resize,.plume-canvas-image .plume-block-move,.plume-canvas-image .plume-block-delete-corner{z-index:12}
+.plume-canvas-text-content{line-height:inherit}
