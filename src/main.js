@@ -373,11 +373,18 @@ function renderTextEditor() {
             <label class="editor-summary-field">Description <span class="optional">facultatif</span><textarea name="summary" maxlength="1200" rows="2" placeholder="Quelle idée traverse cette œuvre ?">${e(work.summary || '')}</textarea></label>
           </div>
           <div class="manuscript-tools">
-            <div><span class="eyebrow">OUTILS D’ÉCRITURE</span><p>Insérez des éléments éditoriaux sans perdre votre texte.</p></div>
-            <div class="editor-tool-list"><button type="button" class="editor-tool" data-insert-token="bold"><b>B</b> Gras</button><button type="button" class="editor-tool" data-insert-token="italic"><i>I</i> Italique</button><button type="button" class="editor-tool" data-insert-token="heading">Titre de section</button><button type="button" class="editor-tool" data-insert-token="quote">Citation</button><button type="button" class="editor-tool" data-insert-token="chapter">Nouveau chapitre</button><button type="button" class="editor-tool" data-insert-token="divider">Séparateur</button></div>
+            <div><span class="eyebrow">OUTILS D’ÉCRITURE</span><p>Ajoutez des titres, citations et séparateurs à votre manuscrit.</p></div>
+            <div class="editor-tool-list"><button type="button" class="editor-tool" data-insert-token="bold"><b>B</b> Gras</button><button type="button" class="editor-tool" data-insert-token="italic"><i>I</i> Italique</button><button type="button" class="editor-tool" data-insert-token="heading">Titre</button><button type="button" class="editor-tool" data-insert-token="quote">Citation</button><button type="button" class="editor-tool" data-insert-token="chapter">Chapitre</button><button type="button" class="editor-tool" data-insert-token="divider">Séparateur</button></div>
           </div>
-          <label class="manuscript-body-label">Votre manuscrit<textarea class="body-editor dedicated-body-editor" name="body" rows="17" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
-          <p class="editor-hint"><span>✳</span> La mise en forme simple est reprise dans l’aperçu. Pensez à enregistrer votre brouillon avant de quitter l’atelier.</p>
+          <div class="editor-paper-desk">
+            <div class="editor-paper-ruler"><span>MANUSCRIT · PAGE DE TRAVAIL</span><span>MODIFIABLE</span></div>
+            <div class="editor-paper-sheet">
+              <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
+              <label class="manuscript-body-label"><span class="editor-paper-label">Votre texte</span><textarea class="body-editor dedicated-body-editor" name="body" rows="20" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
+              <div class="editor-paper-footer"><span>Une phrase après l’autre.</span><span id="editor-paper-word-count">${words(work.body || '')} mots</span></div>
+            </div>
+          </div>
+          <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
         <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
           <div class="editor-panel-intro"><div><span class="eyebrow">IDENTITÉ VISUELLE</span><h2>Donnez un visage à votre œuvre.</h2><p>Importez une couverture image. Elle restera privée dans votre espace de stockage.</p></div></div>
