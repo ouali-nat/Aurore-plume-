@@ -496,3 +496,15 @@
 .plume-color-trigger-swatch{display:inline-block;width:17px;height:17px;min-width:17px;border:1px solid #aaa;border-radius:4px;background:#000;}
 .plume-object-tools [data-editor-rounding][hidden]{display:none!important;}
 .plume-rounding-control[hidden],.plume-palette-scroll[hidden],#plume-palette-title[hidden]{display:none!important;}
+
+
+/* Scroll vertical naturel et fluide dans tout l’espace éditorial; balayage horizontal = page suivante/précédente */
+html:has(.editor-only-shell),body:has(.editor-only-shell){height:auto;min-height:100%;overflow-y:auto!important;touch-action:pan-y;}
+.editor-only-shell,.text-editor-shell,.editor-paper-desk,.editor-paper-sheet,.plume-editor-workspace,.plume-canvas-desk{overflow-y:visible!important;max-height:none!important;touch-action:pan-y;overscroll-behavior-y:auto;}
+.plume-canvas-desk{overflow-x:visible!important;-webkit-overflow-scrolling:touch;}
+.plume-canvas-paper,.plume-canvas-block{touch-action:pan-y;}
+.plume-canvas-block .plume-block-move,.plume-canvas-block .plume-block-resize{touch-action:none;}
+.plume-customizer-color-wrap{position:relative;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.plume-palette-toggle{border:1px solid #ded4e8;border-radius:8px;padding:6px 9px;background:#fff;color:#55436e;font-size:11px;white-space:nowrap;}
+.plume-customizer-color-wrap .plume-palette-scroll{position:absolute;z-index:100;top:100%;left:0;width:min(300px,calc(100vw - 24px));grid-template-columns:repeat(8,minmax(20px,1fr));padding:10px;background:#fff;border:1px solid #e8dced;border-radius:12px;box-shadow:0 12px 32px #34243d2b;max-height:38vh;overflow-y:auto;}
+@media(max-width:760px){.plume-typography-bar{overflow:visible!important;}.plume-customizer-color-wrap .plume-palette-scroll{position:fixed;left:8px;right:8px;top:auto;bottom:calc(82px + env(safe-area-inset-bottom));width:auto;max-height:35vh;}}
