@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -193,7 +193,7 @@ function renderVideoWorkspace() {
   const video = state.editingVideo || {};
   shell('<section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Mes vidéos.</h1><p>Réunissez vos vidéos et partagez un lien quand vous le souhaitez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>' +
   '<section class="container video-workspace">' +
-  '<div class="editor-panel video-editor-panel"><div class="panel-top"><div><span class="eyebrow">' + (video.id ? 'MODIFIER UNE VIDÉO' : 'NOUVELLE VIDÉO') + '</span><h2>' + (video.id ? 'Modifier ma vidéo' : 'Ajouter une vidéo') + '</h2></div><span class="editor-icon">▶</span></div>' +
+  '<div class="editor-panel video-editor-panel" ${state.showCreateForm || video.id ? "" : "hidden"}><div class="panel-top"><div><span class="eyebrow">' + (video.id ? 'MODIFIER UNE VIDÉO' : 'NOUVELLE VIDÉO') + '</span><h2>' + (video.id ? 'Modifier ma vidéo' : 'Ajouter une vidéo') + '</h2></div><span class="editor-icon">▶</span></div>' +
   '<form id="video-form" class="editor-form"><input type="hidden" name="id" value="' + e(video.id || '') + '">' +
   '<label>Titre<input name="title" required maxlength="140" placeholder="Le titre de votre vidéo…" value="' + e(video.title || '') + '"></label>' +
   '<label>Lien de la vidéo<input name="video_url" type="url" required maxlength="1000" placeholder="https://…" value="' + e(video.video_url || '') + '"></label>' +
@@ -221,11 +221,12 @@ function renderAtelier() {
   }
   const editing = state.editing || {};
   if (state.workspaceTab === 'videos') { renderVideoWorkspace(); return; }
+  if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) { renderGenericCreationWorkspace(); return; }
   shell(`
     <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Bonjour, ${e((state.user.user_metadata?.display_name || state.user.email?.split('@')[0] || 'auteur').split(' ')[0])}.</h1><p>Chaque texte avance à son rythme. Reprenez là où vous en étiez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
     <section class="container workspace-grid">
       
-      <div class="editor-panel">
+      <div class="editor-panel" ${state.showCreateForm || editing.id ? "" : "hidden"}>
         <div class="panel-top"><div><span class="eyebrow">${editing.id ? 'REPRENDRE UN TEXTE' : 'UNE NOUVELLE PAGE'}</span><h2>${editing.id ? 'Continuer mon texte' : 'Commencer à écrire'}</h2></div><span class="editor-icon">✎</span></div>
         <form id="work-form" class="editor-form">
           <input type="hidden" name="id" value="${e(editing.id || '')}">
@@ -234,7 +235,7 @@ function renderAtelier() {
           <div class="form-row"><label>Genre<select name="genre"><option ${(editing.genre || 'Texte libre') === 'Texte libre' ? 'selected' : ''}>Texte libre</option><option ${editing.genre === 'Roman' ? 'selected' : ''}>Roman</option><option ${editing.genre === 'Poésie' ? 'selected' : ''}>Poésie</option><option ${editing.genre === 'Nouvelle' ? 'selected' : ''}>Nouvelle</option><option ${editing.genre === 'Essai' ? 'selected' : ''}>Essai</option><option ${editing.genre === 'Théâtre' ? 'selected' : ''}>Théâtre</option><option ${editing.genre === 'Carnet' ? 'selected' : ''}>Carnet</option><option ${editing.genre === 'Conte' ? 'selected' : ''}>Conte</option></select></label><div class="word-count-box"><span class="word-count-number" id="word-count">${words(editing.body || '')}</span><span>mots</span></div></div>
           <label>Quelques mots sur ce texte <span class="optional">pour le retrouver</span><textarea name="summary" maxlength="1200" rows="2" placeholder="Quelle idée traverse ce texte ?">${e(editing.summary || '')}</textarea></label>
           <label>Votre texte<textarea class="body-editor" name="body" rows="11" placeholder="Laissez venir la première phrase…">${e(editing.body || '')}</textarea></label>
-          <div class="editor-actions"><button class="button button-primary" name="intent" value="draft" type="submit">Enregistrer le brouillon <span>↗</span></button><button class="button button-outline" name="intent" value="review" type="submit">Proposer à la relecture</button></div>
+          <div class="editor-actions"><button class="button button-primary" name="intent" value="draft" type="submit">Enregistrer le brouillon <span>↗</span></button><button class="button button-outline" name="intent" value="review" type="submit">Proposer à la relecture</button><button class="button button-quiet" type="button" data-creation-cancel>Annuler</button></div>
           <p class="editor-hint"><span>✳</span> Proposer à la relecture ne publie pas automatiquement votre texte. Une validation humaine est nécessaire.</p>
         </form>
       </div>
@@ -252,6 +253,45 @@ function renderAtelier() {
   });
 }
 
+
+
+const GENERIC_CREATION_KINDS = ['arts', 'dessins', 'musique', 'numerique', 'scene'];
+const GENERIC_CREATION_META = {
+  arts: { label: 'Mes arts visuels', singular: 'œuvre', icon: '✳', intro: 'Rassemblez peintures, photographies, affiches et créations visuelles.', categories: ['Peinture','Photographie','Graphisme','Art numérique','Autre'] },
+  dessins: { label: 'Mes dessins', singular: 'dessin', icon: '✎', intro: 'Gardez vos illustrations, croquis, bandes dessinées et personnages.', categories: ['Illustration','Croquis','Bande dessinée','Portrait','Autre'] },
+  musique: { label: 'Ma musique', singular: 'création sonore', icon: '♫', intro: 'Retrouvez chansons, compositions et créations sonores.', categories: ['Chanson','Instrumental','Spoken word','Podcast','Autre'] },
+  numerique: { label: 'Mes projets numériques', singular: 'projet', icon: '⌘', intro: 'Présentez vos sites, applications, jeux et expériences interactives.', categories: ['Site web','Application','Jeu','Prototype','Autre'] },
+  scene: { label: 'Scène & autres', singular: 'création', icon: '✦', intro: 'Réunissez danse, théâtre, mode, artisanat et créations singulières.', categories: ['Danse','Théâtre','Mode','Artisanat','Autre'] }
+};
+
+async function loadMyCreations() {
+  if (!supabase || !state.user) { state.myCreations = []; return; }
+  const { data, error } = await supabase.from('plume_creations').select('id,kind,title,description,media_url,category,created_at,updated_at').eq('author_id', state.user.id).order('updated_at', { ascending: false }).limit(100);
+  if (error) { console.warn('Créations Plume', error.message); toast('Impossible de charger vos créations. Vérifiez la migration plume_creations.', 'error'); return; }
+  state.myCreations = data || [];
+}
+
+function renderGenericCreationWorkspace() {
+  const kind = state.workspaceTab;
+  const meta = GENERIC_CREATION_META[kind] || GENERIC_CREATION_META.arts;
+  const editing = state.editingCreation || {};
+  const items = state.myCreations.filter(item => item.kind === kind);
+  const showForm = state.showCreateForm || Boolean(editing.id);
+  const form = showForm ? `<div class="editor-panel generic-creation-editor"><div class="panel-top"><div><span class="eyebrow">${editing.id ? 'MODIFIER' : 'NOUVELLE CRÉATION'}</span><h2>${editing.id ? 'Modifier ma création' : 'Ajouter ' + meta.singular}</h2></div><span class="editor-icon">${meta.icon}</span></div>
+    <form id="creation-form" class="editor-form"><input type="hidden" name="id" value="${e(editing.id || '')}"><input type="hidden" name="kind" value="${e(kind)}">
+      <label>Titre<input name="title" required maxlength="140" placeholder="Donnez un titre à votre création…" value="${e(editing.title || '')}"></label>
+      <label>Catégorie<select name="category">${meta.categories.map(item => `<option ${(editing.category || meta.categories[0]) === item ? 'selected' : ''}>${e(item)}</option>`).join('')}</select></label>
+      <label>Lien de la création <span class="optional">facultatif</span><input name="media_url" type="url" maxlength="1000" placeholder="https://…" value="${e(editing.media_url || '')}"></label>
+      <label>Description <span class="optional">facultatif</span><textarea name="description" rows="4" maxlength="1800" placeholder="Présentez votre création en quelques mots…">${e(editing.description || '')}</textarea></label>
+      <div class="editor-actions"><button class="button button-primary" type="submit">Enregistrer ${meta.singular} ↗</button><button class="button button-outline" type="button" data-creation-cancel>Annuler</button></div>
+      <p class="editor-hint">Cette fiche privée enregistre le titre, la catégorie, la description et un lien éventuel. Pour un fichier, ajoutez un lien accessible ; le téléversement direct sera raccordé séparément à R2.</p>
+    </form></div>` : '';
+  shell(`<section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>${e(meta.label)}.</h1><p>${e(meta.intro)}</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
+    <section class="container generic-creation-workspace">${form}
+      <section class="my-works-panel creation-list-panel"><div class="panel-top"><div><span class="eyebrow">VOTRE COLLECTION</span><h2>${e(meta.label)} <span class="count-pill">${items.length}</span></h2></div><button class="button button-primary" data-action="new-creation">Nouvelle création +</button></div>
+      ${items.length ? `<div class="my-work-list">${items.map(item => `<article class="my-work-item"><div class="my-work-symbol">${meta.icon}</div><div class="my-work-copy"><h3>${e(item.title)}</h3><p>${e(item.category || meta.label)} · ${e(formatDate(item.updated_at || item.created_at))}</p>${item.media_url ? `<a href="${e(item.media_url)}" target="_blank" rel="noopener noreferrer">Ouvrir la création ↗</a>` : ''}${item.description ? `<p class="creation-description">${e(item.description)}</p>` : ''}</div><button class="icon-button" data-edit-creation="${e(item.id)}" aria-label="Modifier ${e(item.title)}">✎</button></article>`).join('')}</div>` : `<div class="empty-state empty-works"><span>${meta.icon}</span><h3>Votre collection commence ici.</h3><p>Appuyez sur « Nouvelle création » pour ajouter votre première fiche.</p></div>`}
+    </section></section>`);
+}
 
 const R2_STORAGE_URL = 'https://aurore-plume.oualikevin6.workers.dev';
 const R2_CATEGORIES = [{"value":"manuscrits","label":"Manuscrits"},{"value":"couvertures","label":"Couvertures et images"},{"value":"documents","label":"Documents joints"},{"value":"autres","label":"Autres fichiers"}];
@@ -546,12 +586,15 @@ function openRead(id) {
 
 app.addEventListener('click', async (event) => {
   const workspaceTabButton = event.target.closest('[data-workspace-tab]');
-  if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editingVideo = null; if (state.workspaceTab === 'videos') await loadMyVideos(); render(); return; }
-  if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
-  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
+  if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; state.showCreateForm = true; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.showCreateForm = true; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
   const editVideoButton = event.target.closest('[data-edit-video]');
-  if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; render(); return; }
-  if (event.target.closest('[data-video-cancel]')) { state.editingVideo = null; render(); return; }
+  if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; state.showCreateForm = true; render(); return; }
+  if (event.target.closest('[data-action="new-creation"]')) { state.editingCreation = null; state.showCreateForm = true; render(); document.querySelector('#creation-form [name="title"]')?.focus(); return; }
+  const editCreationButton = event.target.closest('[data-edit-creation]');
+  if (editCreationButton) { state.editingCreation = state.myCreations.find((item) => item.id === editCreationButton.dataset.editCreation) || null; state.workspaceTab = state.editingCreation?.kind || 'arts'; state.showCreateForm = true; render(); return; }
+  if (event.target.closest('[data-video-cancel], [data-creation-cancel]')) { state.editingVideo = null; state.editing = null; state.editingCreation = null; state.showCreateForm = false; render(); return; }
   const pickFilesButton = event.target.closest('#r2-pick-files, #r2-pick-files-secondary');
   if (pickFilesButton) {
     const inputId = pickFilesButton.id === 'r2-pick-files-secondary' ? '#r2-files-input-secondary' : '#r2-files-input';
@@ -597,6 +640,7 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
+    state.workspaceTab = 'textes'; state.showCreateForm = true;
     state.view = 'atelier';
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -722,6 +766,30 @@ app.addEventListener('change', (event) => {
 
 app.addEventListener('submit', async (event) => {
   if (event.target.id === 'r2-upload-form') { event.preventDefault(); await uploadR2Files(event.target); return; }
+  if (event.target.id === 'creation-form') {
+    event.preventDefault();
+    if (!supabase || !state.user) { showAuth('signin'); return; }
+    const form = event.target; const data = new FormData(form); const id = String(data.get('id') || '');
+    const kind = String(data.get('kind') || state.workspaceTab);
+    if (!GENERIC_CREATION_KINDS.includes(kind)) { toast('Catégorie inconnue.', 'error'); return; }
+    const mediaUrl = String(data.get('media_url') || '').trim();
+    if (mediaUrl && !/^https?:\/\//i.test(mediaUrl)) { toast('Le lien doit commencer par https:// ou http://.', 'error'); return; }
+    const payload = { kind, title: String(data.get('title') || '').trim(), category: String(data.get('category') || 'Autre'), media_url: mediaUrl || null, description: String(data.get('description') || '').trim(), updated_at: new Date().toISOString() };
+    const button = form.querySelector('button[type="submit"]'); if (button) button.disabled = true;
+    try {
+      const result = id
+        ? await supabase.from('plume_creations').update(payload).eq('id', id).eq('author_id', state.user.id)
+        : await supabase.from('plume_creations').insert({ ...payload, author_id: state.user.id });
+      if (result.error) throw result.error;
+      toast(id ? 'Création mise à jour.' : 'Création enregistrée.');
+      state.editingCreation = null; state.showCreateForm = false; await loadMyCreations(); render();
+    } catch (error) {
+      console.error('Aurore Plume creation save', error);
+      toast(error.message || 'La création n’a pas pu être enregistrée. Vérifiez la migration plume_creations.', 'error');
+      if (button) button.disabled = false;
+    }
+    return;
+  }
   if (event.target.id === 'video-form') {
     event.preventDefault();
     if (!supabase || !state.user) { showAuth('signin'); return; }
@@ -732,7 +800,7 @@ app.addEventListener('submit', async (event) => {
     try {
       const result = id ? await supabase.from('plume_videos').update(payload).eq('id', id).eq('author_id', state.user.id) : await supabase.from('plume_videos').insert({ title: payload.title, video_url: payload.video_url, category: payload.category, description: payload.description, author_id: state.user.id });
       if (result.error) throw result.error;
-      toast(id ? 'Vidéo mise à jour.' : 'Vidéo enregistrée.'); state.editingVideo = null; await loadMyVideos(); render();
+      toast(id ? 'Vidéo mise à jour.' : 'Vidéo enregistrée.'); state.editingVideo = null; state.showCreateForm = false; await loadMyVideos(); render();
     } catch (error) { console.error('Aurore Plume video save', error); toast(error.message || 'La vidéo n’a pas pu être enregistrée. Appliquez la migration SQL plume_videos.', 'error'); if (button) button.disabled = false; }
     return;
   }
@@ -761,7 +829,7 @@ app.addEventListener('submit', async (event) => {
     const { error } = await query;
     if (error) throw error;
     toast(intent === 'review' ? 'Texte envoyé à la file de relecture.' : 'Brouillon enregistré.');
-    state.editing = null;
+    state.editing = null; state.showCreateForm = false;
     await loadMyWorks();
     render();
   } catch (error) {
