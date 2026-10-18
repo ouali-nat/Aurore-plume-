@@ -780,7 +780,7 @@ app.addEventListener('submit', async (event) => {
     try {
       let mediaKey = String(data.get('existing_media_key') || '');
       if (selectedFile) {
-        const safeName = selectedFile.name.normalize('NFKC').replace(/[^\\p{L}\\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(-160) || 'creation';
+        const safeName = selectedFile.name.normalize('NFKC').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-160) || 'creation';
         mediaKey = kind + '/' + Date.now() + '-' + safeName;
         await r2Request('/api/storage?key=' + encodeURIComponent(mediaKey), { method: 'POST', headers: { 'Content-Type': selectedFile.type || 'application/octet-stream' }, body: selectedFile });
       }
