@@ -240,6 +240,27 @@ function travelEditorHistory(direction) {
   if (undo) undo.disabled = state.editorHistoryIndex <= 0;
   if (redo) redo.disabled = state.editorHistoryIndex >= state.editorHistory.length - 1;
 }
+async function hydrateR2Images(root) {
+  if (!root || !state.user) return;
+  const images = [...root.querySelectorAll('img[src^="r2:"]')];
+  await Promise.all(images.map(async (img) => {
+    const key = img.getAttribute('src')?.slice(3);
+    if (!key || img.dataset.r2Loading === '1' || img.dataset.r2Loaded === '1') return;
+    img.dataset.r2Loading = '1';
+    try {
+      const response = await r2Request('/api/storage?key=' + encodeURIComponent(key));
+      const blob = await response.blob();
+      if (!blob.type.startsWith('image/')) throw new Error('Le fichier stocké n’est pas une image.');
+      const objectUrl = URL.createObjectURL(blob);
+      img.onload = () => { img.dataset.r2Loaded = '1'; img.dataset.r2Loading = ''; };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); img.dataset.r2Loading = ''; };
+      img.src = objectUrl;
+    } catch (error) {
+      img.dataset.r2Loading = '';
+      console.warn('Image du manuscrit non chargée', error.message);
+    }
+  }));
+}
 function editorCanvasMarkup() {
   const page = state.editorPages[state.editorPageIndex] || { blocks: [] };
   return page.blocks.map((b) => {
@@ -252,7 +273,7 @@ function editorCanvasMarkup() {
   }).join('');
 }
 function updateEditorCanvas() {
-  const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) canvas.innerHTML=editorCanvasMarkup();
+  const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) { canvas.innerHTML=editorCanvasMarkup(); void hydrateR2Images(canvas); }
   const thumbs=document.querySelector('#plume-page-thumbnails');
   if(thumbs) thumbs.innerHTML=state.editorPages.map((page,index)=>'<button type="button" class="plume-page-thumb'+(index===state.editorPageIndex?' is-current':'')+'" data-select-page="'+index+'" aria-label="Ouvrir la page '+(index+1)+'"><span class="plume-page-thumb-preview">'+(page.blocks||[]).slice(0,5).map((block)=>'<i class="thumb-block thumb-'+e(block.type||'text')+'"></i>').join('')+'</span><b>Page '+(index+1)+'</b><small>'+((page.blocks||[]).length)+' élément'+((page.blocks||[]).length===1?'':'s')+'</small></button>').join('');
   const count=document.getElementById('editor-page-count'); if(count&&state.editorTab==='manuscript') count.textContent=String(state.editorPageIndex+1).padStart(2,'0')+' / '+String(state.editorPages.length).padStart(2,'0');
@@ -361,7 +382,7 @@ function updateEditorPreviews() {
     if (node) node.textContent = genre;
   });
   const previewBody = document.getElementById('editor-preview-body');
-  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(body) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
+  if (previewBody) { previewBody.innerHTML = manuscriptPreviewHtml(body) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>'; void hydrateR2Images(previewBody); }
   const previewSummary = document.getElementById('editor-preview-summary');
   if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
   const counter = document.getElementById('word-count');
@@ -957,6 +978,8 @@ async function buildWorkPdfBlob(work) {
   stage.appendChild(pages);
   document.body.appendChild(stage);
   try {
+    await hydrateR2Images(stage);
+    await Promise.all([...stage.querySelectorAll('img')].map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; })));
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a5',compress:true});
     const allPages=[titlePage,...pages.querySelectorAll('.plume-rendered-page')];
     for(let i=0;i<allPages.length;i++){
@@ -1414,7 +1437,7 @@ app.addEventListener('change', (event) => {
     const file=imageInput.files?.[0];if(!file)return;
     if(!file.type.startsWith('image/')){toast('Choisissez une image.','error');imageInput.value='';return;}
     if(file.size>1500000){toast('Image limitée à 1,5 Mo pour garder le brouillon léger.','error');imageInput.value='';return;}
-    const reader=new FileReader();reader.onload=()=>{const page=state.editorPages[state.editorPageIndex];if(page){const id='image-'+Date.now();page.blocks.push({id,type:'image',src:String(reader.result),x:12,y:12,w:58,h:32});state.editorSelectedBlock=id;updateEditorCanvas();syncEditorCanvas();}};reader.readAsDataURL(file);imageInput.value='';return;
+    const reader=new FileReader();reader.onload=()=>{const page=state.editorPages[state.editorPageIndex];if(page){const id='image-'+Date.now();page.blocks.push({id,type:'image',src:String(reader.result),x:12,y:12,w:58,h:32});state.editorSelectedBlock=id;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}};reader.readAsDataURL(file);imageInput.value='';return;
   }
   const coverInput = event.target;
   if (coverInput instanceof HTMLInputElement && coverInput.name === 'cover_file') {
@@ -1575,7 +1598,23 @@ app.addEventListener('submit', async (event) => {
   if (intent === 'publish') { payload.publication_status = publishVisibility === 'public' ? 'published' : 'draft'; payload.is_public = publishVisibility === 'public'; if (publishVisibility === 'public') payload.published_at = new Date().toISOString(); }
   const buttons = [...form.querySelectorAll('button[type="submit"]')];
   buttons.forEach((button) => { button.disabled = true; });
+  const uploadedInlineKeys = [];
   try {
+    // Stocker les images intégrées dans R2 et conserver uniquement leurs clés dans la base.
+    for (const page of (state.editorPages || [])) {
+      for (const block of (page.blocks || [])) {
+        if (block.type !== 'image' || !String(block.src || '').startsWith('data:image/')) continue;
+        const response = await fetch(String(block.src));
+        const imageBlob = await response.blob();
+        if (!imageBlob.type.startsWith('image/')) throw new Error('Une image du document est invalide. Réinsérez-la puis réessayez.');
+        const extension = (imageBlob.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'png';
+        const key = 'manuscript-images/' + state.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + extension;
+        await r2Request('/api/storage?key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': imageBlob.type }, body: imageBlob });
+        uploadedInlineKeys.push(key);
+        block.src = 'r2:' + key;
+      }
+    }
+    payload.body = state.editorPages.length ? editorPagesToBody() : String(data.get('body') || '');
     if (selectedCover) {
       const safeName = selectedCover.name.normalize('NFKC').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-140) || 'couverture';
       uploadedCoverKey = 'covers/' + Date.now() + '-' + safeName;
@@ -1626,6 +1665,8 @@ app.addEventListener('submit', async (event) => {
   } catch (error) {
     console.error('Aurore Plume save', error);
     if (uploadedCoverKey) { try { await r2Request('/api/storage?key=' + encodeURIComponent(uploadedCoverKey), { method: 'DELETE' }); } catch {} }
+    for (const key of uploadedInlineKeys) { try { await r2Request('/api/storage?key=' + encodeURIComponent(key), { method: 'DELETE' }); } catch {} }
+    for (const page of (state.editorPages || [])) for (const block of (page.blocks || [])) { if (block.type === 'image' && String(block.src || '').startsWith('r2:') && uploadedInlineKeys.includes(block.src.slice(3))) block.src = ''; }
     toast(error.message || 'Le texte n’a pas pu être enregistré.', 'error');
     buttons.forEach((button) => { button.disabled = false; });
   }
