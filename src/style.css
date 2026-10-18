@@ -508,3 +508,13 @@ html:has(.editor-only-shell),body:has(.editor-only-shell){height:auto;min-height
 .plume-palette-toggle{border:1px solid #ded4e8;border-radius:8px;padding:6px 9px;background:#fff;color:#55436e;font-size:11px;white-space:nowrap;}
 .plume-customizer-color-wrap .plume-palette-scroll{position:absolute;z-index:100;top:100%;left:0;width:min(300px,calc(100vw - 24px));grid-template-columns:repeat(8,minmax(20px,1fr));padding:10px;background:#fff;border:1px solid #e8dced;border-radius:12px;box-shadow:0 12px 32px #34243d2b;max-height:38vh;overflow-y:auto;}
 @media(max-width:760px){.plume-typography-bar{overflow:visible!important;}.plume-customizer-color-wrap .plume-palette-scroll{position:fixed;left:8px;right:8px;top:auto;bottom:calc(82px + env(safe-area-inset-bottom));width:auto;max-height:35vh;}}
+
+
+/* Arrondir les contours est intégré à la barre de personnalisation, sans bloc flottant. */
+.plume-rounding-toolbar{position:relative;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.plume-rounding-toolbar>[data-editor-rounding]{min-height:32px;padding:0 9px;border:1px solid #e5dce9;border-radius:8px;background:#fff;color:#554663;font-size:11px;white-space:nowrap;}
+.plume-rounding-toolbar .plume-rounding-control{position:absolute;z-index:120;left:0;top:calc(100% + 6px);width:min(250px,calc(100vw - 24px));padding:10px 12px;border:1px solid #e1d8e6;border-radius:12px;background:#fff;box-shadow:0 10px 28px #32263c20;}
+.plume-rounding-toolbar .plume-rounding-control[hidden]{display:none!important;}
+.plume-rounding-toolbar .plume-rounding-control input{width:100%;touch-action:pan-x;}
+.plume-color-popover{display:none!important;}
+@media(max-width:760px){.plume-rounding-toolbar .plume-rounding-control{position:fixed;left:12px;right:12px;top:auto;bottom:calc(82px + env(safe-area-inset-bottom));width:auto;}}
