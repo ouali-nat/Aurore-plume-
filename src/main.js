@@ -1481,7 +1481,7 @@ app.addEventListener('change', (event) => {
   if (message) message.textContent = files.length ? 'Fichier prêt à être envoyé.' : '';
 });
 
-app.addEventListener('submit', async (event) => {
+document.addEventListener('submit', async (event) => {
   if (event.target.id === 'draft-create-form') {
     event.preventDefault();
     if (!supabase || !state.user) { showAuth('signin'); return; }
