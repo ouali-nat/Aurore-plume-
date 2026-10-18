@@ -295,3 +295,48 @@
 }
 @media(prefers-reduced-motion:reduce){.editor-tab-panel:not([hidden]){animation:none!important}.my-work-item.draft-work-item,.editor-command{transition:none!important}}
 @media print{.editor-commandbar,.editor-paper-ruler,.editor-paper-footer{display:none!important}.editor-paper-desk{padding:0!important;border:0!important;background:#fff!important}.editor-paper-sheet{min-height:0!important;max-width:none!important;padding:0!important;box-shadow:none!important;border:0!important}.dedicated-body-editor{border:0!important;box-shadow:none!important}}
+/* Aurore Plume — éditeur autonome et création rapide de brouillon */
+.editor-only-shell{min-height:100dvh;background:#eae8ec}
+.editor-only-shell .text-editor-shell{min-height:100dvh;width:100%;max-width:none;margin:0;padding:12px clamp(10px,2.5vw,28px) 24px;background:#f5f3f6}
+.editor-only-shell .text-editor-top{position:relative;max-width:1500px;margin:0 auto 10px;padding:0 44px 0 0;border:0}
+.editor-only-shell .editor-document-title{margin:0;font:normal clamp(18px,2.4vw,27px)/1.15 "DM Serif Display",Georgia,serif;color:#30283b;overflow-wrap:anywhere}
+.editor-exit-button{position:absolute;right:0;top:0;width:36px;height:36px;display:grid;place-items:center;border:1px solid #e2dce7;border-radius:50%;background:#fff;color:#62536f;font-size:24px;line-height:1}
+.editor-only-shell .editor-save-state{font-size:10px;padding:6px 10px}
+.editor-only-shell .editor-commandbar{position:sticky;top:0;max-width:1500px;margin:0 auto 12px;border-radius:12px}
+.editor-only-shell .editor-command-group{gap:6px}
+.editor-only-shell .dedicated-work-form{max-width:1500px;margin:0 auto}
+.editor-only-shell .editor-tab-panel:not([hidden]){max-width:1500px;margin:0 auto}
+.editor-only-shell .editor-panel-intro,.editor-only-shell .editor-hint,.editor-only-shell .manuscript-tools>div:first-child,.editor-only-shell .editor-paper-ruler{display:none!important}
+.editor-only-shell .cover-panel:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,250px);align-items:start;gap:18px}
+.editor-only-shell .cover-editor-grid{display:contents}
+.editor-only-shell .editor-cover-preview-stage{width:100%;max-width:540px;min-height:calc(100dvh - 150px);aspect-ratio:3/4;margin:0 auto;border-radius:3px;box-shadow:0 15px 42px #30213b17}
+.editor-only-shell .cover-editor-controls{position:sticky;top:80px;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #e2dce7;border-radius:14px;background:#fff}
+.editor-only-shell .cover-upload-button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px;border:1px solid #ded4e7;border-radius:10px;background:#f8f4fb;color:#57456b;font-size:12px;font-weight:700;cursor:pointer}
+.editor-only-shell .cover-upload-button input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.editor-only-shell .cover-upload-button:focus-within{outline:3px solid #b7a7de;outline-offset:3px}
+.editor-only-shell .editor-paper-desk{min-height:calc(100dvh - 140px);padding:clamp(10px,2vw,24px)}
+.editor-only-shell .editor-paper-sheet{min-height:calc(100dvh - 190px);max-width:900px}
+.editor-only-shell .editor-actionbar{position:sticky;bottom:0;z-index:10;display:flex;justify-content:flex-end;gap:8px;max-width:1500px;margin:12px auto 0;padding:10px;border:1px solid #e2dce7;border-radius:12px;background:#ffffffed;backdrop-filter:blur(12px)}
+.draft-create-screen{min-height:calc(100dvh - 150px);display:grid;place-items:start center;padding:clamp(20px,6vw,64px) 16px}
+.draft-create-card{position:relative;width:min(100%,520px);display:grid;gap:16px;padding:clamp(22px,5vw,38px);border:1px solid #e5dce8;border-radius:22px;background:#fff;box-shadow:0 22px 65px #30213b0d}
+.draft-create-card h1{margin:0 0 5px;font:normal clamp(26px,5vw,34px)/1.1 "DM Serif Display",Georgia,serif;color:#30283b}
+.draft-create-card label{display:grid;gap:7px;color:#51465d;font-size:12px;font-weight:700}
+.draft-create-card input,.draft-create-card textarea,.draft-create-card select{width:100%;min-width:0;padding:12px 13px;border:1px solid #e3dce7;border-radius:11px;background:#fdfcfe;color:#30283b;font-size:14px;font-weight:400}
+.draft-create-card textarea{resize:vertical;line-height:1.6}
+.draft-create-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:1px solid #e8e0eb;border-radius:50%;background:#fff;color:#675774;font-size:23px}
+.draft-create-submit{justify-self:start;margin-top:3px}
+.my-work-item.draft-work-item .draft-card-summary{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:#62596b;font-size:11px;line-height:1.5;margin:0 0 8px}
+.my-work-item.draft-work-item .draft-card-meta{font-size:9px;color:#948a9a;line-height:1.4;margin:0 0 9px}
+@media(max-width:760px){
+ .editor-only-shell .text-editor-shell{padding:8px 8px 16px}
+ .editor-only-shell .editor-commandbar{top:0}
+ .editor-only-shell .cover-panel:not([hidden]){grid-template-columns:minmax(0,1fr);gap:10px}
+ .editor-only-shell .editor-cover-preview-stage{min-height:0;height:min(66dvh,680px);width:auto;max-width:100%;aspect-ratio:3/4}
+ .editor-only-shell .cover-editor-controls{position:static;padding:9px}
+ .editor-only-shell .editor-paper-desk{min-height:0}
+ .editor-only-shell .editor-paper-sheet{min-height:68dvh}
+ .editor-only-shell .editor-actionbar{flex-wrap:wrap;justify-content:stretch}
+ .editor-only-shell .editor-actionbar .button{flex:1;min-width:130px}
+ .draft-create-screen{min-height:calc(100dvh - 110px);padding:20px 12px}
+ .draft-create-card{border-radius:18px}
+}
