@@ -913,7 +913,7 @@ app.addEventListener('click', async (event) => {
   const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){addEditorBlock('shape',shapeButton.dataset.addShape);return;}
   if(event.target.closest('[data-block-delete]')){const page=state.editorPages[state.editorPageIndex];if(page&&state.editorSelectedBlock)page.blocks=page.blocks.filter((b)=>b.id!==state.editorSelectedBlock);state.editorSelectedBlock=null;updateEditorCanvas();syncEditorCanvas();return;}
   const styleButton=event.target.closest('[data-text-style]');
-  if(styleButton){const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===state.editorSelectedBlock);if(!block||block.type!=='text'){toast('Sélectionnez une zone de texte.');return;}const kind=styleButton.dataset.textStyle;if(kind==='font')block.font=styleButton.value;else if(kind==='size')block.size=Number(styleButton.value);else if(kind==='color')block.color=styleButton.value;else if(kind==='bold')block.bold=!block.bold;else if(kind==='italic')block.italic=!block.italic;else if(kind.startsWith('align-'))block.align=kind.slice(6);updateEditorCanvas();syncEditorCanvas();return;}
+  if(styleButton){if(styleButton.tagName!=='BUTTON')return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===state.editorSelectedBlock);if(!block||block.type!=='text'){toast('Sélectionnez une zone de texte.');return;}const kind=styleButton.dataset.textStyle;if(kind==='bold')block.bold=!block.bold;else if(kind==='italic')block.italic=!block.italic;else if(kind.startsWith('align-'))block.align=kind.slice(6);updateEditorCanvas();syncEditorCanvas();return;}
 
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
@@ -1001,7 +1001,7 @@ app.addEventListener('pointerdown',(event)=>{
 });
 app.addEventListener('pointermove',(event)=>{if(!plumeBlockDrag)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===plumeBlockDrag.id);if(!b)return;const dx=(event.clientX-plumeBlockDrag.startX)/Math.max(1,plumeBlockDrag.cw)*100,dy=(event.clientY-plumeBlockDrag.startY)/Math.max(1,plumeBlockDrag.ch)*100;if(plumeBlockDrag.resizing){b.w=Math.max(12,Math.min(95-b.x,plumeBlockDrag.w+dx));b.h=Math.max(7,Math.min(95-b.y,plumeBlockDrag.h+dy));}else{b.x=Math.max(0,Math.min(95-b.w,plumeBlockDrag.x+dx));b.y=Math.max(0,Math.min(95-b.h,plumeBlockDrag.y+dy));}const n=document.querySelector('.plume-canvas-block.is-selected');if(n){n.style.left=b.x+'%';n.style.top=b.y+'%';n.style.width=b.w+'%';n.style.height=b.h+'%';}});
 app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();}});
-app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){b.text=n.innerText;const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';}});
+app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){b.text=n.innerText;const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();updateEditorPreviews();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';}});
 app.addEventListener('click',(event)=>{const n=event.target.closest('.plume-canvas-block');if(!n)return;state.editorSelectedBlock=n.dataset.blockId;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===state.editorSelectedBlock));});
 let editorTouchStartX = null;
 let editorTouchStartY = null;
@@ -1018,7 +1018,8 @@ app.addEventListener('touchend', (event) => {
   const dy = event.changedTouches[0].clientY - editorTouchStartY;
   const inEditor = event.target.closest('.text-editor-shell');
   if (inEditor && !editorTouchStartedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) {
-    navigateEditorPage(dx < 0 ? 1 : -1);
+    if (state.editorTab === 'manuscript') navigateCanvasPage(dx < 0 ? 1 : -1);
+    else navigateEditorPage(dx < 0 ? 1 : -1);
   }
   editorTouchStartX = null;
   editorTouchStartY = null;
@@ -1117,6 +1118,8 @@ app.addEventListener('cancel', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  const styleControl=event.target.closest('[data-text-style]');
+  if(styleControl && styleControl.tagName!=='BUTTON'){const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===state.editorSelectedBlock);if(block&&block.type==='text'){const kind=styleControl.dataset.textStyle;if(kind==='font')block.font=styleControl.value;else if(kind==='size')block.size=Number(styleControl.value);else if(kind==='color')block.color=styleControl.value;updateEditorCanvas();syncEditorCanvas();}}
   const imageInput=event.target;
   if(imageInput instanceof HTMLInputElement&&imageInput.id==='plume-image-file'){
     const file=imageInput.files?.[0];if(!file)return;
