@@ -17,6 +17,8 @@ let overlayOpen = false;
 let touchStartX = null;
 let touchStartY = null;
 let lastRoot = null;
+let previousActive = 0;
+let gestureStartTarget = null;
 
 function safeText(value) {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -33,7 +35,8 @@ function navMarkup() {
 
 function pageMarkup() {
   const c = channels[active];
-  return `<section class="creative-page ${c.style}" aria-label="${safeText(c.label)}">
+  const directionClass = active >= previousActive ? 'enter-from-right' : 'enter-from-left';
+  return `<section class="creative-page ${c.style} ${directionClass}" aria-label="${safeText(c.label)}" aria-live="polite">
     <div class="creative-page-top"><span class="creative-eyebrow"><span class="creative-eyebrow-dot"></span>${c.kicker}</span><span class="creative-index">0${active + 1} <i>/</i> 0${channels.length}</span></div>
     <div class="creative-hero-grid">
       <div class="creative-copy">
@@ -53,7 +56,10 @@ function pageMarkup() {
 }
 
 function showChannel(index) {
-  active = Math.max(0, Math.min(channels.length - 1, index));
+  const next = Math.max(0, Math.min(channels.length - 1, index));
+  if (next === active && overlayOpen) return;
+  previousActive = active;
+  active = next;
   overlayOpen = true;
   const main = document.querySelector('#app main');
   if (!main) return;
@@ -79,13 +85,21 @@ function syncTabs() {
 
 function enhance() {
   const root = document.querySelector('#app');
-  if (!root || root === lastRoot && root.querySelector('.creative-rail')) return;
-  lastRoot = root;
-  const header = root.querySelector('.site-header');
+  if (!root) return;
   const main = root.querySelector('main');
-  if (!header || !main || header.querySelector('.creative-rail')) return;
+  if (!main) return;
+  // Give the existing home page a lifted, editorial feel without changing its content.
+  main.querySelectorAll('.feature-card, .work-card, .closing-band, .hero-art, .paper-card, .floating-note').forEach((el, index) => {
+    if (!el.classList.contains('plume-float-ready')) {
+      el.classList.add('plume-float-ready');
+      el.style.setProperty('--float-delay', `${(index % 5) * 90}ms`);
+    }
+  });
+  const header = root.querySelector('.site-header');
+  if (!header || header.querySelector('.creative-rail')) return;
   header.insertAdjacentHTML('afterend', navMarkup());
-  // Preserve the existing literary home page; category pages open from the new rail.
+  lastRoot = root;
+  // The normal vertical page scroll never changes the selected creative universe.
 }
 
 document.addEventListener('click', event => {
@@ -107,14 +121,16 @@ document.addEventListener('touchstart', event => {
   if (!overlayOpen || !event.changedTouches?.length) return;
   touchStartX = event.changedTouches[0].clientX;
   touchStartY = event.changedTouches[0].clientY;
+  gestureStartTarget = event.target;
 }, { passive: true });
 
 document.addEventListener('touchend', event => {
   if (!overlayOpen || touchStartX === null || !event.changedTouches?.length) return;
   const dx = event.changedTouches[0].clientX - touchStartX;
   const dy = event.changedTouches[0].clientY - touchStartY;
-  if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.25) showChannel(active + (dx < 0 ? 1 : -1));
-  touchStartX = null; touchStartY = null;
+  const startedOnControl = gestureStartTarget?.closest?.('button, a, input, textarea, select');
+  if (!startedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) showChannel(active + (dx < 0 ? 1 : -1));
+  touchStartX = null; touchStartY = null; gestureStartTarget = null;
 }, { passive: true });
 
 document.addEventListener('keydown', event => {
