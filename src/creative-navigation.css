@@ -59,3 +59,21 @@
 @keyframes creative-arrive{from{opacity:.3;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
 @media(max-width:720px){.creative-rail{padding:10px 14px 11px}.creative-rail-head{margin-bottom:7px}.creative-rail-hint{font-size:9px}.creative-tab{min-height:42px;padding:0 12px;gap:7px}.creative-page{min-height:calc(100svh - 145px);padding:24px 20px 22px}.creative-hero-grid{grid-template-columns:1fr;gap:5px;margin:34px auto 28px}.creative-copy h1{font-size:clamp(43px,12vw,62px);letter-spacing:-1.7px;margin-bottom:17px}.creative-copy h1:after{margin-top:17px}.creative-intro{font-size:14px;line-height:1.75;margin-bottom:18px}.creative-tags{gap:6px;margin-bottom:20px}.creative-tags span{font-size:10px;padding:7px 9px}.creative-artwork{min-height:270px;margin-top:5px}.creative-art-main{width:min(57%,230px)}.creative-art-symbol{font-size:82px}.sticker-one{right:3%;top:15%}.sticker-two{left:1%;bottom:11%}.creative-bottom{padding:17px 0}.creative-bottom-mark{font-size:39px}.creative-bottom p{max-width:290px}.creative-page-controls>button span{display:none}}
 @media(prefers-reduced-motion:reduce){.creative-page{animation:none}.creative-tab,.creative-progress button{transition:none}}
+
+
+/* Polish: page changes respond to deliberate horizontal gestures only. */
+.creative-page{touch-action:pan-y;will-change:transform,opacity}
+.creative-page.enter-from-right{animation:creative-enter-right .34s cubic-bezier(.2,.7,.25,1) both}
+.creative-page.enter-from-left{animation:creative-enter-left .34s cubic-bezier(.2,.7,.25,1) both}
+@keyframes creative-enter-right{from{opacity:.25;transform:translate3d(28px,0,0) scale(.992);filter:blur(2px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}
+@keyframes creative-enter-left{from{opacity:.25;transform:translate3d(-28px,0,0) scale(.992);filter:blur(2px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}
+.plume-float-ready{transform:translateZ(0);transition:transform .28s ease,box-shadow .28s ease}
+.feature-card.plume-float-ready,.work-card.plume-float-ready,.closing-band.plume-float-ready{animation:plume-card-arrive .55s cubic-bezier(.2,.7,.25,1) both;animation-delay:var(--float-delay,0ms)}
+.hero-art.plume-float-ready .paper-card{animation:plume-paper-float 6s ease-in-out infinite}
+.floating-note.plume-float-ready{animation:plume-note-float 5s ease-in-out infinite;animation-delay:var(--float-delay,0ms)}
+.feature-card.plume-float-ready:hover,.work-card.plume-float-ready:hover{transform:translateY(-6px);box-shadow:0 22px 42px #33274614}
+@keyframes plume-card-arrive{from{opacity:.55;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes plume-paper-float{0%,100%{translate:0 0;rotate:2deg}50%{translate:0 -7px;rotate:1deg}}
+@keyframes plume-note-float{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@media(hover:none){.feature-card.plume-float-ready:hover,.work-card.plume-float-ready:hover{transform:none;box-shadow:none}}
+@media(prefers-reduced-motion:reduce){.creative-page.enter-from-right,.creative-page.enter-from-left,.plume-float-ready,.hero-art.plume-float-ready .paper-card,.floating-note.plume-float-ready{animation:none!important;transition:none!important}}
