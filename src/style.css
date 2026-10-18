@@ -518,3 +518,11 @@ html:has(.editor-only-shell),body:has(.editor-only-shell){height:auto;min-height
 .plume-rounding-toolbar .plume-rounding-control input{width:100%;touch-action:pan-x;}
 .plume-color-popover{display:none!important;}
 @media(max-width:760px){.plume-rounding-toolbar .plume-rounding-control{position:fixed;left:12px;right:12px;top:auto;bottom:calc(82px + env(safe-area-inset-bottom));width:auto;}}
+
+
+/* Palette de couleurs refermable : bouton dédié, clic extérieur et retour Android. */
+.plume-customizer-color-wrap .plume-palette-scroll{display:grid;grid-template-columns:repeat(8,minmax(20px,1fr));gap:5px;}
+.plume-customizer-color-wrap .plume-palette-scroll[hidden]{display:none!important;}
+.plume-customizer-color-wrap .plume-palette-scroll .plume-palette-close{grid-column:1/-1;width:100%;min-height:34px;margin-bottom:3px;border:1px solid #e3d9e9;border-radius:8px;background:#f8f4fb;color:#5d4b6c;font-size:12px;font-weight:600;touch-action:manipulation;}
+.plume-typography-bar .plume-compact-color{display:none!important;}
+@media(max-width:760px){.plume-customizer-color-wrap .plume-palette-scroll{grid-template-columns:repeat(8,minmax(20px,1fr));max-height:35vh;overflow-y:auto;overscroll-behavior:contain;}}
