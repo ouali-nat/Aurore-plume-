@@ -358,6 +358,7 @@ function renderTextEditor() {
   shell(`
     <section class="text-editor-shell">
       <div class="text-editor-top">
+        <button type="button" class="editor-exit-button" data-editor-back aria-label="Fermer l’éditeur">×</button>
         <div class="text-editor-heading">
           <h1 class="editor-document-title">${e(work.title || 'Sans titre')}</h1>
           <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
@@ -404,14 +405,13 @@ function renderTextEditor() {
           <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
         <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
-          <div class="editor-panel-intro"><div><span class="eyebrow">IDENTITÉ VISUELLE</span><h2>Donnez un visage à votre œuvre.</h2><p>Importez une couverture image. Elle restera privée dans votre espace de stockage.</p></div></div>
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
               <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}>
               <div class="editor-cover-overlay"><span id="editor-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
             </div>
-            <div class="cover-editor-controls"><span class="eyebrow">VOTRE COUVERTURE</span><h3>Importez votre image</h3><p>Utilisez une illustration créée par vous ou un visuel que vous avez le droit d’utiliser. Les images sont limitées à 10 Mo.</p><label>Choisir une image<input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label><p class="editor-hint">Les modèles de couverture Aurore et leur personnalisation seront enrichis progressivement. Votre manuscrit reste indépendant de cette image.</p><button class="button button-outline" type="button" data-editor-preview-refresh>Actualiser l’aperçu</button></div>
+            <div class="cover-editor-controls"><label class="cover-upload-button">▧ <span>Importer une couverture</span><input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label></div>
           </div>
         </section>
         <section class="editor-tab-panel layout-panel" id="editor-panel-layout" role="tabpanel" ${state.editorTab === 'layout' ? '' : 'hidden'}>
@@ -505,7 +505,7 @@ function renderAtelier() {
       
       <aside class="my-works-panel">
         <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillon privé <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
+        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><p class="draft-card-meta">${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
