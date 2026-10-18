@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], editing: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -182,6 +182,28 @@ function statusLabel(work) {
   return ['Brouillon', 'status-draft'];
 }
 
+async function loadMyVideos() {
+  if (!supabase || !state.user) { state.myVideos = []; return; }
+  const { data, error } = await supabase.from('plume_videos').select('id,title,description,video_url,category,created_at,updated_at').eq('author_id', state.user.id).order('updated_at', { ascending: false }).limit(60);
+  if (error) { console.warn('Vidéos Plume', error.message); toast('Impossible de charger vos vidéos. Vérifiez que la migration plume_videos a été appliquée.', 'error'); return; }
+  state.myVideos = data || [];
+}
+
+function renderVideoWorkspace() {
+  const video = state.editingVideo || {};
+  shell('<section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Mes vidéos.</h1><p>Réunissez vos vidéos et partagez un lien quand vous le souhaitez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>' +
+  '<section class="container video-workspace"><nav class="workspace-tabs" aria-label="Mon atelier"><button class="workspace-tab" data-workspace-tab="textes">Mes textes</button><button class="workspace-tab active" data-workspace-tab="videos">Mes vidéos</button></nav>' +
+  '<div class="editor-panel video-editor-panel"><div class="panel-top"><div><span class="eyebrow">' + (video.id ? 'MODIFIER UNE VIDÉO' : 'NOUVELLE VIDÉO') + '</span><h2>' + (video.id ? 'Modifier ma vidéo' : 'Ajouter une vidéo') + '</h2></div><span class="editor-icon">▶</span></div>' +
+  '<form id="video-form" class="editor-form"><input type="hidden" name="id" value="' + e(video.id || '') + '">' +
+  '<label>Titre<input name="title" required maxlength="140" placeholder="Le titre de votre vidéo…" value="' + e(video.title || '') + '"></label>' +
+  '<label>Lien de la vidéo<input name="video_url" type="url" required maxlength="1000" placeholder="https://…" value="' + e(video.video_url || '') + '"></label>' +
+  '<label>Catégorie<select name="category"><option ' + ((video.category || 'Création') === 'Création' ? 'selected' : '') + '>Création</option><option ' + (video.category === 'Lecture' ? 'selected' : '') + '>Lecture</option><option ' + (video.category === 'Tutoriel' ? 'selected' : '') + '>Tutoriel</option><option ' + (video.category === 'Autre' ? 'selected' : '') + '>Autre</option></select></label>' +
+  '<label>Description <span class="optional">facultatif</span><textarea name="description" rows="3" maxlength="1200" placeholder="Quelques mots sur cette vidéo…">' + e(video.description || '') + '</textarea></label>' +
+  '<div class="editor-actions"><button class="button button-primary" type="submit">Enregistrer la vidéo ↗</button><button class="button button-outline" type="button" data-video-cancel>Annuler</button></div><p class="editor-hint">Collez un lien YouTube, Vimeo ou un autre lien vidéo. Les fichiers R2 existants ne sont pas modifiés.</p></form></div>' +
+  '<section class="my-works-panel video-list-panel"><div class="panel-top"><div><span class="eyebrow">VOTRE COLLECTION</span><h2>Mes vidéos <span class="count-pill">' + state.myVideos.length + '</span></h2></div><button class="button button-primary" data-action="new-video">Nouvelle vidéo +</button></div>' +
+  (state.myVideos.length ? '<div class="my-work-list">' + state.myVideos.map((item) => '<article class="my-work-item"><div class="my-work-symbol">▶</div><div class="my-work-copy"><h3>' + e(item.title) + '</h3><p>' + e(item.category || 'Création') + ' · ' + e(formatDate(item.updated_at || item.created_at)) + '</p><a href="' + e(item.video_url) + '" target="_blank" rel="noopener noreferrer">Ouvrir la vidéo ↗</a></div><button class="icon-button" data-edit-video="' + e(item.id) + '" aria-label="Modifier ' + e(item.title) + '">✎</button></article>').join('') + '</div>' : '<div class="empty-state empty-works"><span>▶</span><h3>Votre collection commence ici.</h3><p>Ajoutez un titre et un lien pour retrouver vos vidéos dans votre espace personnel.</p></div>') + '</section></section>');
+}
+
 function renderAtelier() {
   if (!state.user) {
     shell(`
@@ -198,9 +220,11 @@ function renderAtelier() {
     return;
   }
   const editing = state.editing || {};
+  if (state.workspaceTab === 'videos') { renderVideoWorkspace(); return; }
   shell(`
     <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Bonjour, ${e((state.user.user_metadata?.display_name || state.user.email?.split('@')[0] || 'auteur').split(' ')[0])}.</h1><p>Chaque texte avance à son rythme. Reprenez là où vous en étiez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
     <section class="container workspace-grid">
+      <nav class="workspace-tabs workspace-tabs-wide" aria-label="Mon atelier"><button class="workspace-tab active" data-workspace-tab="textes">Mes textes</button><button class="workspace-tab" data-workspace-tab="videos">Mes vidéos</button><button class="button button-primary" data-action="new-text">Nouveau texte +</button><button class="button button-outline" data-action="new-video">Nouvelle vidéo +</button></nav>
       <div class="editor-panel">
         <div class="panel-top"><div><span class="eyebrow">${editing.id ? 'REPRENDRE UN TEXTE' : 'UNE NOUVELLE PAGE'}</span><h2>${editing.id ? 'Continuer mon texte' : 'Commencer à écrire'}</h2></div><span class="editor-icon">✎</span></div>
         <form id="work-form" class="editor-form">
