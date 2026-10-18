@@ -221,9 +221,7 @@ function renderAtelier() {
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
     </section>
-    ${renderR2StoragePanel()}
   `);
-  loadR2Files();
   document.querySelector('[name="body"]')?.addEventListener('input', (event) => {
     const counter = document.querySelector('#word-count');
     if (counter) counter.textContent = words(event.target.value);
