@@ -106,7 +106,7 @@ function renderDiscover() {
             <button class="button button-primary button-large" data-view="atelier">Ouvrir mon atelier <span aria-hidden="true">↗</span></button>
             <button class="button button-outline button-large" data-view="library">Explorer les textes <span aria-hidden="true">↓</span></button>
           </div>
-          <div class="hero-note"><span class="note-avatar">✳</span><span><strong>Votre voix, votre rythme.</strong><small>Brouillons personnels · Relecture humaine · Publication choisie</small></span></div>
+          <div class="hero-note"><span class="note-avatar">✳</span><span><strong>Votre voix, votre rythme.</strong><small>Brouillons personnels · Publication publique ou privée · Vous gardez le choix</small></span></div>
         </div>
         <div class="hero-art" aria-label="Aperçu d’une page d’écriture">
           <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
@@ -139,10 +139,10 @@ function renderDiscover() {
     <section class="section library-section" id="library-section">
       <div class="container">
         <div class="section-heading">
-          <div><div class="eyebrow">PAGES À DÉCOUVRIR</div><h2>Des mots qui font leur chemin.</h2><p>Une bibliothèque appelée à grandir avec les textes relus et partagés par leurs auteur·rices.</p></div>
+          <div><div class="eyebrow">PAGES À DÉCOUVRIR</div><h2>Des mots qui font leur chemin.</h2><p>Une bibliothèque qui grandit avec les textes que leurs auteur·rices choisissent de partager publiquement.</p></div>
           <button class="text-link" data-view="library">Toute la bibliothèque <span>↗</span></button>
         </div>
-        ${state.publicWorks.length ? '<div class="live-note"><span class="live-dot"></span> Textes publiés et visibles sur Aurore Plume</div>' : '<div class="live-note demo-note"><span class="live-dot"></span> Aperçus fictifs — la bibliothèque s’ouvrira aux premiers textes validés.</div>'}
+        ${state.publicWorks.length ? '<div class="live-note"><span class="live-dot"></span> Textes publiés et visibles sur Aurore Plume</div>' : '<div class="live-note demo-note"><span class="live-dot"></span> Aperçus fictifs — les textes publiés en mode public apparaîtront ici.</div>'}
         <div class="work-grid">${works.slice(0, 3).map((work) => workCard(work)).join('')}</div>
       </div>
     </section>
@@ -157,12 +157,12 @@ function renderLibrary() {
     <section class="page-hero container">
       <div class="eyebrow"><span class="eyebrow-dot"></span> LA BIBLIOTHÈQUE</div>
       <h1>Des pages à <em>rencontrer.</em></h1>
-      <p>Parcourez les textes rendus publics après relecture. Chaque voix a sa manière de regarder le monde.</p>
+      <p>Parcourez les textes que leurs auteur·rices ont choisi de rendre publics. Chaque voix a sa manière de regarder le monde.</p>
       <label class="search-field"><span>⌕</span><input id="library-search" type="search" placeholder="Rechercher un titre, un genre, une idée…" value="${e(state.search)}" autocomplete="off"><kbd>/</kbd></label>
     </section>
     <section class="section container library-results">
       <div class="results-heading"><div><span class="eyebrow">LECTURE LIBRE</span><h2>${state.publicWorks.length ? 'Textes publiés' : 'Un avant-goût de la bibliothèque'}</h2></div><span class="result-count">${filtered.length} ${filtered.length > 1 ? 'textes' : 'texte'}</span></div>
-      ${state.publicWorks.length ? '' : '<div class="notice notice-demo">Les cartes marquées « Aperçu fictif » servent uniquement à présenter le design. Les contenus réels apparaîtront ici après leur validation éditoriale.</div>'}
+      ${state.publicWorks.length ? '' : '<div class="notice notice-demo">Les cartes marquées « Aperçu fictif » servent uniquement à présenter le design. Les textes réels apparaîtront ici dès qu’un auteur les publiera en mode public.</div>'}
       ${filtered.length ? `<div class="work-grid">${filtered.map((work) => workCard(work)).join('')}</div>` : '<div class="empty-state"><span>⌕</span><h3>Aucun texte ne correspond.</h3><p>Essayez un autre titre ou un genre différent.</p></div>'}
     </section>
   `);
