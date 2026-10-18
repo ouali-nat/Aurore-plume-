@@ -82,3 +82,10 @@
   .my-works-panel .panel-top{align-items:flex-start}
   .my-works-panel .panel-top .button{font-size:10px;padding:10px 11px}
 }
+
+/* Tous les univers personnels : formulaire ouvert à la demande. */
+.editor-panel[hidden]{display:none!important}
+.video-workspace{grid-template-columns:minmax(0,1fr)}
+.personal-creative-rail .creative-tabs{scroll-snap-type:x proximity}
+.personal-creative-rail .creative-tab{scroll-snap-align:start}
+@media(max-width:560px){.personal-creative-rail .creative-tab{min-width:108px;padding:0 12px}}
