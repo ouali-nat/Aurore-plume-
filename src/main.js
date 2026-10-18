@@ -374,7 +374,7 @@ function renderTextEditor() {
           <button type="button" class="editor-command" data-editor-tool="page"><span aria-hidden="true">▤</span><b>Page</b></button>
         </div>
         <div class="editor-page-nav">
-          <button type="button" data-editor-page-prev aria-label="Étape précédente">←</button>
+          <button type="button" data-editor-page-prev ${state.editorTab === 'cover' ? 'disabled' : ''} aria-label="Étape précédente">←</button>
           <span id="editor-page-count">01 / 04</span>
           <button type="button" data-editor-page-next aria-label="Étape suivante">→</button>
         </div>
@@ -937,7 +937,7 @@ app.addEventListener('touchstart', (event) => {
   if (!state.editorOpen || !event.target.closest('.text-editor-shell') || !event.changedTouches?.length) return;
   editorTouchStartX = event.changedTouches[0].clientX;
   editorTouchStartY = event.changedTouches[0].clientY;
-  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, textarea, select, label'));
+  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, select'));
 }, { passive: true });
 app.addEventListener('touchend', (event) => {
   if (editorTouchStartX === null || !event.changedTouches?.length) return;
