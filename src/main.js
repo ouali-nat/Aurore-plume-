@@ -9,13 +9,7 @@ const app = document.querySelector('#app');
 const modalRoot = document.querySelector('#modal-root');
 const toastRoot = document.querySelector('#toast-root');
 
-const demoWorks = [
-  { id: 'demo-1', demo: true, title: 'La lumière entre par les phrases', subtitle: 'Notes sur le courage tranquille', genre: 'Carnet', summary: 'Un texte bref sur ces petits recommencements que personne ne voit, mais qui changent tout.', body: 'Il y a des matins qui ne font pas de bruit. Ils posent seulement une lumière douce sur la table, comme pour nous rappeler que recommencer peut aussi être un geste calme.\n\nJ’ai longtemps cru qu’il fallait attendre le grand élan. Maintenant, j’apprends à faire confiance aux pages modestes : une ligne, puis une autre. La suite finit souvent par nous rejoindre.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } },
-  { id: 'demo-2', demo: true, title: 'Au bord de la saison', subtitle: 'Poème — extrait de démonstration', genre: 'Poésie', summary: 'Une promenade entre les pluies, les souvenirs et ce que l’on choisit de garder.', body: 'Le vent replie la cour / dans le silence des feuilles. / La saison change de nom / sans nous demander la permission.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } },
-  { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
-];
-
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], publicWorksError: !supabase, myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -94,76 +88,56 @@ function workCard(work, compact = false) {
 }
 
 function renderDiscover() {
-  const works = state.publicWorks.length ? state.publicWorks : demoWorks;
+  const works = state.publicWorks;
+  const worksMarkup = works.length
+    ? `<div class="work-grid">${works.slice(0, 9).map((work) => workCard(work)).join('')}</div>`
+    : state.publicWorksError
+      ? `<div class="empty-state"><span>!</span><h3>La bibliothèque est momentanément indisponible.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
+      : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Écrire la première œuvre <span aria-hidden="true">↗</span></button></div>`;
   shell(`
-    <section class="hero-wrap">
-      <div class="hero container">
-        <div class="hero-copy">
-          <div class="eyebrow"><span class="eyebrow-dot"></span> L’atelier littéraire d’Aurore</div>
-          <h1>Les mots trouvent <em>leur place.</em></h1>
-          <p class="hero-lead">Un espace pour déposer une idée, lui donner forme et faire grandir vos textes. Écrivez à votre rythme, sans perdre le fil.</p>
-          <div class="hero-actions">
-            <button class="button button-primary button-large" data-view="atelier">Ouvrir mon atelier <span aria-hidden="true">↗</span></button>
-            <button class="button button-outline button-large" data-view="library">Explorer les textes <span aria-hidden="true">↓</span></button>
-          </div>
-          <div class="hero-note"><span class="note-avatar">✳</span><span><strong>Votre voix, votre rythme.</strong><small>Brouillons personnels · Publication publique ou privée · Vous gardez le choix</small></span></div>
+    <section class="discover-intro container">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> AURORE PLUME · BIBLIOTHÈQUE VIVANTE</div>
+      <div class="discover-intro-row">
+        <div>
+          <h1>Les œuvres trouvent <em>leur place.</em></h1>
+          <p>Poèmes, carnets, récits et idées à découvrir, publiés directement par leurs auteur·rices.</p>
         </div>
-        <div class="hero-art" aria-label="Aperçu d’une page d’écriture">
-          <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
-          <div class="paper-back paper-back-one"></div><div class="paper-back paper-back-two"></div>
-          <div class="paper-card">
-            <div class="paper-top"><span>CAHIER N° 01</span><span class="paper-star">✳</span></div>
-            <p class="paper-small">Une note à garder</p>
-            <h2>« Il suffit parfois<br>de commencer<br><em>par une phrase.</em> »</h2>
-            <div class="paper-rule"></div>
-            <p class="paper-foot">Les idées deviennent des histoires quand on leur laisse le temps.</p>
-            <div class="paper-signature">aurore plume <span>✦</span></div>
-          </div>
-          <div class="floating-note floating-top"><span class="floating-icon">✎</span><span><b>Un espace à soi</b><small>Gardez vos brouillons</small></span></div>
-          <div class="floating-note floating-bottom"><span class="floating-icon soft">♡</span><span><b>Une voix qui compte</b><small>Partagez à votre rythme</small></span></div>
-        </div>
+        <button class="button button-primary button-large" data-view="atelier">Écrire une œuvre <span aria-hidden="true">↗</span></button>
       </div>
     </section>
-    <section class="trust-strip"><div class="container trust-inner"><span><b>01</b> Écrire sans pression</span><i></i><span><b>02</b> Organiser ses idées</span><i></i><span><b>03</b> Choisir de publier</span><i></i><span class="trust-muted">La publication est toujours relue.</span></div></section>
-    <section class="section container">
+    <section class="section container home-library" id="library-section">
       <div class="section-heading">
-        <div><div class="eyebrow">LE PLAISIR DE CRÉER</div><h2>Un atelier, plusieurs chemins.</h2><p>Que vous écriviez depuis longtemps ou que vous commenciez aujourd’hui, trouvez la bonne place pour vos idées.</p></div>
-        <button class="text-link" data-view="atelier">Découvrir mon atelier <span>↗</span></button>
+        <div><div class="eyebrow">À LIRE · À DÉCOUVRIR</div><h2>Les œuvres publiées</h2><p>Retrouvez ici les œuvres réellement rendues publiques, des plus récentes aux plus anciennes.</p></div>
+        <button class="text-link" data-view="library">Toute la bibliothèque <span>↗</span></button>
       </div>
-      <div class="feature-grid">
-        <article class="feature-card feature-purple"><div class="feature-icon">✎</div><span class="feature-step">01 / CRÉER</span><h3>Écrivez, simplement.</h3><p>Commencez un texte, enrichissez-le au fil des jours et retrouvez vos brouillons dans un espace personnel.</p><button data-view="atelier" class="feature-link">Commencer à écrire <span>↗</span></button><span class="feature-watermark">Aa</span></article>
-        <article class="feature-card feature-cream"><div class="feature-icon">⌑</div><span class="feature-step">02 / CULTIVER</span><h3>Donnez forme à vos idées.</h3><p>Classez vos textes par genre, ajoutez un résumé et prenez le temps de trouver votre voix.</p><button data-view="atelier" class="feature-link">Organiser mes textes <span>↗</span></button><span class="feature-watermark">✳</span></article>
-        <article class="feature-card feature-green"><div class="feature-icon">↗</div><span class="feature-step">03 / PARTAGER</span><h3>Publiez quand c’est prêt.</h3><p>Proposez votre texte à une relecture humaine. Rien n’est publié automatiquement.</p><button data-view="atelier" class="feature-link">Comprendre le parcours <span>↗</span></button><span class="feature-watermark">✦</span></article>
-      </div>
+      ${worksMarkup}
     </section>
-    <section class="section library-section" id="library-section">
-      <div class="container">
-        <div class="section-heading">
-          <div><div class="eyebrow">PAGES À DÉCOUVRIR</div><h2>Des mots qui font leur chemin.</h2><p>Une bibliothèque qui grandit avec les textes que leurs auteur·rices choisissent de partager publiquement.</p></div>
-          <button class="text-link" data-view="library">Toute la bibliothèque <span>↗</span></button>
-        </div>
-        ${state.publicWorks.length ? '<div class="live-note"><span class="live-dot"></span> Textes publiés et visibles sur Aurore Plume</div>' : '<div class="live-note demo-note"><span class="live-dot"></span> Aperçus fictifs — les textes publiés en mode public apparaîtront ici.</div>'}
-        <div class="work-grid">${works.slice(0, 3).map((work) => workCard(work)).join('')}</div>
-      </div>
-    </section>
-    <section class="closing-band container"><div class="closing-spark">✳</div><div><p class="eyebrow">LA PREMIÈRE PHRASE EST LA PLUS IMPORTANTE</p><h2>Votre prochaine page vous attend.</h2><p>Gardez vos idées en mouvement. Le reste vient en écrivant.</p></div><button class="button button-light button-large" data-view="atelier">Commencer un texte <span>↗</span></button><div class="closing-orb"></div></section>
   `);
 }
 
 function renderLibrary() {
-  const works = state.publicWorks.length ? state.publicWorks : demoWorks;
+  const works = state.publicWorks;
   const filtered = works.filter((work) => [work.title, work.subtitle, work.summary, work.genre, authorOf(work)?.display_name].join(' ').toLowerCase().includes(state.search.toLowerCase()));
+  let listing = '';
+  if (!works.length && state.publicWorksError) {
+    listing = '<div class="empty-state"><span>!</span><h3>La bibliothèque est momentanément indisponible.</h3><p>Actualisez la page dans un instant. Vos brouillons ne sont pas affectés.</p></div>';
+  } else if (!works.length) {
+    listing = '<div class="empty-state"><span>✳</span><h3>Aucune œuvre publique pour le moment.</h3><p>Les œuvres apparaîtront ici dès qu’un auteur les publiera en mode public. Les brouillons privés restent dans leur atelier.</p></div>';
+  } else if (!filtered.length) {
+    listing = '<div class="empty-state"><span>⌕</span><h3>Aucun texte ne correspond.</h3><p>Essayez un autre titre, une autre idée ou un autre genre.</p></div>';
+  } else {
+    listing = `<div class="work-grid">${filtered.map((work) => workCard(work)).join('')}</div>`;
+  }
   shell(`
     <section class="page-hero container">
       <div class="eyebrow"><span class="eyebrow-dot"></span> LA BIBLIOTHÈQUE</div>
       <h1>Des pages à <em>rencontrer.</em></h1>
-      <p>Parcourez les textes que leurs auteur·rices ont choisi de rendre publics. Chaque voix a sa manière de regarder le monde.</p>
+      <p>Découvrez uniquement les œuvres réellement publiées en mode public par leurs auteur·rices.</p>
       <label class="search-field"><span>⌕</span><input id="library-search" type="search" placeholder="Rechercher un titre, un genre, une idée…" value="${e(state.search)}" autocomplete="off"><kbd>/</kbd></label>
     </section>
     <section class="section container library-results">
-      <div class="results-heading"><div><span class="eyebrow">LECTURE LIBRE</span><h2>${state.publicWorks.length ? 'Textes publiés' : 'Un avant-goût de la bibliothèque'}</h2></div><span class="result-count">${filtered.length} ${filtered.length > 1 ? 'textes' : 'texte'}</span></div>
-      ${state.publicWorks.length ? '' : '<div class="notice notice-demo">Les cartes marquées « Aperçu fictif » servent uniquement à présenter le design. Les textes réels apparaîtront ici dès qu’un auteur les publiera en mode public.</div>'}
-      ${filtered.length ? `<div class="work-grid">${filtered.map((work) => workCard(work)).join('')}</div>` : '<div class="empty-state"><span>⌕</span><h3>Aucun texte ne correspond.</h3><p>Essayez un autre titre ou un genre différent.</p></div>'}
+      <div class="results-heading"><div><span class="eyebrow">LECTURE LIBRE</span><h2>Textes publiés</h2></div><span class="result-count">${filtered.length} ${filtered.length > 1 ? 'textes' : 'texte'}</span></div>
+      ${listing}
     </section>
   `);
   const input = document.querySelector('#library-search');
@@ -598,8 +572,8 @@ function renderAtelier() {
         <div class="workspace-decoration"><span class="decor-big">Aa</span><span class="decor-small">✳</span></div>
         <div class="eyebrow"><span class="eyebrow-dot"></span> VOTRE ESPACE PERSONNEL</div>
         <h1>Une page blanche.<br><em>Toutes les possibilités.</em></h1>
-        <p>Connectez-vous pour garder vos idées, rédiger vos textes et suivre les propositions de relecture dans un espace qui vous appartient.</p>
-        <div class="workspace-benefits"><span>✓ Brouillons privés</span><span>✓ Édition à tout moment</span><span>✓ Publication après relecture</span></div>
+        <p>Connectez-vous pour conserver vos idées, développer vos textes et choisir simplement ce que vous souhaitez partager.</p>
+        <div class="workspace-benefits"><span>✓ Brouillons privés</span><span>✓ Édition à tout moment</span><span>✓ Partage public ou privé</span></div>
         <button class="button button-primary button-large" data-action="auth">Créer mon espace <span>↗</span></button>
         <p class="fine-print">Pas de publication automatique. Vous restez maître de vos textes.</p>
       </section>
@@ -871,12 +845,20 @@ async function ensureProfile(user) {
 }
 
 async function loadPublicWorks() {
-  if (!supabase) return;
+  if (!supabase) {
+    state.publicWorksError = true;
+    return;
+  }
   const { data, error } = await supabase.from('plume_works')
     .select('id,title,subtitle,summary,genre,body,created_at,published_at,author_id,plume_profiles(display_name,handle)')
     .eq('publication_status', 'published').eq('is_public', true)
     .order('published_at', { ascending: false }).limit(24);
-  if (error) { console.warn('Bibliothèque Plume', error.message); return; }
+  if (error) {
+    state.publicWorksError = true;
+    console.warn('Bibliothèque Plume', error.message);
+    return;
+  }
+  state.publicWorksError = false;
   state.publicWorks = data || [];
 }
 
@@ -1033,7 +1015,7 @@ function updatePlumePdfReader(){
 }
 function closePdfReader(){modalRoot.innerHTML='';plumePdfDocument=null;plumePdfBlob=null;}
 async function openRead(id) {
-  const work = state.publicWorks.find((item) => item.id === id) || state.myWorks.find((item) => item.id === id) || demoWorks.find((item) => item.id === id);
+  const work = state.publicWorks.find((item) => item.id === id) || state.myWorks.find((item) => item.id === id);
   if (!work) return;
   try { toast('Préparation du PDF de lecture…'); const blob=await buildWorkPdfBlob(work); await openPdfReader(blob,work.title||'Lecture'); }
   catch(error){console.error('PDF lecture Aurore Plume',error);toast(error.message||'Le PDF ne peut pas être préparé.','error');}
