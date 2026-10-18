@@ -1010,7 +1010,7 @@ app.addEventListener('touchstart', (event) => {
   if (!state.editorOpen || !event.target.closest('.text-editor-shell') || !event.changedTouches?.length) return;
   editorTouchStartX = event.changedTouches[0].clientX;
   editorTouchStartY = event.changedTouches[0].clientY;
-  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, select'));
+  editorTouchStartedOnControl = Boolean(event.target.closest('button, a, input, select, .plume-canvas-block, .plume-typography-bar, [contenteditable="true"]'));
 }, { passive: true });
 app.addEventListener('touchend', (event) => {
   if (editorTouchStartX === null || !event.changedTouches?.length) return;
