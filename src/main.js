@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -29,6 +29,10 @@ function toast(message, kind = 'success') {
 }
 
 function shell(content) {
+  if (state.editorOpen) {
+    app.innerHTML = `<main class="editor-only-shell">${content}</main>`;
+    return;
+  }
   const nav = [
     ['discover', 'Découvrir'],
     ['library', 'La bibliothèque'],
@@ -354,18 +358,12 @@ function renderTextEditor() {
   shell(`
     <section class="text-editor-shell">
       <div class="text-editor-top">
-        <button type="button" class="editor-back-link" data-editor-back>← Retour à mon carnet</button>
+        <button type="button" class="editor-exit-button" data-editor-back aria-label="Fermer l’éditeur">×</button>
         <div class="text-editor-heading">
-          <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${e(work.title || (work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'))}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
+          <h1 class="editor-document-title">${e(work.title || 'Sans titre')}</h1>
           <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
         </div>
       </div>
-      <nav class="editor-tabs" role="tablist" aria-label="Espaces de l’éditeur">
-        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>01</span> Couverture</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>02</span> Manuscrit</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'layout' ? 'is-active' : ''}" data-editor-tab="layout" role="tab" aria-selected="${state.editorTab === 'layout'}"><span>03</span> Mise en page</button>
-        <button type="button" class="editor-tab ${state.editorTab === 'preview' ? 'is-active' : ''}" data-editor-tab="preview" role="tab" aria-selected="${state.editorTab === 'preview'}"><span>04</span> Aperçu PDF</button>
-      </nav>
       <div class="editor-commandbar" aria-label="Outils de l’atelier">
         <div class="editor-command-group">
           <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button>
@@ -407,14 +405,13 @@ function renderTextEditor() {
           <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
         <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
-          <div class="editor-panel-intro"><div><span class="eyebrow">IDENTITÉ VISUELLE</span><h2>Donnez un visage à votre œuvre.</h2><p>Importez une couverture image. Elle restera privée dans votre espace de stockage.</p></div></div>
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
               <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}>
               <div class="editor-cover-overlay"><span id="editor-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
             </div>
-            <div class="cover-editor-controls"><span class="eyebrow">VOTRE COUVERTURE</span><h3>Importez votre image</h3><p>Utilisez une illustration créée par vous ou un visuel que vous avez le droit d’utiliser. Les images sont limitées à 10 Mo.</p><label>Choisir une image<input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label><p class="editor-hint">Les modèles de couverture Aurore et leur personnalisation seront enrichis progressivement. Votre manuscrit reste indépendant de cette image.</p><button class="button button-outline" type="button" data-editor-preview-refresh>Actualiser l’aperçu</button></div>
+            <div class="cover-editor-controls"><label class="cover-upload-button">▧ <span>Importer une couverture</span><input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label></div>
           </div>
         </section>
         <section class="editor-tab-panel layout-panel" id="editor-panel-layout" role="tabpanel" ${state.editorTab === 'layout' ? '' : 'hidden'}>
@@ -466,6 +463,22 @@ function renderTextEditor() {
   if (coverKey) loadEditorCoverPreview(coverKey);
 }
 
+function renderDraftCreate() {
+  shell(`
+    <section class="draft-create-screen">
+      <form id="draft-create-form" class="draft-create-card">
+        <button type="button" class="draft-create-close" data-draft-cancel aria-label="Annuler">×</button>
+        <span class="eyebrow">NOUVELLE ŒUVRE</span>
+        <h1>Créer un brouillon</h1>
+        <label>Titre de l’œuvre<input name="title" maxlength="140" required placeholder="Le titre de votre œuvre"></label>
+        <label>Description<textarea name="summary" maxlength="1200" rows="3" placeholder="Quelques mots pour présenter votre idée…"></textarea></label>
+        <label>Type d’œuvre<select name="genre">${['Texte libre','Roman','Nouvelle','Poésie','Recueil de poésie','Conte','Théâtre','Essai','Récit personnel','Carnet'].map((genre) => `<option value="${e(genre)}">${e(genre)}</option>`).join('')}</select></label>
+        <button class="button button-primary draft-create-submit" type="submit">Créer le brouillon <span>↗</span></button>
+      </form>
+    </section>
+  `);
+}
+
 function renderAtelier() {
   if (!state.user) {
     shell(`
@@ -483,6 +496,7 @@ function renderAtelier() {
   }
   if (state.workspaceTab === 'videos') { renderVideoWorkspace(); return; }
   if (state.editorOpen && state.workspaceTab === 'textes') { renderTextEditor(); return; }
+  if (state.showDraftCreate && state.workspaceTab === 'textes') { renderDraftCreate(); return; }
   const editing = state.editing || {};
   if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) { renderGenericCreationWorkspace(); return; }
   shell(`
@@ -491,7 +505,7 @@ function renderAtelier() {
       
       <aside class="my-works-panel">
         <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillon privé <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
+        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item" data-edit-id="${e(work.id)}"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><p class="draft-card-meta">${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
@@ -857,13 +871,14 @@ app.addEventListener('click', async (event) => {
   }
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
-  if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
+  if (event.target.closest('[data-draft-cancel]')) { state.showDraftCreate = false; render(); return; }
+  if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.showDraftCreate = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
   if (event.target.closest('[data-editor-print]')) { activateEditorTab('preview'); window.setTimeout(() => window.print(), 120); return; }
   if (event.target.closest('[data-editor-preview-refresh]')) { updateEditorPreviews(); toast('Aperçu de la couverture actualisé.'); return; }
   const workspaceTabButton = event.target.closest('[data-workspace-tab]');
   if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editorOpen = false; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
   if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; state.showCreateForm = true; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
-  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = false; state.showDraftCreate = true; state.showCreateForm = false; render(); document.querySelector('#draft-create-form [name="title"]')?.focus(); return; }
   const editVideoButton = event.target.closest('[data-edit-video]');
   if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; state.showCreateForm = true; render(); return; }
   if (event.target.closest('[data-action="new-creation"]')) { state.editingCreation = null; state.showCreateForm = true; render(); document.querySelector('#creation-form [name="title"]')?.focus(); return; }
@@ -916,7 +931,7 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
-    state.workspaceTab = 'textes'; state.editorOpen = true; state.editorTab = 'cover'; state.showCreateForm = false;
+    state.workspaceTab = 'textes'; state.editorOpen = true; state.showDraftCreate = false; state.editorTab = 'cover'; state.showCreateForm = false;
     if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
     state.editorCoverPreview = null;
     state.view = 'atelier';
@@ -1086,6 +1101,31 @@ app.addEventListener('change', (event) => {
   if (message) message.textContent = files.length ? 'Fichier prêt à être envoyé.' : '';
 });
 
+app.addEventListener('submit', async (event) => {
+  if (event.target.id === 'draft-create-form') {
+    event.preventDefault();
+    if (!supabase || !state.user) { showAuth('signin'); return; }
+    const form = event.target;
+    const data = new FormData(form);
+    const title = String(data.get('title') || '').trim();
+    if (!title) { form.querySelector('[name="title"]')?.focus(); return; }
+    const button = form.querySelector('button[type="submit"]');
+    if (button) button.disabled = true;
+    const payload = { title, summary: String(data.get('summary') || '').trim(), genre: String(data.get('genre') || 'Texte libre'), subtitle: '', body: '', editorial_settings: DEFAULT_EDITORIAL_SETTINGS, cover_media_key: null, author_id: state.user.id };
+    try {
+      const { error } = await supabase.from('plume_works').insert(payload);
+      if (error) throw error;
+      state.showDraftCreate = false;
+      await loadMyWorks();
+      render();
+      toast('Brouillon créé.');
+    } catch (error) {
+      console.error('Aurore Plume draft creation', error);
+      toast(error.message || 'Le brouillon n’a pas pu être créé.', 'error');
+      if (button) button.disabled = false;
+    }
+    return;
+  }
 app.addEventListener('submit', async (event) => {
   if (event.target.id === 'r2-upload-form') { event.preventDefault(); await uploadR2Files(event.target); return; }
   if (event.target.id === 'creation-form') {
