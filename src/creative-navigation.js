@@ -24,20 +24,29 @@ function safeText(value) {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+const personalChannels = [
+  { id: 'textes', label: 'Mes textes', icon: 'Aa' },
+  { id: 'videos', label: 'Mes vidéos', icon: '▶' },
+  { id: 'arts', label: 'Mes arts visuels', icon: '✳' },
+  { id: 'dessins', label: 'Mes dessins', icon: '✎' },
+  { id: 'musique', label: 'Ma musique', icon: '♫' },
+  { id: 'numerique', label: 'Mes projets numériques', icon: '⌘' },
+  { id: 'scene', label: 'Scène & autres', icon: '✦' }
+];
+
 function isPersonalWorkspace() {
-  return Boolean(document.querySelector('#app main .workspace-grid, #app main .video-workspace'));
+  return Boolean(document.querySelector('#app main .workspace-grid, #app main .video-workspace, #app main .generic-creation-workspace'));
 }
 
 function personalNavMarkup() {
-  const videosActive = Boolean(document.querySelector('#app main .video-workspace'));
+  const heading = document.querySelector('#app main .workspace-header h1')?.textContent || '';
+  const activeId = heading.includes('vidéos') ? 'videos' : heading.includes('arts visuels') ? 'arts' : heading.includes('dessins') ? 'dessins' : heading.includes('musique') ? 'musique' : heading.includes('numériques') ? 'numerique' : heading.includes('Scène') ? 'scene' : 'textes';
   return `<nav class="creative-rail personal-creative-rail" aria-label="Navigation de mon espace">
     <div class="creative-rail-head"><span class="creative-rail-label">MON ESPACE PERSONNEL</span><span class="creative-rail-hint">Glissez pour changer de page <span aria-hidden="true">↔</span></span></div>
     <div class="creative-tabs" role="tablist" aria-label="Mes créations">
-      <button class="creative-tab ${videosActive ? '' : 'is-active'}" role="tab" aria-selected="${!videosActive}" data-workspace-tab="textes"><span class="creative-tab-icon">Aa</span><span>Mes textes</span></button>
-      <button class="creative-tab ${videosActive ? 'is-active' : ''}" role="tab" aria-selected="${videosActive}" data-workspace-tab="videos"><span class="creative-tab-icon">▶</span><span>Mes vidéos</span></button>
+      ${personalChannels.map(c => `<button class="creative-tab ${activeId === c.id ? 'is-active' : ''}" role="tab" aria-selected="${activeId === c.id}" data-workspace-tab="${c.id}"><span class="creative-tab-icon">${c.icon}</span><span>${c.label}</span></button>`).join('')}
     </div>
   </nav>`;
-}
 
 function navMarkup() {
   if (isPersonalWorkspace()) return personalNavMarkup();
@@ -147,12 +156,11 @@ document.addEventListener('touchend', event => {
   const startedOnControl = gestureStartTarget?.closest?.('button, a, input, textarea, select');
   if (!startedOnControl && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
     if (isPersonalWorkspace()) {
-      const currentPage = document.querySelector('#app main .video-workspace') ? 1 : 0;
-      const nextPage = currentPage + (dx < 0 ? 1 : -1);
-      if (nextPage >= 0 && nextPage <= 1) {
-        const destination = nextPage === 0 ? 'textes' : 'videos';
-        document.querySelector('.personal-creative-rail [data-workspace-tab="' + destination + '"]')?.click();
-      }
+      const currentTab = document.querySelector('.personal-creative-rail [aria-selected="true"]');
+      const tabs = [...document.querySelectorAll('.personal-creative-rail [data-workspace-tab]')];
+      const currentPage = tabs.indexOf(currentTab);
+      const nextPage = Math.max(0, Math.min(tabs.length - 1, currentPage + (dx < 0 ? 1 : -1)));
+      if (currentPage >= 0 && nextPage !== currentPage) tabs[nextPage]?.click();
     } else {
       const next = !overlayOpen && dx > 0 ? 0 : active + (dx < 0 ? 1 : -1);
       showChannel(next);
