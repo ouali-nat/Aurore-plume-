@@ -14,7 +14,7 @@ const demoWorks = [
   { id: 'demo-3', demo: true, title: 'Le carnet des choses simples', subtitle: 'Fragments d’un quotidien attentif', genre: 'Fragments', summary: 'Des fragments courts pour apprendre à regarder le monde d’un peu plus près.', body: 'Le voisin a réparé sa chaise. La petite fille a partagé sa mangue. Une vieille chanson a traversé la cour. Ce n’était pas une journée extraordinaire. C’était mieux : une journée habitée.', plume_profiles: { display_name: 'Exemple fictif', handle: 'aperçu' } }
 ];
 
-const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, editorOpen: false, editorTab: 'manuscript', editorCoverPreview: null, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -204,6 +204,222 @@ function renderVideoWorkspace() {
   (state.myVideos.length ? '<div class="my-work-list">' + state.myVideos.map((item) => '<article class="my-work-item"><div class="my-work-symbol">▶</div><div class="my-work-copy"><h3>' + e(item.title) + '</h3><p>' + e(item.category || 'Création') + ' · ' + e(formatDate(item.updated_at || item.created_at)) + '</p><a href="' + e(item.video_url) + '" target="_blank" rel="noopener noreferrer">Ouvrir la vidéo ↗</a></div><button class="icon-button" data-edit-video="' + e(item.id) + '" aria-label="Modifier ' + e(item.title) + '">✎</button></article>').join('') + '</div>' : '<div class="empty-state empty-works"><span>▶</span><h3>Votre collection commence ici.</h3><p>Ajoutez un titre et un lien pour retrouver vos vidéos dans votre espace personnel.</p></div>') + '</section></section>');
 }
 
+
+const DEFAULT_EDITORIAL_SETTINGS = { page_format: 'A5', body_font: 'Georgia', font_size: 12, line_height: 1.7, margins: 'standard' };
+
+function manuscriptPreviewHtml(value = '') {
+  return String(value || '').split(/\n\s*\n/).map((block) => {
+    const trimmed = block.trim();
+    if (!trimmed) return '';
+    if (/^---+$/.test(trimmed)) return '<hr class="manuscript-divider">';
+    if (trimmed.startsWith('### ')) return '<h3>' + e(trimmed.slice(4)) + '</h3>';
+    if (trimmed.startsWith('## ')) return '<h2>' + e(trimmed.slice(3)) + '</h2>';
+    if (trimmed.split('\n').every((line) => line.startsWith('> '))) {
+      return '<blockquote>' + trimmed.split('\n').map((line) => e(line.slice(2))).join('<br>') + '</blockquote>';
+    }
+    const safe = e(trimmed).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+    return '<p>' + safe.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+}
+
+function activateEditorTab(tab) {
+  const allowed = ['manuscript', 'cover', 'layout', 'preview'];
+  state.editorTab = allowed.includes(tab) ? tab : 'manuscript';
+  document.querySelectorAll('[data-editor-tab]').forEach((button) => {
+    const active = button.dataset.editorTab === state.editorTab;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('.editor-tab-panel').forEach((panel) => {
+    panel.hidden = panel.id !== 'editor-panel-' + state.editorTab;
+  });
+  updateEditorPreviews();
+}
+
+function updateEditorPreviews() {
+  const form = document.querySelector('#work-form');
+  if (!form) return;
+  const value = (name, fallback = '') => String(form.querySelector('[name="' + name + '"]')?.value ?? fallback);
+  const title = value('title').trim() || 'Titre de votre œuvre';
+  const subtitle = value('subtitle').trim();
+  const genre = value('genre', 'Texte libre');
+  const body = value('body');
+  const summary = value('summary').trim();
+  ['editor-cover-title', 'editor-print-cover-title', 'editor-preview-title'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = title;
+  });
+  ['editor-cover-subtitle', 'editor-print-cover-subtitle', 'editor-preview-subtitle'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) { node.textContent = subtitle; node.hidden = !subtitle; }
+  });
+  ['editor-cover-genre', 'editor-print-cover-genre'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = genre;
+  });
+  const previewBody = document.getElementById('editor-preview-body');
+  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(body) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
+  const previewSummary = document.getElementById('editor-preview-summary');
+  if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
+  const counter = document.getElementById('word-count');
+  if (counter) counter.textContent = words(body);
+  const settings = {
+    page_format: value('page_format', DEFAULT_EDITORIAL_SETTINGS.page_format),
+    body_font: value('body_font', DEFAULT_EDITORIAL_SETTINGS.body_font),
+    font_size: value('font_size', DEFAULT_EDITORIAL_SETTINGS.font_size),
+    line_height: value('line_height', DEFAULT_EDITORIAL_SETTINGS.line_height),
+    margins: value('margins', DEFAULT_EDITORIAL_SETTINGS.margins)
+  };
+  const paper = document.getElementById('editor-preview-paper');
+  if (paper) {
+    paper.style.setProperty('--preview-font', settings.body_font);
+    paper.style.setProperty('--preview-size', settings.font_size + 'pt');
+    paper.style.setProperty('--preview-leading', settings.line_height);
+    paper.dataset.format = settings.page_format;
+    paper.dataset.margins = settings.margins;
+  }
+  const printStyle = document.getElementById('editor-print-page-style');
+  if (printStyle) {
+    const format = settings.page_format === 'A4' ? 'A4' : settings.page_format === 'Letter' ? 'Letter' : 'A5';
+    const margin = settings.margins === 'narrow' ? '12mm' : settings.margins === 'wide' ? '25mm' : '18mm';
+    printStyle.textContent = '@page { size: ' + format + ' portrait; margin: ' + margin + '; }';
+  }
+}
+
+function insertEditorToken(kind) {
+  const field = document.querySelector('#work-form [name="body"]');
+  if (!field) return;
+  const start = field.selectionStart ?? field.value.length;
+  const end = field.selectionEnd ?? start;
+  const selected = field.value.slice(start, end);
+  const tokens = {
+    bold: ['**', '**', 'texte en gras'],
+    italic: ['*', '*', 'texte en italique'],
+    heading: ['### ', '', 'Titre de section'],
+    quote: ['> ', '', 'Citation'],
+    chapter: ['', '', 'Chapitre I\n\n'],
+    divider: ['', '', '\n\n---\n\n']
+  };
+  const token = tokens[kind];
+  if (!token) return;
+  const content = selected || token[2];
+  const insertion = (kind === 'chapter' || kind === 'divider') ? token[2] : token[0] + content + token[1];
+  field.setRangeText(insertion, start, end, 'select');
+  field.focus();
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+async function loadEditorCoverPreview(key) {
+  if (!key) return;
+  try {
+    const response = await r2Request('/api/storage?key=' + encodeURIComponent(key));
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/')) return;
+    if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
+    state.editorCoverPreview = URL.createObjectURL(blob);
+    ['editor-cover-image', 'editor-print-cover-image'].forEach((id) => {
+      const img = document.getElementById(id);
+      if (img) { img.src = state.editorCoverPreview; img.hidden = false; }
+    });
+    document.querySelectorAll('.editor-cover-placeholder').forEach((node) => { node.hidden = true; });
+  } catch (error) {
+    console.warn('Couverture Plume non chargée', error.message);
+  }
+}
+
+function renderTextEditor() {
+  const work = state.editing || {};
+  const settings = { ...DEFAULT_EDITORIAL_SETTINGS, ...(work.editorial_settings && typeof work.editorial_settings === 'object' ? work.editorial_settings : {}) };
+  const coverKey = work.cover_media_key || '';
+  shell(`
+    <section class="text-editor-shell">
+      <div class="text-editor-top">
+        <button type="button" class="editor-back-link" data-editor-back>← Retour à mon carnet</button>
+        <div class="text-editor-heading">
+          <div><span class="eyebrow"><span class="eyebrow-dot"></span> ATELIER D’ÉDITION</span><h1>${work.id ? 'Éditer mon œuvre' : 'Créer une œuvre'}</h1><p>Un espace dédié à votre manuscrit, sa couverture et sa mise en page.</p></div>
+          <span class="editor-save-state"><span class="save-state-dot"></span>Brouillon privé</span>
+        </div>
+      </div>
+      <nav class="editor-tabs" role="tablist" aria-label="Espaces de l’éditeur">
+        <button type="button" class="editor-tab ${state.editorTab === 'manuscript' ? 'is-active' : ''}" data-editor-tab="manuscript" role="tab" aria-selected="${state.editorTab === 'manuscript'}"><span>01</span> Manuscrit</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'cover' ? 'is-active' : ''}" data-editor-tab="cover" role="tab" aria-selected="${state.editorTab === 'cover'}"><span>02</span> Couverture</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'layout' ? 'is-active' : ''}" data-editor-tab="layout" role="tab" aria-selected="${state.editorTab === 'layout'}"><span>03</span> Mise en page</button>
+        <button type="button" class="editor-tab ${state.editorTab === 'preview' ? 'is-active' : ''}" data-editor-tab="preview" role="tab" aria-selected="${state.editorTab === 'preview'}"><span>04</span> Aperçu PDF</button>
+      </nav>
+      <form id="work-form" class="dedicated-work-form">
+        <input type="hidden" name="id" value="${e(work.id || '')}">
+        <input type="hidden" name="existing_cover_media_key" value="${e(coverKey)}">
+        <section class="editor-tab-panel manuscript-panel" id="editor-panel-manuscript" role="tabpanel" ${state.editorTab === 'manuscript' ? '' : 'hidden'}>
+          <div class="editor-panel-intro"><div><span class="eyebrow">VOTRE ŒUVRE</span><h2>Tout commence par les mots.</h2><p>Choisissez le type d’œuvre, puis écrivez à votre rythme. Vous pourrez revenir sur ces réglages à tout moment.</p></div><div class="word-count-box"><span class="word-count-number" id="word-count">${words(work.body || '')}</span><span>mots</span></div></div>
+          <div class="editor-meta-grid">
+            <label>Titre de l’œuvre<input name="title" maxlength="140" placeholder="Le titre qui vous ressemble…" value="${e(work.title || '')}"></label>
+            <label>Sous-titre <span class="optional">facultatif</span><input name="subtitle" maxlength="180" placeholder="Une précision, une intention…" value="${e(work.subtitle || '')}"></label>
+            <label>Type d’œuvre<select name="genre">
+              ${['Texte libre','Roman','Nouvelle','Poésie','Recueil de poésie','Conte','Théâtre','Essai','Récit personnel','Carnet'].map((genre) => `<option value="${e(genre)}" ${(work.genre || 'Texte libre') === genre ? 'selected' : ''}>${e(genre)}</option>`).join('')}
+            </select></label>
+            <label class="editor-summary-field">Description <span class="optional">facultatif</span><textarea name="summary" maxlength="1200" rows="2" placeholder="Quelle idée traverse cette œuvre ?">${e(work.summary || '')}</textarea></label>
+          </div>
+          <div class="manuscript-tools">
+            <div><span class="eyebrow">OUTILS D’ÉCRITURE</span><p>Insérez des éléments éditoriaux sans perdre votre texte.</p></div>
+            <div class="editor-tool-list"><button type="button" class="editor-tool" data-insert-token="bold"><b>B</b> Gras</button><button type="button" class="editor-tool" data-insert-token="italic"><i>I</i> Italique</button><button type="button" class="editor-tool" data-insert-token="heading">Titre de section</button><button type="button" class="editor-tool" data-insert-token="quote">Citation</button><button type="button" class="editor-tool" data-insert-token="chapter">Nouveau chapitre</button><button type="button" class="editor-tool" data-insert-token="divider">Séparateur</button></div>
+          </div>
+          <label class="manuscript-body-label">Votre manuscrit<textarea class="body-editor dedicated-body-editor" name="body" rows="17" placeholder="Laissez venir la première phrase…">${e(work.body || '')}</textarea></label>
+          <p class="editor-hint"><span>✳</span> La mise en forme simple est reprise dans l’aperçu. Pensez à enregistrer votre brouillon avant de quitter l’atelier.</p>
+        </section>
+        <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
+          <div class="editor-panel-intro"><div><span class="eyebrow">IDENTITÉ VISUELLE</span><h2>Donnez un visage à votre œuvre.</h2><p>Importez une couverture image. Elle restera privée dans votre espace de stockage.</p></div></div>
+          <div class="cover-editor-grid">
+            <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
+              <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
+              <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}>
+              <div class="editor-cover-overlay"><span id="editor-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
+            </div>
+            <div class="cover-editor-controls"><span class="eyebrow">VOTRE COUVERTURE</span><h3>Importez votre image</h3><p>Utilisez une illustration créée par vous ou un visuel que vous avez le droit d’utiliser. Les images sont limitées à 10 Mo.</p><label>Choisir une image<input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label><p class="editor-hint">Les modèles de couverture Aurore et leur personnalisation seront enrichis progressivement. Votre manuscrit reste indépendant de cette image.</p><button class="button button-outline" type="button" data-editor-preview-refresh>Actualiser l’aperçu</button></div>
+          </div>
+        </section>
+        <section class="editor-tab-panel layout-panel" id="editor-panel-layout" role="tabpanel" ${state.editorTab === 'layout' ? '' : 'hidden'}>
+          <div class="editor-panel-intro"><div><span class="eyebrow">PRÉPARATION DU LIVRE</span><h2>Une page qui vous ressemble.</h2><p>Ces réglages sont enregistrés avec votre œuvre et utilisés dans l’aperçu avant impression PDF.</p></div></div>
+          <div class="editor-layout-grid">
+            <label>Format de page<select name="page_format"><option value="A5" ${settings.page_format === 'A5' ? 'selected' : ''}>A5 — livre</option><option value="A4" ${settings.page_format === 'A4' ? 'selected' : ''}>A4 — document</option><option value="Letter" ${settings.page_format === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
+            <label>Police du corps<select name="body_font"><option value="Georgia" ${settings.body_font === 'Georgia' ? 'selected' : ''}>Georgia — littéraire</option><option value="Arial" ${settings.body_font === 'Arial' ? 'selected' : ''}>Arial — moderne</option><option value="Times New Roman" ${settings.body_font === 'Times New Roman' ? 'selected' : ''}>Times New Roman — classique</option><option value="system-ui" ${settings.body_font === 'system-ui' ? 'selected' : ''}>Sans sérif — système</option></select></label>
+            <label>Taille du texte<select name="font_size"><option value="10" ${Number(settings.font_size) === 10 ? 'selected' : ''}>10 pt</option><option value="11" ${Number(settings.font_size) === 11 ? 'selected' : ''}>11 pt</option><option value="12" ${Number(settings.font_size) === 12 ? 'selected' : ''}>12 pt</option><option value="13" ${Number(settings.font_size) === 13 ? 'selected' : ''}>13 pt</option><option value="14" ${Number(settings.font_size) === 14 ? 'selected' : ''}>14 pt</option></select></label>
+            <label>Interligne<select name="line_height"><option value="1.4" ${Number(settings.line_height) === 1.4 ? 'selected' : ''}>Compact</option><option value="1.6" ${Number(settings.line_height) === 1.6 ? 'selected' : ''}>Équilibré</option><option value="1.7" ${Number(settings.line_height) === 1.7 ? 'selected' : ''}>Aéré</option><option value="1.9" ${Number(settings.line_height) === 1.9 ? 'selected' : ''}>Très aéré</option></select></label>
+            <label>Marges<select name="margins"><option value="narrow" ${settings.margins === 'narrow' ? 'selected' : ''}>Étroites</option><option value="standard" ${settings.margins === 'standard' ? 'selected' : ''}>Standard</option><option value="wide" ${settings.margins === 'wide' ? 'selected' : ''}>Confortables</option></select></label>
+          </div>
+          <div class="editor-layout-note"><span>✳</span><div><strong>Une œuvre, une mise en page cohérente.</strong><p>Les réglages s’appliqueront à l’aperçu imprimable. Le manuscrit enregistré conserve son contenu d’origine.</p></div></div>
+        </section>
+        <section class="editor-tab-panel preview-panel" id="editor-panel-preview" role="tabpanel" ${state.editorTab === 'preview' ? '' : 'hidden'}>
+          <div class="editor-panel-intro"><div><span class="eyebrow">VÉRIFICATION FINALE</span><h2>Votre œuvre prend forme.</h2><p>Vérifiez la couverture et la typographie avant de lancer l’impression ou l’enregistrement en PDF.</p></div><button class="button button-outline" type="button" data-editor-print>Imprimer / PDF ↗</button></div>
+          <div class="editor-preview-spread">
+            <div class="editor-print-cover" id="editor-print-cover">
+              <div class="editor-cover-preview-stage editor-print-cover-stage">
+                <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME</small><h2 id="editor-print-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-print-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
+                <img id="editor-print-cover-image" alt="" ${coverKey ? '' : 'hidden'}>
+                <div class="editor-cover-overlay"><span id="editor-print-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
+              </div>
+            </div>
+            <article class="editor-preview-paper" id="editor-preview-paper" data-format="${e(settings.page_format)}" data-margins="${e(settings.margins)}">
+              <div class="editor-preview-kicker">AURORE PLUME · ${e(work.genre || 'Texte libre')}</div>
+              <h1 id="editor-preview-title">${e(work.title || 'Titre de votre œuvre')}</h1><p id="editor-preview-subtitle" class="editor-preview-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><p class="editor-preview-summary" id="editor-preview-summary" ${work.summary ? '' : 'hidden'}>${e(work.summary || '')}</p><div class="editor-preview-rule"></div><div id="editor-preview-body" class="editor-preview-body">${manuscriptPreviewHtml(work.body || '') || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>'}</div>
+            </article>
+          </div>
+          <p class="editor-hint"><span>✳</span> L’aperçu est un premier rendu éditorial. Vérifiez toujours le PDF final avant de le partager ou de l’imprimer.</p>
+        </section>
+        <div class="editor-actionbar">
+          <button class="button button-primary" name="intent" value="draft" type="submit">Enregistrer le brouillon <span>↗</span></button>
+          <button class="button button-outline" name="intent" value="review" type="submit">Proposer à la relecture</button>
+          <button class="button button-quiet editor-print-action" type="button" data-editor-print>Exporter en PDF</button>
+        </div>
+      </form>
+      <style id="editor-print-page-style"></style>
+    </section>
+  `);
+  updateEditorPreviews();
+  document.querySelector('#work-form')?.addEventListener('input', updateEditorPreviews);
+  document.querySelector('#work-form')?.addEventListener('change', updateEditorPreviews);
+  if (coverKey) loadEditorCoverPreview(coverKey);
+}
+
 function renderAtelier() {
   if (!state.user) {
     shell(`
@@ -219,29 +435,17 @@ function renderAtelier() {
     `);
     return;
   }
-  const editing = state.editing || {};
   if (state.workspaceTab === 'videos') { renderVideoWorkspace(); return; }
+  if (state.editorOpen && state.workspaceTab === 'textes') { renderTextEditor(); return; }
+  const editing = state.editing || {};
   if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) { renderGenericCreationWorkspace(); return; }
   shell(`
     <section class="workspace-header"><div class="container workspace-title-row"><div><div class="eyebrow"><span class="eyebrow-dot"></span> MON ATELIER</div><h1>Bonjour, ${e((state.user.user_metadata?.display_name || state.user.email?.split('@')[0] || 'auteur').split(' ')[0])}.</h1><p>Chaque texte avance à son rythme. Reprenez là où vous en étiez.</p></div><button class="button button-outline" data-action="signout">Se déconnecter</button></div></section>
-    <section class="container workspace-grid">
+    <section class="container workspace-grid workspace-grid-single">
       
-      <div class="editor-panel" ${state.showCreateForm || editing.id ? "" : "hidden"}>
-        <div class="panel-top"><div><span class="eyebrow">${editing.id ? 'REPRENDRE UN TEXTE' : 'UNE NOUVELLE PAGE'}</span><h2>${editing.id ? 'Continuer mon texte' : 'Commencer à écrire'}</h2></div><span class="editor-icon">✎</span></div>
-        <form id="work-form" class="editor-form">
-          <input type="hidden" name="id" value="${e(editing.id || '')}">
-          <label>Titre du texte<input name="title" required maxlength="140" placeholder="Le titre qui vous ressemble…" value="${e(editing.title || '')}"></label>
-          <label>Sous-titre <span class="optional">facultatif</span><input name="subtitle" maxlength="180" placeholder="Une précision, une intention…" value="${e(editing.subtitle || '')}"></label>
-          <div class="form-row"><label>Genre<select name="genre"><option ${(editing.genre || 'Texte libre') === 'Texte libre' ? 'selected' : ''}>Texte libre</option><option ${editing.genre === 'Roman' ? 'selected' : ''}>Roman</option><option ${editing.genre === 'Poésie' ? 'selected' : ''}>Poésie</option><option ${editing.genre === 'Nouvelle' ? 'selected' : ''}>Nouvelle</option><option ${editing.genre === 'Essai' ? 'selected' : ''}>Essai</option><option ${editing.genre === 'Théâtre' ? 'selected' : ''}>Théâtre</option><option ${editing.genre === 'Carnet' ? 'selected' : ''}>Carnet</option><option ${editing.genre === 'Conte' ? 'selected' : ''}>Conte</option></select></label><div class="word-count-box"><span class="word-count-number" id="word-count">${words(editing.body || '')}</span><span>mots</span></div></div>
-          <label>Quelques mots sur ce texte <span class="optional">pour le retrouver</span><textarea name="summary" maxlength="1200" rows="2" placeholder="Quelle idée traverse ce texte ?">${e(editing.summary || '')}</textarea></label>
-          <label>Votre texte<textarea class="body-editor" name="body" rows="11" placeholder="Laissez venir la première phrase…">${e(editing.body || '')}</textarea></label>
-          <div class="editor-actions"><button class="button button-primary" name="intent" value="draft" type="submit">Enregistrer le brouillon <span>↗</span></button><button class="button button-outline" name="intent" value="review" type="submit">Proposer à la relecture</button><button class="button button-quiet" type="button" data-creation-cancel>Annuler</button></div>
-          <p class="editor-hint"><span>✳</span> Proposer à la relecture ne publie pas automatiquement votre texte. Une validation humaine est nécessaire.</p>
-        </form>
-      </div>
       <aside class="my-works-panel">
         <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Mes textes <span class="count-pill">${state.myWorks.length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="icon-button" data-edit-id="${e(work.id)}" title="Modifier le texte" aria-label="Modifier ${e(work.title)}">↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
+        ${state.myWorks.length ? `<div class="my-work-list">${state.myWorks.map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p>${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Votre carnet est prêt.</h3><p>Le premier brouillon n’a pas besoin d’être parfait. Il a seulement besoin d’exister.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Vos brouillons restent visibles uniquement par vous jusqu’à ce qu’un texte soit validé et rendu public.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
@@ -504,7 +708,7 @@ async function loadPublicWorks() {
 async function loadMyWorks() {
   if (!supabase || !state.user) { state.myWorks = []; return; }
   const { data, error } = await supabase.from('plume_works')
-    .select('id,title,subtitle,summary,genre,body,publication_status,is_public,submission_requested_at,created_at,updated_at')
+    .select('id,title,subtitle,summary,genre,body,cover_media_key,editorial_settings,publication_status,is_public,submission_requested_at,created_at,updated_at')
     .eq('author_id', state.user.id).order('updated_at', { ascending: false }).limit(60);
   if (error) { console.warn('Carnet Plume', error.message); toast('Impossible de charger vos textes pour le moment.', 'error'); return; }
   state.myWorks = data || [];
@@ -585,10 +789,17 @@ function openRead(id) {
 }
 
 app.addEventListener('click', async (event) => {
+  const editorTabButton = event.target.closest('[data-editor-tab]');
+  if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
+  const insertTokenButton = event.target.closest('[data-insert-token]');
+  if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
+  if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
+  if (event.target.closest('[data-editor-print]')) { activateEditorTab('preview'); window.setTimeout(() => window.print(), 120); return; }
+  if (event.target.closest('[data-editor-preview-refresh]')) { updateEditorPreviews(); toast('Aperçu de la couverture actualisé.'); return; }
   const workspaceTabButton = event.target.closest('[data-workspace-tab]');
-  if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
+  if (workspaceTabButton) { state.workspaceTab = workspaceTabButton.dataset.workspaceTab; state.editing = null; state.editorOpen = false; state.editingVideo = null; state.editingCreation = null; state.showCreateForm = false; if (state.workspaceTab === 'videos') await loadMyVideos(); if (GENERIC_CREATION_KINDS.includes(state.workspaceTab)) await loadMyCreations(); render(); return; }
   if (event.target.closest('[data-action="new-video"]')) { state.workspaceTab = 'videos'; state.editingVideo = null; state.showCreateForm = true; await loadMyVideos(); render(); document.querySelector('#video-form [name="title"]')?.focus(); return; }
-  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.showCreateForm = true; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
+  if (event.target.closest('[data-action="new-text"]')) { state.workspaceTab = 'textes'; state.editing = null; state.editorOpen = true; state.editorTab = 'manuscript'; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); document.querySelector('#work-form [name="title"]')?.focus(); return; }
   const editVideoButton = event.target.closest('[data-edit-video]');
   if (editVideoButton) { state.workspaceTab = 'videos'; state.editingVideo = state.myVideos.find((item) => item.id === editVideoButton.dataset.editVideo) || null; state.showCreateForm = true; render(); return; }
   if (event.target.closest('[data-action="new-creation"]')) { state.editingCreation = null; state.showCreateForm = true; render(); document.querySelector('#creation-form [name="title"]')?.focus(); return; }
@@ -623,6 +834,7 @@ app.addEventListener('click', async (event) => {
   if (viewButton) {
     state.view = viewButton.dataset.view;
     state.editing = null;
+    state.editorOpen = false;
     render();
     if (state.view === 'atelier' && state.user) { await loadMyWorks(); render(); }
     if (state.view === 'library') { await loadPublicWorks(); render(); }
@@ -640,7 +852,9 @@ app.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-id]');
   if (editButton) {
     state.editing = state.myWorks.find((work) => work.id === editButton.dataset.editId) || null;
-    state.workspaceTab = 'textes'; state.showCreateForm = true;
+    state.workspaceTab = 'textes'; state.editorOpen = true; state.editorTab = 'manuscript'; state.showCreateForm = false;
+    if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
+    state.editorCoverPreview = null;
     state.view = 'atelier';
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -737,6 +951,21 @@ app.addEventListener('cancel', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  const coverInput = event.target;
+  if (coverInput instanceof HTMLInputElement && coverInput.name === 'cover_file') {
+    const file = coverInput.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { coverInput.value = ''; toast('Choisissez une image pour la couverture.', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { coverInput.value = ''; toast('La couverture doit faire 10 Mo maximum.', 'error'); return; }
+    if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
+    state.editorCoverPreview = URL.createObjectURL(file);
+    ['editor-cover-image', 'editor-print-cover-image'].forEach((id) => {
+      const img = document.getElementById(id);
+      if (img) { img.src = state.editorCoverPreview; img.hidden = false; }
+    });
+    document.querySelectorAll('.editor-cover-placeholder').forEach((node) => { node.hidden = true; });
+    return;
+  }
   const input = event.target;
   if (!(input instanceof HTMLInputElement) || !['files', 'files-secondary'].includes(input.name) || !input.closest('#r2-upload-form')) return;
   state.r2PickerOpen = false;
@@ -819,29 +1048,60 @@ app.addEventListener('submit', async (event) => {
   const data = new FormData(form);
   const intent = event.submitter?.value || 'draft';
   const id = String(data.get('id') || '');
+  const title = String(data.get('title') || '').trim();
+  if (!title) { activateEditorTab('manuscript'); form.querySelector('[name="title"]')?.focus(); toast('Ajoutez un titre avant d’enregistrer.', 'error'); return; }
+  const selectedCover = form.querySelector('[name="cover_file"]')?.files?.[0] || null;
+  if (selectedCover && !selectedCover.type.startsWith('image/')) { activateEditorTab('cover'); toast('Choisissez un fichier image pour la couverture.', 'error'); return; }
+  if (selectedCover && selectedCover.size > 10 * 1024 * 1024) { activateEditorTab('cover'); toast('La couverture doit faire 10 Mo maximum.', 'error'); return; }
+  const previousCoverKey = String(data.get('existing_cover_media_key') || '');
+  let uploadedCoverKey = '';
+  const editorialSettings = {
+    page_format: String(data.get('page_format') || DEFAULT_EDITORIAL_SETTINGS.page_format),
+    body_font: String(data.get('body_font') || DEFAULT_EDITORIAL_SETTINGS.body_font),
+    font_size: Number(data.get('font_size') || DEFAULT_EDITORIAL_SETTINGS.font_size),
+    line_height: Number(data.get('line_height') || DEFAULT_EDITORIAL_SETTINGS.line_height),
+    margins: String(data.get('margins') || DEFAULT_EDITORIAL_SETTINGS.margins)
+  };
   const payload = {
-    title: String(data.get('title') || '').trim(),
+    title,
     subtitle: String(data.get('subtitle') || '').trim(),
     genre: String(data.get('genre') || 'Texte libre'),
     summary: String(data.get('summary') || '').trim(),
     body: String(data.get('body') || ''),
+    editorial_settings: editorialSettings,
+    cover_media_key: previousCoverKey || null,
     updated_at: new Date().toISOString()
   };
   if (intent === 'review') payload.submission_requested_at = new Date().toISOString();
   const buttons = [...form.querySelectorAll('button[type="submit"]')];
   buttons.forEach((button) => { button.disabled = true; });
   try {
-    let query;
-    if (id) query = supabase.from('plume_works').update(payload).eq('id', id).eq('author_id', state.user.id);
-    else { const { updated_at, ...insertPayload } = payload; query = supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}) }); }
-    const { error } = await query;
-    if (error) throw error;
+    if (selectedCover) {
+      const safeName = selectedCover.name.normalize('NFKC').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-140) || 'couverture';
+      uploadedCoverKey = 'covers/' + Date.now() + '-' + safeName;
+      await r2Request('/api/storage?key=' + encodeURIComponent(uploadedCoverKey), { method: 'POST', headers: { 'Content-Type': selectedCover.type || 'application/octet-stream' }, body: selectedCover });
+      payload.cover_media_key = uploadedCoverKey;
+    }
+    if (id) {
+      const result = await supabase.from('plume_works').update(payload).eq('id', id).eq('author_id', state.user.id);
+      if (result.error) throw result.error;
+    } else {
+      const { updated_at, ...insertPayload } = payload;
+      const result = await supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}) }).select('id').single();
+      if (result.error) throw result.error;
+    }
+    if (uploadedCoverKey && previousCoverKey && previousCoverKey !== uploadedCoverKey) {
+      try { await r2Request('/api/storage?key=' + encodeURIComponent(previousCoverKey), { method: 'DELETE' }); } catch (cleanupError) { console.warn('Ancienne couverture non supprimée', cleanupError.message); }
+    }
     toast(intent === 'review' ? 'Texte envoyé à la file de relecture.' : 'Brouillon enregistré.');
-    state.editing = null; state.showCreateForm = false;
+    state.editing = null; state.editorOpen = false; state.showCreateForm = false;
+    if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview);
+    state.editorCoverPreview = null;
     await loadMyWorks();
     render();
   } catch (error) {
     console.error('Aurore Plume save', error);
+    if (uploadedCoverKey) { try { await r2Request('/api/storage?key=' + encodeURIComponent(uploadedCoverKey), { method: 'DELETE' }); } catch {} }
     toast(error.message || 'Le texte n’a pas pu être enregistré.', 'error');
     buttons.forEach((button) => { button.disabled = false; });
   }
