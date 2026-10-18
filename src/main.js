@@ -1603,8 +1603,14 @@ app.addEventListener('submit', async (event) => {
       }
     } else {
       const { updated_at, ...insertPayload } = payload;
-      const result = await supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}), ...(intent === 'publish' ? { publication_status: publishVisibility === 'public' ? 'published' : 'draft', is_public: publishVisibility === 'public', ...(publishVisibility === 'public' ? { published_at: new Date().toISOString() } : {}) } : {}) }).select('id').single();
+      const result = await supabase.from('plume_works').insert({ ...insertPayload, author_id: state.user.id, ...(intent === 'review' ? { submission_requested_at: new Date().toISOString() } : {}), ...(intent === 'publish' ? { publication_status: publishVisibility === 'public' ? 'published' : 'draft', is_public: publishVisibility === 'public', ...(publishVisibility === 'public' ? { published_at: new Date().toISOString() } : {}) } : {}) }).select('id,title,publication_status,is_public,published_at').single();
       if (result.error) throw result.error;
+      if (intent === 'publish') {
+        const expectedPublic = publishVisibility === 'public';
+        if ((result.data.publication_status === 'published') !== expectedPublic || result.data.is_public !== expectedPublic) {
+          throw new Error('La base n’a pas confirmé le mode de publication choisi. Votre texte reste dans votre atelier.');
+        }
+      }
     }
     if (uploadedCoverKey && previousCoverKey && previousCoverKey !== uploadedCoverKey) {
       try { await r2Request('/api/storage?key=' + encodeURIComponent(previousCoverKey), { method: 'DELETE' }); } catch (cleanupError) { console.warn('Ancienne couverture non supprimée', cleanupError.message); }
