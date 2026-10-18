@@ -288,7 +288,7 @@ function manuscriptPreviewHtml(value = '') {
       const saved = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
       const pages = Array.isArray(saved) ? saved : saved.pages;
       return pages.map((page) => '<section class="plume-rendered-page">' + (page.blocks || []).map((b) => {
-        const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';';
+        const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';'+(b.fill?'background-color:'+e(b.fill)+';':'');
         if (b.type === 'image') return '<div class="plume-rendered-block plume-rendered-image" style="'+style+'"><img alt="" src="'+e(b.src||'')+'"></div>';
         if (b.type === 'shape') return '<div class="plume-rendered-block plume-rendered-shape shape-'+e(b.shape||'round')+'" style="'+style+'">'+e(b.label||'')+'</div>';
         return '<div class="plume-rendered-block" style="'+style+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div>';
