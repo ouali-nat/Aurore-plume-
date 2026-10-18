@@ -1599,6 +1599,7 @@ app.addEventListener('submit', async (event) => {
   const buttons = [...form.querySelectorAll('button[type="submit"]')];
   buttons.forEach((button) => { button.disabled = true; });
   const uploadedInlineKeys = [];
+  const uploadedInlineOriginals = [];
   try {
     // Stocker les images intégrées dans R2 et conserver uniquement leurs clés dans la base.
     for (const page of (state.editorPages || [])) {
@@ -1611,6 +1612,7 @@ app.addEventListener('submit', async (event) => {
         const key = 'manuscript-images/' + state.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + extension;
         await r2Request('/api/storage?key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': imageBlob.type }, body: imageBlob });
         uploadedInlineKeys.push(key);
+        uploadedInlineOriginals.push({ block, src: block.src, key });
         block.src = 'r2:' + key;
       }
     }
@@ -1666,7 +1668,7 @@ app.addEventListener('submit', async (event) => {
     console.error('Aurore Plume save', error);
     if (uploadedCoverKey) { try { await r2Request('/api/storage?key=' + encodeURIComponent(uploadedCoverKey), { method: 'DELETE' }); } catch {} }
     for (const key of uploadedInlineKeys) { try { await r2Request('/api/storage?key=' + encodeURIComponent(key), { method: 'DELETE' }); } catch {} }
-    for (const page of (state.editorPages || [])) for (const block of (page.blocks || [])) { if (block.type === 'image' && String(block.src || '').startsWith('r2:') && uploadedInlineKeys.includes(block.src.slice(3))) block.src = ''; }
+    for (const item of uploadedInlineOriginals) item.block.src = item.src;
     toast(error.message || 'Le texte n’a pas pu être enregistré.', 'error');
     buttons.forEach((button) => { button.disabled = false; });
   }
