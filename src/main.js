@@ -1321,16 +1321,33 @@ modalRoot.addEventListener('click', (event) => {
   if(!form)return;
   const visibilityField = form.querySelector('[name="publish_visibility"]');
   if (!visibilityField) { toast('Impossible de préparer la publication : champ de visibilité introuvable.', 'error'); return; }
+  const submitButton = form.querySelector('button[type="submit"][name="intent"]');
+  if (!submitButton) { toast('Impossible de lancer la publication : bouton d’enregistrement introuvable.', 'error'); return; }
   visibilityField.value = choice.dataset.publishVisibility;
+  // Déclencher le gestionnaire via le vrai bouton submit avec une intention
+  // explicite : ne pas dépendre d’un submitter null ou d’un événement synthétique.
+  const previousValue = submitButton.value;
+  submitButton.value = 'publish';
   form.dataset.submitIntent = 'publish';
-  modalRoot.innerHTML = '';
-  // Utiliser l’API native du formulaire pour déclencher le même flux que
-  // le bouton Enregistrer, avec validation et événement submit natifs.
-  if (typeof form.requestSubmit === 'function') {
-    form.requestSubmit();
-  } else {
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  if (!form.checkValidity()) {
+    modalRoot.innerHTML = '';
+    form.reportValidity();
+    submitButton.value = previousValue;
+    delete form.dataset.submitIntent;
+    toast('Vérifiez les champs obligatoires avant de publier.', 'error');
+    return;
   }
+  modalRoot.innerHTML = '';
+  try {
+    form.requestSubmit(submitButton);
+  } catch (error) {
+    submitButton.value = previousValue;
+    delete form.dataset.submitIntent;
+    console.error('Aurore Plume publication submit', error);
+    toast('Le formulaire n’a pas pu démarrer la publication. Réessayez après avoir enregistré le brouillon.', 'error');
+    return;
+  }
+  submitButton.value = previousValue;
 });
 modalRoot.addEventListener('submit', async (event) => {
   if (event.target.id !== 'auth-form') return;
