@@ -19,16 +19,15 @@ Projet : https://supabase.com/dashboard/project/iymioasfkithmyqtpipd
 
 La migration `supabase/migrations/20261017090000_initial_aurore_plume_schema.sql` crée les profils d'auteurs, les textes et les commentaires. Toutes les tables exposées ont RLS. La clé publishable est prévue pour le navigateur ; aucune clé service-role ne doit être ajoutée au site.
 
-## Publication éditoriale
-Les auteurs peuvent créer et modifier leurs brouillons et demander une relecture. Les rôles clients ne peuvent pas écrire les colonnes `publication_status`, `is_public`, `published_at` ou `review_status`. Une personne de confiance doit approuver les textes depuis l'espace SQL Supabase. Exemple pour un texte relu :
+## Publication des œuvres
 
-```sql
-update public.plume_works
-set publication_status = 'published', is_public = true, published_at = now()
-where id = '<UUID_DU_TEXTE>' and submission_requested_at is not null;
-```
+Le bouton **Publier** enregistre réellement le choix de visibilité :
+- **Public — dans la bibliothèque** : l’œuvre passe à `publication_status = 'published'`, `is_public = true` et reçoit une date de publication. Après confirmation de Supabase, elle apparaît sur l’accueil et dans la bibliothèque.
+- **Privé — moi uniquement** : l’œuvre reste en brouillon privé et n’est pas visible dans la bibliothèque publique.
 
-Un commentaire n'est public qu'après validation de `review_status = 'visible'`. Ne publiez que les textes dont les droits et l'accord de l'auteur ont été vérifiés.
+La migration `supabase/migrations/20261018120000_allow_author_direct_publication.sql` accorde aux utilisateurs connectés les droits sur les seules colonnes de visibilité et de date nécessaires à ce choix. Les politiques RLS continuent de limiter chaque écriture aux œuvres dont `author_id = auth.uid()`. Les visiteurs non connectés ne peuvent lire que les œuvres publiées et publiques.
+
+Les commentaires restent soumis à validation : un commentaire n’est public qu’après passage à `review_status = 'visible'`. Ne publiez que des textes dont vous possédez les droits.
 
 ## Configuration Vercel
 Variables à ajouter aux environnements Production, Preview et Development :
