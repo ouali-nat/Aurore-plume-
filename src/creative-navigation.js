@@ -118,18 +118,21 @@ document.addEventListener('click', event => {
 }, true);
 
 document.addEventListener('touchstart', event => {
-  if (!overlayOpen || !event.changedTouches?.length) return;
+  if (!event.changedTouches?.length || !event.target.closest?.('#app main')) return;
   touchStartX = event.changedTouches[0].clientX;
   touchStartY = event.changedTouches[0].clientY;
   gestureStartTarget = event.target;
 }, { passive: true });
 
 document.addEventListener('touchend', event => {
-  if (!overlayOpen || touchStartX === null || !event.changedTouches?.length) return;
+  if (touchStartX === null || !event.changedTouches?.length) return;
   const dx = event.changedTouches[0].clientX - touchStartX;
   const dy = event.changedTouches[0].clientY - touchStartY;
   const startedOnControl = gestureStartTarget?.closest?.('button, a, input, textarea, select');
-  if (!startedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) showChannel(active + (dx < 0 ? 1 : -1));
+  if (!startedOnControl && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+    const next = !overlayOpen && dx > 0 ? 0 : active + (dx < 0 ? 1 : -1);
+    showChannel(next);
+  }
   touchStartX = null; touchStartY = null; gestureStartTarget = null;
 }, { passive: true });
 
