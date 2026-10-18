@@ -371,3 +371,14 @@
 .plume-rendered-shape.shape-quote{border-radius:14px;background:#f7f2e9;border-left:5px solid #c7ad82}
 .plume-rendered-shape.shape-label{border-radius:7px;background:#f7e8ec;border-color:#d9b7c1;color:#8b5264}
 @media print{.plume-rendered-page{width:100%;max-width:none;min-height:0;margin:0;border:0;break-after:page;page-break-after:always}}
+
+/* Le manuscrit doit montrer la page elle-même, pas les métadonnées de l’œuvre. */
+.editor-only-shell .editor-paper-desk{display:block!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.editor-only-shell .editor-paper-sheet{display:block!important;max-width:none!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.editor-only-shell .editor-paper-sheet-top,.editor-only-shell .editor-paper-footer,.editor-only-shell .editor-paper-ruler,
+.editor-only-shell .editor-panel-intro,.editor-only-shell .editor-meta-grid,.editor-only-shell .manuscript-tools,
+.editor-only-shell .editor-hint{display:none!important}
+.editor-only-shell .manuscript-panel{padding:0!important;margin:0!important;border:0!important;background:transparent!important}
+.editor-only-shell .plume-editor-workspace{width:100%;margin:0}
+.editor-only-shell .plume-canvas-desk{width:100%;box-sizing:border-box}
+.editor-only-shell .editor-page-nav button:disabled{opacity:.45}
