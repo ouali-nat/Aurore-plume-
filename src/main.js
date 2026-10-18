@@ -1027,8 +1027,8 @@ app.addEventListener('touchend', (event) => {
   const dy = event.changedTouches[0].clientY - editorTouchStartY;
   const inEditor = event.target.closest('.text-editor-shell');
   if (inEditor && !editorTouchStartedOnControl && Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.35) {
-    if (state.editorTab === 'manuscript') navigateCanvasPage(dx < 0 ? 1 : -1);
-    else navigateEditorPage(dx < 0 ? 1 : -1);
+    if (state.editorTab !== 'manuscript') activateEditorTab('manuscript');
+    navigateCanvasPage(dx < 0 ? 1 : -1);
   }
   editorTouchStartX = null;
   editorTouchStartY = null;
