@@ -256,15 +256,25 @@ function navigateCanvasPage(direction) {
 const DEFAULT_EDITORIAL_SETTINGS = { page_format: 'A5', body_font: 'Georgia', font_size: 12, line_height: 1.7, margins: 'standard' };
 
 function manuscriptPreviewHtml(value = '') {
-  return String(value || '').split(/\n\s*\n/).map((block) => {
+  const raw = String(value || '');
+  if (raw.startsWith(EDITOR_DOCUMENT_PREFIX)) {
+    try {
+      const pages = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
+      return pages.map((page) => '<section class="plume-rendered-page">' + (page.blocks || []).map((b) => {
+        const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';';
+        if (b.type === 'image') return '<div class="plume-rendered-block plume-rendered-image" style="'+style+'"><img alt="" src="'+e(b.src||'')+'"></div>';
+        if (b.type === 'shape') return '<div class="plume-rendered-block plume-rendered-shape shape-'+e(b.shape||'round')+'" style="'+style+'">'+e(b.label||'')+'</div>';
+        return '<div class="plume-rendered-block" style="'+style+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div>';
+      }).join('') + '</section>').join('');
+    } catch { return '<p class="preview-empty">Impossible de lire la mise en page de cette œuvre.</p>'; }
+  }
+  return raw.split(/\n\s*\n/).map((block) => {
     const trimmed = block.trim();
     if (!trimmed) return '';
     if (/^---+$/.test(trimmed)) return '<hr class="manuscript-divider">';
     if (trimmed.startsWith('### ')) return '<h3>' + e(trimmed.slice(4)) + '</h3>';
     if (trimmed.startsWith('## ')) return '<h2>' + e(trimmed.slice(3)) + '</h2>';
-    if (trimmed.split('\n').every((line) => line.startsWith('> '))) {
-      return '<blockquote>' + trimmed.split('\n').map((line) => e(line.slice(2))).join('<br>') + '</blockquote>';
-    }
+    if (trimmed.split('\n').every((line) => line.startsWith('> '))) return '<blockquote>' + trimmed.split('\n').map((line) => e(line.slice(2))).join('<br>') + '</blockquote>';
     const safe = e(trimmed).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
     return '<p>' + safe.replace(/\n/g, '<br>') + '</p>';
   }).join('');
@@ -324,8 +334,7 @@ function updateEditorPreviews() {
     if (node) node.textContent = genre;
   });
   const previewBody = document.getElementById('editor-preview-body');
-  const printableBody = body.startsWith(EDITOR_DOCUMENT_PREFIX) ? (() => { try { return JSON.parse(body.slice(EDITOR_DOCUMENT_PREFIX.length)).map((page) => (page.blocks || []).map((block) => block.type === 'text' ? block.text : block.type === 'shape' ? block.label : '').filter(Boolean).join('\\n\\n')).filter(Boolean).join('\\n\\n'); } catch { return ''; } })() : body;
-  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(printableBody) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
+  if (previewBody) previewBody.innerHTML = manuscriptPreviewHtml(body) || '<p class="preview-empty">Votre manuscrit apparaîtra ici au fur et à mesure de l’écriture.</p>';
   const previewSummary = document.getElementById('editor-preview-summary');
   if (previewSummary) { previewSummary.textContent = summary; previewSummary.hidden = !summary; }
   const counter = document.getElementById('word-count');
