@@ -728,6 +728,9 @@ app.addEventListener('submit', async (event) => {
   }
 });
 
+// Affiche immédiatement l’application : l’attente de la session Supabase ne doit pas laisser l’écran de démarrage bloqué.
+render();
+
 if (supabase) {
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
