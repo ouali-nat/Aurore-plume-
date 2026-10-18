@@ -96,7 +96,7 @@ function enhance() {
     }
   });
   const header = root.querySelector('.site-header');
-  if (!header || header.querySelector('.creative-rail')) return;
+  if (!header || root.querySelector('.creative-rail')) return;
   header.insertAdjacentHTML('afterend', navMarkup());
   lastRoot = root;
   // The normal vertical page scroll never changes the selected creative universe.
