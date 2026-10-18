@@ -223,9 +223,9 @@ function editorCanvasMarkup() {
     const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(b.font||'Georgia')+';font-size:'+Number(b.size||18)+'px;text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';';
     const selected = b.id === state.editorSelectedBlock ? ' is-selected' : '';
     const handles = '<button type="button" class="plume-block-move" aria-label="Déplacer le bloc">⠿</button>'+['nw','n','ne','e','se','s','sw','w'].map((dir)=>'<button type="button" class="plume-block-resize resize-'+dir+'" data-resize-dir="'+dir+'" aria-label="Redimensionner"></button>').join('');
-    if (b.type === 'image') return '<div class="plume-canvas-block plume-canvas-image'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><img alt="Image ajoutée" src="'+e(b.src||'')+'">${handles}</div>';
-    if (b.type === 'shape') return '<div class="plume-canvas-block plume-canvas-shape shape-'+e(b.shape||'round')+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><span>'+e(b.label||'')+'</span><button type="button" class="plume-block-resize" aria-label="Redimensionner"></button></div>';
-    return '<div class="plume-canvas-block plume-canvas-text'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><div class="plume-canvas-text-content" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div><button type="button" class="plume-block-resize" aria-label="Redimensionner"></button></div>';
+    if (b.type === 'image') return '<div class="plume-canvas-block plume-canvas-image'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><img alt="Image ajoutée" src="'+e(b.src||'')+'">'+handles+'</div>';
+    if (b.type === 'shape') return '<div class="plume-canvas-block plume-canvas-shape shape-'+e(b.shape||'round')+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><span>'+e(b.label||'')+'</span>'+handles+'</div>';
+    return '<div class="plume-canvas-block plume-canvas-text'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><button type="button" class="plume-block-move" aria-label="Déplacer la zone de texte">⠿</button><div class="plume-canvas-text-content" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div>'+handles+'</div>';
   }).join('');
 }
 function updateEditorCanvas() {
