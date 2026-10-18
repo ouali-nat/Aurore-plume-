@@ -131,7 +131,7 @@
 .editor-panel-intro p{max-width:640px;color:#79727c;font-size:13px;line-height:1.7;margin:0}
 .editor-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
 .editor-meta-grid label,.editor-layout-grid label,.cover-editor-controls label{display:flex;flex-direction:column;gap:8px;color:#504958;font-size:12px;font-weight:800;min-width:0}
-.editor-meta-grid input,.editor-meta-grid textarea,.editor-meta-grid select,.editor-layout-grid select,.cover-editor-controls input[type=file]{width:100%;min-width:0;border:1px solid #e2dbe3;border-radius:12px;background:#fff;color:#302b35;padding:13px 14px;font:500 14px/1.5 inherit;outline:none}
+.editor-meta-grid input,.editor-meta-grid textarea,.editor-meta-grid select,.editor-layout-grid select,.cover-editor-controls input[type=file]{width:100%;min-width:0;border:1px solid #e2dbe3;border-radius:12px;background:#fff;color:#302b35;padding:13px 14px;font:500 14px/1.5 "DM Sans",sans-serif;outline:none}
 .editor-meta-grid input:focus,.editor-meta-grid textarea:focus,.editor-meta-grid select:focus,.editor-layout-grid select:focus,.cover-editor-controls input[type=file]:focus{border-color:#8c78ae;box-shadow:0 0 0 3px #8c78ae20}
 .editor-meta-grid textarea{resize:vertical}
 .editor-summary-field{grid-column:1/-1}
