@@ -269,9 +269,9 @@ async function hydrateR2Images(root) {
     }
   }));
 }
-function editorCanvasMarkup() {
-  const page = state.editorPages[state.editorPageIndex] || { blocks: [] };
-  const settings = editorialSettingsFromForm();
+function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
+  const page = pageOverride || state.editorPages[state.editorPageIndex] || { blocks: [] };
+  const settings = settingsOverride || editorialSettingsFromForm();
   return page.blocks.map((b) => {
     const useEditorialFont = b.type === 'text' && b.editorialFont !== false;
     const useEditorialSize = b.type === 'text' && b.editorialSize !== false;
@@ -1077,6 +1077,96 @@ async function buildWorkPdfBlob(work) {
       : { format: 'a5', width: 148, height: 210 };
   const pageWidth = formatConfig.width, pageHeight = formatConfig.height;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: formatConfig.format, compress: true });
+  const body = String(work.body || '');
+
+  // Les pages créées dans l'éditeur sont rendues avec le même DOM et les mêmes
+  // règles CSS que la feuille visible. Le PDF reprend cette image fidèle, puis
+  // ajoute une couche de texte invisible pour conserver la sélection/recherche.
+  if (body.startsWith(EDITOR_DOCUMENT_PREFIX)) {
+    let pages = [];
+    try {
+      const saved = JSON.parse(body.slice(EDITOR_DOCUMENT_PREFIX.length));
+      pages = normalizeEditorPages(Array.isArray(saved) ? saved : saved.pages);
+    } catch { pages = []; }
+    if (!pages.length) pages = [{ blocks: [] }];
+
+    const { default: html2canvas } = await import('html2canvas');
+    const surface = document.createElement('div');
+    surface.className = 'plume-canvas-paper plume-pdf-export-surface';
+    surface.setAttribute('aria-hidden', 'true');
+    const renderWidth = 1200;
+    surface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+Math.round(renderWidth*pageHeight/pageWidth)+'px;min-height:0;aspect-ratio:auto;overflow:hidden;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;background:#fff;transform:none;';
+    document.body.appendChild(surface);
+    try {
+      for (let index = 0; index < pages.length; index++) {
+        surface.style.width = renderWidth + 'px';
+        surface.style.height = Math.round(renderWidth * pageHeight / pageWidth) + 'px';
+        surface.innerHTML = editorCanvasMarkup(pages[index], settings);
+        surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-resize').forEach((node) => {
+          node.classList.remove('is-selected');
+          if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
+        });
+        await hydrateR2Images(surface);
+        await Promise.all([...surface.querySelectorAll('img')].map((img) => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise((resolve) => {
+            const done = () => resolve();
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+            window.setTimeout(done, 10000);
+          });
+        }));
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const renderedCanvas = await html2canvas(surface, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          width: renderWidth,
+          height: Math.round(renderWidth * pageHeight / pageWidth),
+          windowWidth: Math.max(window.innerWidth, renderWidth),
+          windowHeight: Math.max(window.innerHeight, Math.round(renderWidth * pageHeight / pageWidth))
+        });
+        if (index > 0) doc.addPage(formatConfig.format, 'portrait');
+        doc.addImage(renderedCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+
+        // Couche invisible : le rendu visible reste strictement celui de la feuille.
+        // Le texte demeure disponible pour la sélection, la recherche et l'extraction.
+        const mmPerPx = pageWidth / renderWidth;
+        for (const block of (pages[index].blocks || [])) {
+          const isText = block.type === 'text' || (block.type === 'shape' && block.label);
+          if (!isText) continue;
+          const value = String(block.type === 'shape' ? block.label : block.text || '');
+          if (!value) continue;
+          const x = Math.max(0, Number(block.x ?? 9) / 100 * pageWidth + 5 * mmPerPx);
+          const y = Math.max(0, Number(block.y ?? 10) / 100 * pageHeight + 5 * mmPerPx);
+          const width = Math.max(1, Number(block.w ?? 82) / 100 * pageWidth - 10 * mmPerPx);
+          const useEditorialFont = block.type === 'text' && block.editorialFont !== false;
+          const useEditorialSize = block.type === 'text' && block.editorialSize !== false;
+          const fontFamily = useEditorialFont ? settings.body_font : (block.font || settings.body_font);
+          const fontPt = useEditorialSize ? Number(settings.font_size) : Math.max(5, Number(block.size || 18) * .75);
+          const fontName = pdfFontName(fontFamily);
+          const fontStyle = (block.bold ? 'bold' : '') + (block.italic ? 'italic' : '') || 'normal';
+          doc.setFont(fontName, fontStyle);
+          doc.setFontSize(Math.max(5, Math.min(72, fontPt)));
+          const textLines = String(value).split(/\r?\n/).flatMap((line) => line ? doc.splitTextToSize(line, width) : ['']);
+          const leading = block.type === 'text' && block.editorialLineHeight !== false ? Number(settings.line_height || 1.7) : 1.35;
+          const lineStep = fontPt * (25.4 / 72) * leading;
+          let baseline = y + fontPt * (25.4 / 72) * .9;
+          const align = ['left','center','right'].includes(block.align) ? block.align : 'left';
+          for (const line of textLines) {
+            if (line) doc.text(line, align === 'center' ? x + width / 2 : align === 'right' ? x + width : x, baseline, { align, renderingMode: 'invisible' });
+            baseline += lineStep;
+          }
+        }
+      }
+    } finally {
+      surface.remove();
+    }
+    return doc.output('blob');
+  }
+
+  // Compatibilité avec les anciens textes sans mise en page par blocs.
   const author = authorOf(work)?.display_name || 'Aurore Plume';
   const coverImageKey = String(work.cover_media_key || '');
   if (coverImageKey) {
@@ -1104,69 +1194,23 @@ async function buildWorkPdfBlob(work) {
   doc.setTextColor(...coverInk); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   doc.text(String(work.genre || 'Texte libre') + ' · ' + author, pageWidth * .1, pageHeight * .72);
   doc.setFontSize(7); doc.text('ÉCRIRE · PARTAGER · GRANDIR', pageWidth * .1, pageHeight * .9);
-
-  const body = String(work.body || '');
-  if (body.startsWith(EDITOR_DOCUMENT_PREFIX)) {
-    let pages;
-    try { const saved = JSON.parse(body.slice(EDITOR_DOCUMENT_PREFIX.length)); pages = normalizeEditorPages(Array.isArray(saved) ? saved : saved.pages); }
-    catch { pages = []; }
-    for (const page of (pages.length ? pages : [{ blocks: [] }])) {
-      doc.addPage(formatConfig.format, 'portrait');
-      doc.setFillColor(255, 255, 255); doc.rect(0, 0, pageWidth, pageHeight, 'F');
-      for (const block of (page.blocks || [])) {
-        const x = Math.max(0, Number(block.x ?? 0) / 100 * pageWidth);
-        const y = Math.max(0, Number(block.y ?? 0) / 100 * pageHeight);
-        const width = Math.max(1, Math.min(pageWidth - x, Number(block.w ?? 82) / 100 * pageWidth));
-        const height = Math.max(1, Math.min(pageHeight - y, Number(block.h ?? 24) / 100 * pageHeight));
-        if (block.type === 'image') {
-          try {
-            const imageSource = await imageDataForPdf(block.src || '');
-            const scale = Math.min(width / imageSource.width, height / imageSource.height);
-            const drawWidth = imageSource.width * scale, drawHeight = imageSource.height * scale;
-            doc.addImage(imageSource.dataUrl, 'PNG', x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
-          } catch (error) { console.warn('Image de manuscrit ignorée dans le PDF', error.message); }
-          continue;
-        }
-        if (block.type === 'shape') {
-          const shapeName = String(block.shape || 'round');
-          const defaults = shapeName === 'circle' ? {fill:'#e2ece4',stroke:'#b2cbb8',text:'#46654d'}
-            : shapeName === 'square' ? {fill:'#f4eadb',stroke:'#d9c39d',text:'#745b37'}
-            : shapeName === 'quote' ? {fill:'#f7f2e9',stroke:'#c7ad82',text:'#5d4776'}
-            : shapeName === 'label' ? {fill:'#f7e8ec',stroke:'#d9b7c1',text:'#8b5264'}
-            : {fill:'#eee6f7',stroke:'#bba8d0',text:'#5d4776'};
-          doc.setFillColor(...pdfRgb(block.fill || defaults.fill)); doc.setDrawColor(...pdfRgb(defaults.stroke)); doc.setLineWidth(.4);
-          if (shapeName === 'line') {
-            doc.setDrawColor(...pdfRgb(block.color || defaults.stroke)); doc.setLineWidth(Math.max(.5,Math.min(4,height*.12)));
-            doc.line(x,y+height/2,x+width,y+height/2);
-          } else if (shapeName === 'circle') doc.ellipse(x+width/2,y+height/2,width/2,height/2,'FD');
-          else if (shapeName === 'square') doc.rect(x,y,width,height,'FD');
-          else { const radius=Math.min(3,width/8,height/8); doc.roundedRect(x,y,width,height,radius,radius,'FD'); }
-          if (block.label) drawPdfTextBox(doc,block.label,block,settings,pageWidth,pageHeight,{color:block.color||defaults.text,fontSize:Number(settings.font_size),align:'center'});
-          continue;
-        }
-        drawPdfTextBox(doc,block.text || '',block,settings,pageWidth,pageHeight);
-      }
+  const marginMm=settings.margins==='narrow'?12:settings.margins==='wide'?25:18;
+  const fontPt=Number(settings.font_size)||12;
+  const lineStep=fontPt*(25.4/72)*(Number(settings.line_height)||1.7);
+  let x=marginMm,y=marginMm;
+  const plain=body.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/^#{1,3}\s+/gm,'').replace(/^>\s?/gm,'');
+  doc.addPage(formatConfig.format,'portrait');doc.setFont(pdfFontName(settings.body_font),'normal');doc.setFontSize(fontPt);doc.setTextColor(48,42,53);
+  for(const paragraph of plain.split(/\r?\n/)){
+    const lines=paragraph?doc.splitTextToSize(paragraph,pageWidth-marginMm*2):[''];
+    for(const line of lines){
+      if(y+lineStep>pageHeight-marginMm){doc.addPage(formatConfig.format,'portrait');y=marginMm;doc.setFont(pdfFontName(settings.body_font),'normal');doc.setFontSize(fontPt);}
+      if(line)doc.text(line,x,y+fontPt*(25.4/72)*.9);
+      y+=lineStep;
     }
-  } else {
-    const marginMm=settings.margins==='narrow'?12:settings.margins==='wide'?25:18;
-    const fontPt=Number(settings.font_size)||12;
-    const lineStep=fontPt*(25.4/72)*(Number(settings.line_height)||1.7);
-    let x=marginMm,y=marginMm;
-    const plain=body.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/^#{1,3}\s+/gm,'').replace(/^>\s?/gm,'');
-    doc.addPage(formatConfig.format,'portrait');doc.setFont(pdfFontName(settings.body_font),'normal');doc.setFontSize(fontPt);doc.setTextColor(48,42,53);
-    for(const paragraph of plain.split(/\r?\n/)){
-      const lines=paragraph?doc.splitTextToSize(paragraph,pageWidth-marginMm*2):[''];
-      for(const line of lines){
-        if(y+lineStep>pageHeight-marginMm){doc.addPage(formatConfig.format,'portrait');y=marginMm;doc.setFont(pdfFontName(settings.body_font),'normal');doc.setFontSize(fontPt);}
-        if(line)doc.text(line,x,y+fontPt*(25.4/72)*.9);
-        y+=lineStep;
-      }
-      y+=lineStep*.35;
-    }
+    y+=lineStep*.35;
   }
   return doc.output('blob');
 }
-
 function downloadBlob(blob,filename) {
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=filename;link.style.display='none';document.body.appendChild(link);link.click();link.remove();
