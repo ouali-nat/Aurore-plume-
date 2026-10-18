@@ -1126,7 +1126,6 @@ app.addEventListener('submit', async (event) => {
     }
     return;
   }
-app.addEventListener('submit', async (event) => {
   if (event.target.id === 'r2-upload-form') { event.preventDefault(); await uploadR2Files(event.target); return; }
   if (event.target.id === 'creation-form') {
     event.preventDefault();
