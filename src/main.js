@@ -348,7 +348,8 @@ function manuscriptPreviewHtml(value = '', editorialSettings = {}) {
     try {
       const saved = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
       const pages = Array.isArray(saved) ? saved : saved.pages;
-      return normalizeEditorPages(pages).map((page) => '<section class="plume-rendered-page">' + page.blocks.map((b) => {
+      const pageRatio = settings.page_format === 'A4' ? '210 / 297' : settings.page_format === 'Letter' ? '8.5 / 11' : '148 / 210';
+      return normalizeEditorPages(pages).map((page) => '<section class="plume-rendered-page" style="aspect-ratio:'+pageRatio+';min-height:auto;">' + page.blocks.map((b) => {
         const useEditorialFont = b.type === 'text' && b.editorialFont !== false;
         const useEditorialSize = b.type === 'text' && b.editorialSize !== false;
         const useEditorialLeading = b.type === 'text' && b.editorialLineHeight !== false;
