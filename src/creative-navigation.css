@@ -77,3 +77,15 @@
 @keyframes plume-note-float{0%,100%{translate:0 0}50%{translate:0 -5px}}
 @media(hover:none){.feature-card.plume-float-ready:hover,.work-card.plume-float-ready:hover{transform:none;box-shadow:none}}
 @media(prefers-reduced-motion:reduce){.creative-page.enter-from-right,.creative-page.enter-from-left,.plume-float-ready,.hero-art.plume-float-ready .paper-card,.floating-note.plume-float-ready{animation:none!important;transition:none!important}}
+
+
+/* Navigation personnelle : même rail horizontal que les univers créatifs */
+.personal-creative-rail .creative-rail-label{color:#493b72}
+.personal-creative-rail .creative-tabs{gap:10px}
+.personal-creative-rail .creative-tab{min-width:132px;justify-content:flex-start}
+.personal-creative-rail .creative-tab[aria-selected="true"]{background:#493b72;border-color:#493b72;color:#fffaf4}
+.personal-creative-rail .creative-tab[aria-selected="true"] .creative-tab-icon{background:#ffffff26;color:#fff}
+@media(max-width:560px){
+  .personal-creative-rail .creative-tab{min-width:122px;padding:0 12px}
+  .personal-creative-rail .creative-rail-hint{font-size:9px}
+}
