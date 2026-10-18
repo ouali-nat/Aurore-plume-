@@ -24,7 +24,23 @@ function safeText(value) {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function isPersonalWorkspace() {
+  return Boolean(document.querySelector('#app main .workspace-grid, #app main .video-workspace'));
+}
+
+function personalNavMarkup() {
+  const videosActive = Boolean(document.querySelector('#app main .video-workspace'));
+  return `<nav class="creative-rail personal-creative-rail" aria-label="Navigation de mon espace">
+    <div class="creative-rail-head"><span class="creative-rail-label">MON ESPACE PERSONNEL</span><span class="creative-rail-hint">Glissez pour changer de page <span aria-hidden="true">↔</span></span></div>
+    <div class="creative-tabs" role="tablist" aria-label="Mes créations">
+      <button class="creative-tab ${videosActive ? '' : 'is-active'}" role="tab" aria-selected="${!videosActive}" data-workspace-tab="textes"><span class="creative-tab-icon">Aa</span><span>Mes textes</span></button>
+      <button class="creative-tab ${videosActive ? 'is-active' : ''}" role="tab" aria-selected="${videosActive}" data-workspace-tab="videos"><span class="creative-tab-icon">▶</span><span>Mes vidéos</span></button>
+    </div>
+  </nav>`;
+}
+
 function navMarkup() {
+  if (isPersonalWorkspace()) return personalNavMarkup();
   return `<nav class="creative-rail" aria-label="Univers créatifs">
     <div class="creative-rail-head"><span class="creative-rail-label">EXPLORER LES UNIVERS</span><span class="creative-rail-hint">Glissez pour découvrir <span aria-hidden="true">↔</span></span></div>
     <div class="creative-tabs" role="tablist" aria-label="Catégories de créations">
@@ -130,8 +146,17 @@ document.addEventListener('touchend', event => {
   const dy = event.changedTouches[0].clientY - touchStartY;
   const startedOnControl = gestureStartTarget?.closest?.('button, a, input, textarea, select');
   if (!startedOnControl && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-    const next = !overlayOpen && dx > 0 ? 0 : active + (dx < 0 ? 1 : -1);
-    showChannel(next);
+    if (isPersonalWorkspace()) {
+      const currentPage = document.querySelector('#app main .video-workspace') ? 1 : 0;
+      const nextPage = currentPage + (dx < 0 ? 1 : -1);
+      if (nextPage >= 0 && nextPage <= 1) {
+        const destination = nextPage === 0 ? 'textes' : 'videos';
+        document.querySelector('.personal-creative-rail [data-workspace-tab="' + destination + '"]')?.click();
+      }
+    } else {
+      const next = !overlayOpen && dx > 0 ? 0 : active + (dx < 0 ? 1 : -1);
+      showChannel(next);
+    }
   }
   touchStartX = null; touchStartY = null; gestureStartTarget = null;
 }, { passive: true });
