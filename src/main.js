@@ -463,6 +463,22 @@ function renderTextEditor() {
   if (coverKey) loadEditorCoverPreview(coverKey);
 }
 
+function renderDraftCreate() {
+  shell(`
+    <section class="draft-create-screen">
+      <form id="draft-create-form" class="draft-create-card">
+        <button type="button" class="draft-create-close" data-draft-cancel aria-label="Annuler">×</button>
+        <span class="eyebrow">NOUVELLE ŒUVRE</span>
+        <h1>Créer un brouillon</h1>
+        <label>Titre de l’œuvre<input name="title" maxlength="140" required placeholder="Le titre de votre œuvre"></label>
+        <label>Description<textarea name="summary" maxlength="1200" rows="3" placeholder="Quelques mots pour présenter votre idée…"></textarea></label>
+        <label>Type d’œuvre<select name="genre">${['Texte libre','Roman','Nouvelle','Poésie','Recueil de poésie','Conte','Théâtre','Essai','Récit personnel','Carnet'].map((genre) => `<option value="${e(genre)}">${e(genre)}</option>`).join('')}</select></label>
+        <button class="button button-primary draft-create-submit" type="submit">Créer le brouillon <span>↗</span></button>
+      </form>
+    </section>
+  `);
+}
+
 function renderAtelier() {
   if (!state.user) {
     shell(`
@@ -855,6 +871,7 @@ app.addEventListener('click', async (event) => {
   }
   const insertTokenButton = event.target.closest('[data-insert-token]');
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
+  if (event.target.closest('[data-draft-cancel]')) { state.showDraftCreate = false; render(); return; }
   if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.showDraftCreate = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
   if (event.target.closest('[data-editor-print]')) { activateEditorTab('preview'); window.setTimeout(() => window.print(), 120); return; }
   if (event.target.closest('[data-editor-preview-refresh]')) { updateEditorPreviews(); toast('Aperçu de la couverture actualisé.'); return; }
@@ -1084,6 +1101,31 @@ app.addEventListener('change', (event) => {
   if (message) message.textContent = files.length ? 'Fichier prêt à être envoyé.' : '';
 });
 
+app.addEventListener('submit', async (event) => {
+  if (event.target.id === 'draft-create-form') {
+    event.preventDefault();
+    if (!supabase || !state.user) { showAuth('signin'); return; }
+    const form = event.target;
+    const data = new FormData(form);
+    const title = String(data.get('title') || '').trim();
+    if (!title) { form.querySelector('[name="title"]')?.focus(); return; }
+    const button = form.querySelector('button[type="submit"]');
+    if (button) button.disabled = true;
+    const payload = { title, summary: String(data.get('summary') || '').trim(), genre: String(data.get('genre') || 'Texte libre'), subtitle: '', body: '', editorial_settings: DEFAULT_EDITORIAL_SETTINGS, cover_media_key: null, author_id: state.user.id };
+    try {
+      const { error } = await supabase.from('plume_works').insert(payload);
+      if (error) throw error;
+      state.showDraftCreate = false;
+      await loadMyWorks();
+      render();
+      toast('Brouillon créé.');
+    } catch (error) {
+      console.error('Aurore Plume draft creation', error);
+      toast(error.message || 'Le brouillon n’a pas pu être créé.', 'error');
+      if (button) button.disabled = false;
+    }
+    return;
+  }
 app.addEventListener('submit', async (event) => {
   if (event.target.id === 'r2-upload-form') { event.preventDefault(); await uploadR2Files(event.target); return; }
   if (event.target.id === 'creation-form') {
