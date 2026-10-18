@@ -479,3 +479,13 @@
 .plume-rounding-control input{width:100%;accent-color:#786096;touch-action:pan-x;}
 .plume-canvas-image img{width:100%;height:100%;object-fit:cover;display:block;}
 @media(max-width:700px){.editor-only-shell,.text-editor-shell{width:100%;max-width:100%;}.plume-color-popover{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;width:auto!important;max-width:none;max-height:55vh;}.plume-palette-scroll{max-height:30vh;}.plume-canvas-desk{touch-action:pan-y pan-x;}}
+
+
+/* Compact explicit color controls: palette opens only on user action */
+.plume-compact-color{display:inline-flex;align-items:center;gap:7px;}
+.plume-color-chip{display:inline-block;width:22px;height:22px;min-width:22px;padding:0;border:1px solid #a9a0b4;border-radius:5px;background:var(--chip-color,#000000);cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);}
+.plume-color-chip:focus-visible{outline:2px solid #786096;outline-offset:2px;}
+.plume-object-tools{align-items:center;}
+.plume-object-tools button[aria-expanded="true"]{background:#e9e0f4;border-color:#9d88b9;}
+.plume-rounding-control[hidden],.plume-palette-scroll[hidden],#plume-palette-title[hidden]{display:none!important;}
+.plume-compact-color input[type=color][hidden]{display:none!important;}
