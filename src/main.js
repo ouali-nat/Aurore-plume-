@@ -961,7 +961,18 @@ async function buildWorkPdfBlob(work) {
   const pagesMarkup=manuscriptPreviewHtml(work.body||'');
   const pages=document.createElement('div');
   pages.innerHTML=pagesMarkup||'<section class="plume-rendered-page"></section>';
-  pages.querySelectorAll('.plume-rendered-page').forEach((page)=>{page.style.cssText+=';width:794px;height:1123px;min-height:0;max-width:none;aspect-ratio:auto;margin:0;padding:0;border:0;box-shadow:none;overflow:hidden;background:#fff;';});
+  if(!pages.querySelector('.plume-rendered-page')){
+    const legacyPage=document.createElement('section');
+    legacyPage.className='plume-rendered-page';
+    legacyPage.innerHTML=pages.innerHTML;
+    pages.innerHTML='';
+    pages.appendChild(legacyPage);
+    legacyPage.dataset.legacyText='true';
+  }
+  pages.querySelectorAll('.plume-rendered-page').forEach((page)=>{
+    page.style.cssText+=';box-sizing:border-box;width:794px;height:1123px;min-height:0;max-width:none;aspect-ratio:auto;margin:0;padding:'+(page.dataset.legacyText?'76px 74px':'0')+';border:0;box-shadow:none;overflow:hidden;background:#fff;';
+    if(page.dataset.legacyText){page.style.fontFamily='Georgia,serif';page.style.fontSize='18px';page.style.lineHeight='1.65';}
+  });
   stage.appendChild(pages);
   document.body.appendChild(stage);
   try {
@@ -985,7 +996,7 @@ let plumePdfDocument=null, plumePdfScale=1, plumePdfPage=1, plumePdfBlob=null;
 async function openPdfReader(blob,title='Lecture du document') {
   plumePdfBlob=blob;
   const url=URL.createObjectURL(blob);
-  modalRoot.innerHTML='<div class="plume-pdf-reader-overlay" id="pdfViewerOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfViewerTitre"><div class="pdf-reader-shell"><div class="pdf-reader-topbar"><button type="button" class="pdf-reader-menu-toggle pdf-reader-back" data-pdf-reader-close aria-label="Fermer le lecteur">×</button><strong id="pdfViewerTitre" class="pdf-reader-title plume-pdf-reader-title">'+e(title)+'</strong><span class="pdf-reader-badge">LECTURE</span><div class="pdf-reader-top-actions pdf-reader-toolbar"><button type="button" data-pdf-zoom-out aria-label="Réduire le zoom">−</button><span data-pdf-zoom-label>100%</span><button type="button" data-pdf-zoom-in aria-label="Agrandir le zoom">+</button><button type="button" data-pdf-download>↓ Télécharger</button></div></div><div class="pdf-reader-pages" id="plume-pdf-reader-pages"><p class="plume-pdf-loading">Préparation du document…</p></div><div class="pdf-reader-bottombar"><button type="button" data-pdf-prev>Précédent</button><span data-pdf-page-count>— / —</span><button type="button" data-pdf-next>Suivant</button></div></div></div>';
+  modalRoot.innerHTML='<div class="plume-pdf-reader-overlay" id="pdfViewerOverlay" role="dialog" aria-modal="true" aria-labelledby="pdfViewerTitre"><div class="pdf-reader-shell"><div class="pdf-reader-topbar"><button type="button" class="pdf-reader-menu-toggle pdf-reader-back" data-pdf-reader-close aria-label="Fermer le lecteur">×</button><strong id="pdfViewerTitre" class="pdf-reader-title plume-pdf-reader-title">'+e(title)+'</strong><span class="pdf-reader-badge">LECTURE</span><div class="pdf-reader-top-actions pdf-reader-toolbar pdf-toolbar-group"><button type="button" data-pdf-zoom-out aria-label="Réduire le zoom">−</button><span data-pdf-zoom-label>100%</span><button type="button" data-pdf-zoom-in aria-label="Agrandir le zoom">+</button><button type="button" data-pdf-download>↓ Télécharger</button></div></div><div class="pdf-reader-pages" id="plume-pdf-reader-pages"><p class="plume-pdf-loading">Préparation du document…</p></div><div class="pdf-reader-bottombar"><button type="button" data-pdf-prev>Précédent</button><span data-pdf-page-count>— / —</span><button type="button" data-pdf-next>Suivant</button></div></div></div>';
   try {
     const pdfjs=await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc=pdfWorkerUrl;
