@@ -1611,7 +1611,54 @@ app.addEventListener('pointermove',(event)=>{
   }
 });
 app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}});
-app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){if(b.type==='shape')b.label=n.innerText;else b.text=n.innerText;const canvas=document.querySelector('#plume-editor-canvas');if(canvas&&b.type==='text'){const blockNode=n.closest('.plume-canvas-block');if(blockNode){const needed=Math.max(12,Math.ceil(n.scrollHeight/Math.max(1,canvas.clientHeight)*100)+2);b.h=Math.max(Number(b.h)||0,needed);blockNode.style.height=b.h+'%';}}const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();updateEditorPreviews();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';saveEditorRecovery();}});
+function fitPastedTextBlock(node,block){
+  const canvas=document.querySelector('#plume-editor-canvas'),blockNode=node?.closest('.plume-canvas-block');
+  if(!canvas||!blockNode||!block||block.type!=='text')return;
+  const pageHeight=Math.max(1,canvas.clientHeight),remainingPercent=Math.max(8,100-Number(block.y||0));
+  const remainingPx=pageHeight*remainingPercent/100;
+  const originalSize=Number.parseFloat(getComputedStyle(node).fontSize)||Number(block.size)||18;
+  node.style.height='auto';node.style.maxHeight='none';node.style.overflow='visible';
+  let contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
+  if(contentHeight>remainingPx){
+    let size=Math.max(10,originalSize*remainingPx/contentHeight);
+    blockNode.style.fontSize=size+'px';
+    block.size=size;block.editorialSize=false;
+    node.style.fontSize='inherit';
+    contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
+  }
+  const needed=Math.max(12,Math.ceil(contentHeight/pageHeight*100)+1);
+  block.h=Math.min(remainingPercent,Math.max(Number(block.h)||0,needed));
+  blockNode.style.height=block.h+'%';
+  node.style.height='100%';node.style.maxHeight='100%';
+  node.style.overflow=contentHeight>remainingPx?'auto':'hidden';
+  node.style.overflowWrap='anywhere';node.style.whiteSpace='pre-wrap';
+  if(contentHeight>remainingPx){node.style.overflow='auto';}
+  if(!block.editorialSize)block.size=Number.parseFloat(blockNode.style.fontSize)||block.size;
+}
+app.addEventListener('paste',(event)=>{
+  const node=event.target.closest?.('[data-block-text]');
+  if(!node)return;
+  const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((item)=>item.id===node.dataset.blockText);
+  if(!block||block.type==='shape')return;
+  const clipboard=event.clipboardData;
+  const raw=clipboard?.getData('text/plain');
+  if(typeof raw!=='string')return;
+  event.preventDefault();
+  const text=raw.replace(/\r\n?/g,'\n').replace(/\u0000/g,'').replace(/\u00a0/g,' ');
+  node.focus();
+  let inserted=false;
+  try{inserted=document.execCommand('insertText',false,text);}catch{}
+  if(!inserted){
+    const selection=window.getSelection();
+    if(selection?.rangeCount){
+      const range=selection.getRangeAt(0);range.deleteContents();
+      const textNode=document.createTextNode(text);range.insertNode(textNode);
+      range.setStartAfter(textNode);range.collapse(true);selection.removeAllRanges();selection.addRange(range);
+    }else node.appendChild(document.createTextNode(text));
+    node.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertFromPaste',data:text}));
+  }
+});
+app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){if(b.type==='shape')b.label=n.innerText;else b.text=n.innerText;if(b.type==='text')fitPastedTextBlock(n,b);const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();updateEditorPreviews();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';saveEditorRecovery();}});
 app.addEventListener('focusout',(event)=>{if(!event.target.matches('[data-block-text]'))return;recordEditorHistory();});
 app.addEventListener('input',(event)=>{if(event.target.matches('[data-text-style="color"]')){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b&&b.type==='text'){b.color=event.target.value;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}}});
 app.addEventListener('change',(event)=>{if(event.target.matches('[data-text-style="size"], [data-text-style="font"]')){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b&&b.type==='text'){if(event.target.matches('[data-text-style="size"]')){b.size=Number(event.target.value)||18;b.editorialSize=false;}else{b.font=event.target.value;b.editorialFont=false;}updateEditorCanvas();syncEditorCanvas();recordEditorHistory();}}});
