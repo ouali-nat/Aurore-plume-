@@ -622,7 +622,7 @@ function renderTextEditor() {
   shell(`
     <section class="text-editor-shell">
       <div class="text-editor-top">
-        <button type="button" class="editor-exit-button" data-editor-back aria-label="Fermer l’éditeur">×</button>
+        <button type="button" class="editor-exit-button" data-editor-back aria-label="Retour à la page simple" title="Retour à la page simple"><span aria-hidden="true">←</span><span class="editor-exit-label">Page simple</span></button>
         <div class="text-editor-heading">
           <h1 class="editor-document-title">${e(work.title || 'Sans titre')}</h1>
           <span class="editor-save-state"><span class="save-state-dot"></span><span id="editor-save-label">Brouillon privé</span></span>
@@ -1900,8 +1900,12 @@ app.addEventListener('pointermove',(event)=>{
     if(d.includes('n')){h=Math.max(3,plumeBlockDrag.h-dy);y=plumeBlockDrag.y+dy;}
     b.x=Math.max(0,Math.min(99,x)); b.y=Math.max(0,Math.min(99,y));
     b.w=Math.max(4,Math.min(100-b.x,w)); b.h=Math.max(3,Math.min(100-b.y,h));
-    if(b.type==='text'&&(d.includes('e')||d.includes('w'))){
-      const ratio=Math.max(.55,Math.min(2.25,b.w/Math.max(4,plumeBlockDrag.w)));
+    if(b.type==='text'){
+      // La typographie suit aussi les poignées verticales : réduire le bloc
+      // depuis le bas ou le haut réduit la taille au lieu de laisser le texte déborder.
+      const widthRatio=b.w/Math.max(4,plumeBlockDrag.w);
+      const heightRatio=b.h/Math.max(3,plumeBlockDrag.h);
+      const ratio=Math.sqrt(Math.max(.12,widthRatio)*Math.max(.12,heightRatio));
       b.size=Math.round(Math.max(7,Math.min(72,plumeBlockDrag.baseFontPx*ratio))*10)/10;
       b.editorialSize=false;
     }
