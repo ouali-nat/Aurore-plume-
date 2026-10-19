@@ -1617,13 +1617,12 @@ function fitPastedTextBlock(node,block){
   const pageHeight=Math.max(1,canvas.clientHeight),remainingPercent=Math.max(8,100-Number(block.y||0));
   const remainingPx=pageHeight*remainingPercent/100;
   const originalSize=Number.parseFloat(getComputedStyle(node).fontSize)||Number(block.size)||18;
-  const oldHeight=node.style.height,oldMaxHeight=node.style.maxHeight,oldOverflow=node.style.overflow,oldParentFont=blockNode.style.fontSize;
   node.style.height='auto';node.style.maxHeight='none';node.style.overflow='visible';
   let contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
   if(contentHeight>remainingPx){
     let size=Math.max(10,originalSize*remainingPx/contentHeight);
     blockNode.style.fontSize=size+'px';
-    if(!block.editorialSize){block.size=size;}
+    block.size=size;block.editorialSize=false;
     node.style.fontSize='inherit';
     contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
   }
@@ -1634,9 +1633,6 @@ function fitPastedTextBlock(node,block){
   node.style.overflow=contentHeight>remainingPx?'auto':'hidden';
   node.style.overflowWrap='anywhere';node.style.whiteSpace='pre-wrap';
   if(contentHeight>remainingPx){node.style.overflow='auto';}
-  if(oldHeight&& !block.h)node.style.height=oldHeight;
-  if(oldMaxHeight&& !block.h)node.style.maxHeight=oldMaxHeight;
-  if(oldOverflow&& !block.h)node.style.overflow=oldOverflow;
   if(!block.editorialSize)block.size=Number.parseFloat(blockNode.style.fontSize)||block.size;
 }
 app.addEventListener('paste',(event)=>{
