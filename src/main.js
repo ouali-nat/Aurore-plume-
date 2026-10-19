@@ -1644,7 +1644,7 @@ app.addEventListener('paste',(event)=>{
   const raw=clipboard?.getData('text/plain');
   if(typeof raw!=='string')return;
   event.preventDefault();
-  const text=raw.replace(/\\r\\n?/g,'\\n').replace(/\\u0000/g,'').replace(/\\u00a0/g,' ');
+  const text=raw.replace(/\r\\n?/g,'\\n').replace(/\u0000/g,'').replace(/\u00a0/g,' ');
   node.focus();
   let inserted=false;
   try{inserted=document.execCommand('insertText',false,text);}catch{}
