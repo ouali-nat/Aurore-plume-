@@ -322,6 +322,10 @@ function updateEditorCanvas() {
     const page=state.editorPages[state.editorPageIndex]||{};
     canvas.style.aspectRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210';
     canvas.style.backgroundColor=page.background||'#ffffff';
+    const pageColor=page.background||'#ffffff';
+    const customPageColor=document.querySelector('#editor-page-color-custom');
+    if(customPageColor&&/^#[0-9a-f]{6}$/i.test(pageColor))customPageColor.value=pageColor;
+    document.querySelectorAll('[data-page-color]').forEach((swatch)=>{const active=swatch.dataset.pageColor.toLowerCase()===pageColor.toLowerCase();swatch.setAttribute('aria-pressed',String(active));swatch.classList.toggle('is-selected',active);});
     const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
     if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
     canvas.innerHTML=editorCanvasMarkup();
