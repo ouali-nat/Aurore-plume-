@@ -212,3 +212,68 @@
  .plume-nudge-toggle{font-size:11px;padding:6px 7px}
 }
 @media(max-width:370px){.editor-exit-label{display:none}.editor-exit-button{width:38px;padding:0}}
+
+
+/* Correction ciblée — poignée Déplacer et contrôles de redimensionnement toujours au premier plan */
+.editor-only-shell .plume-canvas-block.is-selected {
+  z-index: 10000 !important;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 10020 !important;
+  display: grid !important;
+  width: 29px !important;
+  height: 29px !important;
+  min-width: 29px !important;
+  min-height: 29px !important;
+  border-radius: 9px !important;
+  font-size: 0 !important;
+  color: #5c3c86 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  cursor: grab !important;
+  touch-action: none !important;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move:active {
+  cursor: grabbing !important;
+}
+.editor-only-shell .plume-block-move::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 7px);
+  left: calc(50% - 2px);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow:
+    -5px 0 0 currentColor, 5px 0 0 currentColor,
+    -5px 5px 0 currentColor, 5px 5px 0 currentColor,
+    -5px 10px 0 currentColor, 5px 10px 0 currentColor;
+  pointer-events: none;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-resize {
+  z-index: 10030 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-actions-toggle {
+  z-index: 10025 !important;
+  display: grid !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-actions-menu:not([hidden]) {
+  z-index: 10040 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
