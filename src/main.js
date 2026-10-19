@@ -1379,6 +1379,19 @@ async function openRead(id) {
   catch(error){console.error('PDF lecture Aurore Plume',error);toast(error.message||'Le PDF ne peut pas être préparé.','error');}
 }
 
+function positionBlockActionMenu(owner,menu){
+  if(!owner||!menu)return;
+  menu.classList.remove('opens-up','opens-right');
+  const paper=owner.closest('.plume-canvas-paper');
+  const paperRect=paper?.getBoundingClientRect();
+  const blockRect=owner.getBoundingClientRect();
+  if(!paperRect)return;
+  const width=Math.min(236,Math.max(190,window.innerWidth-32));
+  const height=Math.min(menu.scrollHeight||190,window.innerHeight-24);
+  if(blockRect.bottom+height+20>paperRect.bottom)menu.classList.add('opens-up');
+  if(blockRect.right-4-width<paperRect.left)menu.classList.add('opens-right');
+}
+
 app.addEventListener('click', async (event) => {
   if (!event.target.closest('.plume-block-actions-menu, .plume-block-actions-toggle')) {
     document.querySelectorAll('.plume-block-actions-menu:not([hidden])').forEach((menu)=>{menu.hidden=true;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','false');});
@@ -1391,7 +1404,7 @@ app.addEventListener('click', async (event) => {
     state.editorSelectedBlock=owner.dataset.blockId||null;
     document.querySelectorAll('.plume-block-actions-menu').forEach((menu)=>{if(menu!==owner.querySelector('.plume-block-actions-menu')){menu.hidden=true;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','false');}});
     const menu=owner.querySelector('.plume-block-actions-menu');
-    if(menu){const opening=menu.hidden;menu.hidden=!opening;blockMenuToggle.setAttribute('aria-expanded',String(opening));}
+    if(menu){const opening=menu.hidden;menu.hidden=!opening;blockMenuToggle.setAttribute('aria-expanded',String(opening));if(opening)positionBlockActionMenu(owner,menu);}
     return;
   }
   const editorTabButton = event.target.closest('[data-editor-tab]');
@@ -1442,7 +1455,7 @@ app.addEventListener('click', async (event) => {
     block.rotation=rotateResetButton?0:Math.max(-180,Math.min(180,Math.round((Number(block.rotation)||0)+delta)));
     updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();
     const menu=document.querySelector('.plume-canvas-block.is-selected .plume-block-actions-menu');
-    if(menu){menu.hidden=false;const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
+    if(menu){menu.hidden=false;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','true');positionBlockActionMenu(menu.closest('.plume-canvas-block'),menu);const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
     return;
   }
   const cornerDelete = event.target.closest('[data-delete-block]');
@@ -1759,7 +1772,7 @@ app.addEventListener('change',(event)=>{
       block.rotation=Math.max(-180,Math.min(180,Number(rotationControl.value)||0));
       updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();
       const menu=document.querySelector('.plume-canvas-block.is-selected .plume-block-actions-menu');
-      if(menu){menu.hidden=false;const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
+      if(menu){menu.hidden=false;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','true');positionBlockActionMenu(menu.closest('.plume-canvas-block'),menu);const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
     }
     return;
   }
