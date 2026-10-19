@@ -1,7 +1,7 @@
 /* Aurore Plume — barre d'outils de l'éditeur en « pilule flottante » (variante B : indicateur actif en tuile).
    Couche purement visuelle et additive : aucun sélecteur JS, aucun markup modifié.
    Pour revenir en arrière : retirer le <link> de index.html (ou supprimer ce fichier). Voir docs/HANDOFF-pill-bar.md */
-.text-editor-shell{--pill-red:#c8102e;--pill-red-deep:#a50d25;--pill-on:#fff}
+.text-editor-shell{--pill-red:var(--theme-primary,#c8102e);--pill-red-deep:var(--theme-strong,#a50d25);--pill-on:#fff}
 
 .text-editor-shell .editor-commandbar{
   gap:6px;padding:7px;
