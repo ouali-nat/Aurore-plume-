@@ -4,6 +4,7 @@ import './editorial-studio.css';
 import './aurore-pdf-reader.css';
 import './aurore-science-keyboard.css';
 import './plume-latex-flow.css';
+import './plume-pill-bar.css';
 import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
@@ -499,6 +500,7 @@ function manuscriptPreviewHtml(value = '', editorialSettings = {}) {
 function activateEditorTab(tab) {
   const allowed = ['cover', 'manuscript', 'layout', 'preview'];
   state.editorTab = allowed.includes(tab) ? tab : 'cover';
+  document.querySelectorAll('.editor-commandbar [data-editor-tool].is-active').forEach((button) => button.classList.remove('is-active'));
   document.querySelectorAll('[data-editor-tab]').forEach((button) => {
     const active = button.dataset.editorTab === state.editorTab;
     button.classList.toggle('is-active', active);
@@ -1649,6 +1651,7 @@ app.addEventListener('click', async (event) => {
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
+    document.querySelectorAll('.editor-commandbar [data-editor-tool]').forEach((button)=>button.classList.toggle('is-active',button===editorTool));
     return;
   }
   if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=true;activateEditorTab('manuscript');document.querySelector('#plume-editor-canvas')?.scrollIntoView({block:'nearest',behavior:'smooth'});return;}
