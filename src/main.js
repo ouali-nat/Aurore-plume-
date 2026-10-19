@@ -303,13 +303,15 @@ function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
     const fontFamily = useEditorialFont ? settings.body_font : (b.font || settings.body_font);
     const fontSize = useEditorialSize ? Number(settings.font_size) * 96 / 72 : Number(b.size || 18);
     const leading = useEditorialLeading ? Number(settings.line_height) : 1.35;
-    const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#000000')+';font-family:'+e(fontFamily)+';font-size:'+fontSize+'px;line-height:'+leading+';text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+' ;font-style:'+(b.italic?'italic':'normal')+';opacity:'+Math.max(0.1,Math.min(1,Number(b.opacity??100)/100))+';'+(b.fill?'background-color:'+e(b.fill)+';':'');
+    const rotation = Math.max(-180, Math.min(180, Number(b.rotation ?? 0) || 0));
+    const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#000000')+';font-family:'+e(fontFamily)+';font-size:'+fontSize+'px;line-height:'+leading+';text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+' ;font-style:'+(b.italic?'italic':'normal')+';opacity:'+Math.max(0.1,Math.min(1,Number(b.opacity??100)/100))+';--plume-block-rotation:'+rotation+'deg;transform:rotate('+rotation+'deg);transform-origin:center center;'+(b.fill?'background-color:'+e(b.fill)+';':'');
     const selected = b.id === state.editorSelectedBlock ? ' is-selected' : '';
-    const handles = '<button type="button" class="plume-block-move" aria-label="Déplacer le bloc" title="Déplacer">⠿</button><button type="button" class="plume-block-delete-corner" data-delete-block="'+e(b.id)+'" aria-label="Supprimer cet élément" title="Supprimer">×</button>'+['nw','n','ne','e','se','s','sw','w'].map((dir)=>'<button type="button" class="plume-block-resize resize-'+dir+'" data-resize-dir="'+dir+'" aria-label="Redimensionner"></button>').join('');
+    const rotationLabel = Math.round(rotation) + '°';
+    const handles = '<button type="button" class="plume-block-move" aria-label="Déplacer le bloc" title="Déplacer">⠿</button><button type="button" class="plume-block-actions-toggle" data-block-menu-toggle aria-expanded="false" aria-label="Options de l’élément" title="Rotation ou suppression">⋮</button><div class="plume-block-actions-menu" hidden role="group" aria-label="Options de l’élément"><strong>Options de l’élément</strong><label class="plume-block-rotation-label">Rotation <output data-rotation-output>'+rotationLabel+'</output></label><div class="plume-block-rotation-controls"><button type="button" data-rotate-delta="-15" aria-label="Tourner de 15 degrés vers la gauche" title="−15°">↶</button><input type="range" min="-180" max="180" step="5" value="'+rotation+'" data-block-rotation aria-label="Angle de rotation"><button type="button" data-rotate-delta="15" aria-label="Tourner de 15 degrés vers la droite" title="+15°">↷</button></div><button type="button" class="plume-block-rotation-reset" data-rotate-reset>Réinitialiser la rotation</button><button type="button" class="plume-block-delete-action" data-delete-block="'+e(b.id)+'">Supprimer l’élément</button></div>'+['nw','n','ne','e','se','s','sw','w'].map((dir)=>'<button type="button" class="plume-block-resize resize-'+dir+'" data-resize-dir="'+dir+'" aria-label="Redimensionner"></button>').join('');
     if (b.type === 'image') return '<div class="plume-canvas-block plume-canvas-image'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+';border-radius:'+Math.max(0,Number(b.radius??16))+'px;overflow:visible"><img alt="Image ajoutée" src="'+e(b.src||'')+'" style="border-radius:'+Math.max(0,Number(b.radius??16))+'px">'+handles+'</div>';
     if (b.type === 'shape') return '<div class="plume-canvas-block plume-canvas-shape shape-'+e(b.shape||'round')+selected+'" data-block-id="'+e(b.id)+'" style="'+style+';border-radius:'+Math.max(0,Number(b.radius??16))+'px"><div class="plume-shape-text" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.label||'')+'</div>'+handles+'</div>';
-    if (b.latex) return '<div class="plume-canvas-block plume-canvas-text plume-canvas-latex'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><button type="button" class="plume-block-move" aria-label="Déplacer la formule">⠿</button><div class="plume-latex-render" data-latex-render>'+String.raw`\[`+e(b.text||'')+String.raw`\]`+'</div>'+handles+'</div>';
-    return '<div class="plume-canvas-block plume-canvas-text'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><button type="button" class="plume-block-move" aria-label="Déplacer la zone de texte">⠿</button><div class="plume-canvas-text-content" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div>'+handles+'</div>';
+    if (b.latex) return '<div class="plume-canvas-block plume-canvas-text plume-canvas-latex'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><div class="plume-latex-render" data-latex-render>'+'\\['+e(b.text||'')+'\\]'+'</div>'+handles+'</div>';
+    return '<div class="plume-canvas-block plume-canvas-text'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><div class="plume-canvas-text-content" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.text||'').replace(/\n/g,'<br>')+'</div>'+handles+'</div>';
   }).join('');
 }
 function updateEditorCanvas() {
@@ -1204,7 +1206,7 @@ async function buildWorkPdfBlob(work) {
         surface.innerHTML = editorCanvasMarkup(pages[index], settings);
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
         if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');fitLatexMath(surface);}
-        surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-resize').forEach((node) => {
+        surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
           if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
         });
@@ -1377,6 +1379,20 @@ async function openRead(id) {
 }
 
 app.addEventListener('click', async (event) => {
+  if (!event.target.closest('.plume-block-actions-menu, .plume-block-actions-toggle')) {
+    document.querySelectorAll('.plume-block-actions-menu:not([hidden])').forEach((menu)=>{menu.hidden=true;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','false');});
+  }
+  const blockMenuToggle=event.target.closest('[data-block-menu-toggle]');
+  if(blockMenuToggle){
+    const owner=blockMenuToggle.closest('.plume-canvas-block');
+    if(!owner)return;
+    document.querySelectorAll('.plume-canvas-block').forEach((node)=>node.classList.toggle('is-selected',node===owner));
+    state.editorSelectedBlock=owner.dataset.blockId||null;
+    document.querySelectorAll('.plume-block-actions-menu').forEach((menu)=>{if(menu!==owner.querySelector('.plume-block-actions-menu')){menu.hidden=true;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','false');}});
+    const menu=owner.querySelector('.plume-block-actions-menu');
+    if(menu){const opening=menu.hidden;menu.hidden=!opening;blockMenuToggle.setAttribute('aria-expanded',String(opening));}
+    return;
+  }
   const editorTabButton = event.target.closest('[data-editor-tab]');
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
   if (event.target.closest('[data-editor-undo]')) { travelEditorHistory(-1); return; }
@@ -1387,7 +1403,7 @@ app.addEventListener('click', async (event) => {
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
-    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');hidePlumeScienceKeyboard();if(panel&&field){field.value='';updateLatexSourceCount(field);if(preview){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();}if(status)status.textContent='Saisis une expression pour voir l’aperçu.';panel.hidden=false;field.focus();}}
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');hidePlumeScienceKeyboard();if(panel&&field){field.value='';updateLatexSourceCount(field);if(preview){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();}if(status)status.textContent='Saisis une expression pour voir l’aperçu.';panel.hidden=false;}}
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
@@ -1415,6 +1431,19 @@ app.addEventListener('click', async (event) => {
     return;
   }
   const pageColorButton=event.target.closest('[data-page-color]');if(pageColorButton){const p=state.editorPages[state.editorPageIndex];if(p){p.background=pageColorButton.dataset.pageColor;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;const custom=document.querySelector('#editor-page-color-custom');if(custom)custom.value=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
+  const rotateButton=event.target.closest('[data-rotate-delta]');
+  const rotateResetButton=event.target.closest('[data-rotate-reset]');
+  if(rotateButton||rotateResetButton){
+    const owner=(rotateButton||rotateResetButton).closest('.plume-canvas-block');
+    const page=state.editorPages[state.editorPageIndex],block=(page?.blocks||[]).find((item)=>item.id===owner?.dataset.blockId);
+    if(!block)return;
+    const delta=Number(rotateButton?.dataset.rotateDelta||0);
+    block.rotation=rotateResetButton?0:Math.max(-180,Math.min(180,Math.round((Number(block.rotation)||0)+delta)));
+    updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();
+    const menu=document.querySelector('.plume-canvas-block.is-selected .plume-block-actions-menu');
+    if(menu){menu.hidden=false;const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
+    return;
+  }
   const cornerDelete = event.target.closest('[data-delete-block]');
   if (cornerDelete) {
     const page = state.editorPages[state.editorPageIndex], id = cornerDelete.dataset.deleteBlock;
@@ -1631,7 +1660,7 @@ app.addEventListener('pointerdown',(event)=>{const handle=event.target.closest('
 window.addEventListener('pointermove',(event)=>{const drag=plumeNudgeDrag;if(!drag||(event.pointerId!==undefined&&event.pointerId!==drag.pointerId))return;const left=Math.max(8,Math.min(Math.max(8,window.innerWidth-drag.width-8),drag.left+event.clientX-drag.startX));const top=Math.max(8,Math.min(Math.max(8,window.innerHeight-drag.height-8),drag.top+event.clientY-drag.startY));drag.panel.style.transform='translate3d('+(left-drag.left)+'px,'+(top-drag.top)+'px,0)';event.preventDefault();},{passive:false});
 const finishNudgeDrag=()=>{if(!plumeNudgeDrag)return;const drag=plumeNudgeDrag,rect=drag.panel.getBoundingClientRect();drag.panel.style.left=Math.max(8,Math.min(window.innerWidth-rect.width-8,rect.left))+'px';drag.panel.style.top=Math.max(8,Math.min(window.innerHeight-rect.height-8,rect.top))+'px';drag.panel.style.transform='';drag.panel.style.willChange='';plumeNudgeDrag=null;};window.addEventListener('pointerup',finishNudgeDrag);window.addEventListener('pointercancel',finishNudgeDrag);window.addEventListener('resize',()=>{const panel=document.querySelector('.plume-nudge.is-floating');if(!panel)return;const rect=panel.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(window.innerWidth-rect.width-8,rect.left))+'px';panel.style.top=Math.max(8,Math.min(window.innerHeight-rect.height-8,rect.top))+'px';});
 let plumeBlockDrag=null;
-app.addEventListener('pointerdown',(event)=>{if(event.target.closest('[data-delete-block]'))return;const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');if(!node||!canvas)return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;const resize=event.target.closest('[data-resize-dir]'),moveGrip=event.target.closest('.plume-block-move');if(event.target.closest('[contenteditable="true"]')&&!resize&&!moveGrip)return;state.editorSelectedBlock=block.id;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===block.id));const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=false;pop.style.left=Math.min(Math.max(8,event.clientX+12),window.innerWidth-260)+'px';pop.style.top=Math.min(Math.max(8,event.clientY+12),window.innerHeight-190)+'px';const palette=pop.querySelector('.plume-palette-scroll');if(palette)palette.hidden=true;const title=document.querySelector('#plume-palette-title');if(title)title.hidden=true;const colorsButton=pop.querySelector('[data-editor-colors]');if(colorsButton)colorsButton.setAttribute('aria-expanded','false');const round=document.querySelector('#plume-rounding-control');if(round)round.hidden=true;const roundButton=document.querySelector('[data-editor-rounding]');if(roundButton){roundButton.hidden=!(block.type==='shape'||block.type==='image');roundButton.setAttribute('aria-expanded','false');}const radius=pop.querySelector('#plume-corner-radius');if(radius){radius.value=String(block.radius??16);const output=pop.querySelector('#plume-corner-radius-value');if(output)output.textContent=radius.value+' px';}}const editableText=node.querySelector('[data-block-text]');
+app.addEventListener('pointerdown',(event)=>{if(event.target.closest('[data-delete-block], .plume-block-actions-toggle, .plume-block-actions-menu'))return;const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');if(!node||!canvas)return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;const resize=event.target.closest('[data-resize-dir]'),moveGrip=event.target.closest('.plume-block-move');if(event.target.closest('[contenteditable="true"]')&&!resize&&!moveGrip)return;state.editorSelectedBlock=block.id;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===block.id));const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=false;pop.style.left=Math.min(Math.max(8,event.clientX+12),window.innerWidth-260)+'px';pop.style.top=Math.min(Math.max(8,event.clientY+12),window.innerHeight-190)+'px';const palette=pop.querySelector('.plume-palette-scroll');if(palette)palette.hidden=true;const title=document.querySelector('#plume-palette-title');if(title)title.hidden=true;const colorsButton=pop.querySelector('[data-editor-colors]');if(colorsButton)colorsButton.setAttribute('aria-expanded','false');const round=document.querySelector('#plume-rounding-control');if(round)round.hidden=true;const roundButton=document.querySelector('[data-editor-rounding]');if(roundButton){roundButton.hidden=!(block.type==='shape'||block.type==='image');roundButton.setAttribute('aria-expanded','false');}const radius=pop.querySelector('#plume-corner-radius');if(radius){radius.value=String(block.radius??16);const output=pop.querySelector('#plume-corner-radius-value');if(output)output.textContent=radius.value+' px';}}const editableText=node.querySelector('[data-block-text]');
 const baseFontPx=block.type==='text'?(Number.parseFloat(getComputedStyle(editableText||node).fontSize)||18):0;
 plumeBlockDrag={id:block.id,startX:event.clientX,startY:event.clientY,x:Number(block.x),y:Number(block.y),w:Number(block.w),h:Number(block.h),cw:canvas.clientWidth,ch:canvas.clientHeight,baseFontPx,dir:resize?.dataset.resizeDir||'',moving:Boolean(moveGrip)||(!resize&&!event.target.closest('[contenteditable="true"]'))};if(plumeBlockDrag.moving||plumeBlockDrag.dir)event.preventDefault();});
 app.addEventListener('pointermove',(event)=>{
@@ -1720,7 +1749,28 @@ app.addEventListener('paste',(event)=>{
 app.addEventListener('input',(event)=>{const n=event.target.closest('[data-block-text]');if(!n)return;const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===n.dataset.blockText);if(b){if(b.type==='shape')b.label=n.innerText;else b.text=n.innerText;if(b.type==='text')fitPastedTextBlock(n,b);const field=document.querySelector('#work-form [name="body"]');if(field)field.value=editorPagesToBody();updateEditorPreviews();const label=document.querySelector('#editor-save-label');if(label)label.textContent='Modifications à enregistrer';saveEditorRecovery();}});
 app.addEventListener('focusout',(event)=>{if(!event.target.matches('[data-block-text]'))return;recordEditorHistory();});
 app.addEventListener('input',(event)=>{if(event.target.matches('[data-text-style="color"]')){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b&&b.type==='text'){b.color=event.target.value;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}}});
-app.addEventListener('change',(event)=>{if(event.target.matches('[data-text-style="size"], [data-text-style="font"]')){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);if(b&&b.type==='text'){if(event.target.matches('[data-text-style="size"]')){b.size=Number(event.target.value)||18;b.editorialSize=false;}else{b.font=event.target.value;b.editorialFont=false;}updateEditorCanvas();syncEditorCanvas();recordEditorHistory();}}});
+app.addEventListener('change',(event)=>{
+  const rotationControl=event.target.closest('[data-block-rotation]');
+  if(rotationControl){
+    const owner=rotationControl.closest('.plume-canvas-block'),page=state.editorPages[state.editorPageIndex];
+    const block=(page?.blocks||[]).find((item)=>item.id===owner?.dataset.blockId);
+    if(block){
+      block.rotation=Math.max(-180,Math.min(180,Number(rotationControl.value)||0));
+      updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();
+      const menu=document.querySelector('.plume-canvas-block.is-selected .plume-block-actions-menu');
+      if(menu){menu.hidden=false;const output=menu.querySelector('[data-rotation-output]');if(output)output.textContent=block.rotation+'°';}
+    }
+    return;
+  }
+  if(event.target.matches('[data-text-style="size"], [data-text-style="font"]')){
+    const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);
+    if(b&&b.type==='text'){
+      if(event.target.matches('[data-text-style="size"]')){b.size=Number(event.target.value)||18;b.editorialSize=false;}
+      else{b.font=event.target.value;b.editorialFont=false;}
+      updateEditorCanvas();syncEditorCanvas();recordEditorHistory();
+    }
+  }
+});
 app.addEventListener('click',(event)=>{
   const nudgeToggle=event.target.closest('[data-toggle-nudge-float]');
   if(nudgeToggle){const panel=nudgeToggle.closest('.plume-nudge');if(!panel)return;const floating=!panel.classList.contains('is-floating');if(floating){panel.classList.add('is-floating');panel.style.left=Math.max(8,window.innerWidth-Math.min(340,window.innerWidth-16)-16)+'px';panel.style.top=Math.max(8,Math.min(96,window.innerHeight-180))+'px';panel.style.right='auto';panel.style.bottom='auto';}else{panel.classList.remove('is-floating');panel.style.left='';panel.style.top='';panel.style.right='';panel.style.bottom='';}nudgeToggle.textContent=floating?'Fixer':'Détacher';nudgeToggle.setAttribute('aria-pressed',String(floating));nudgeToggle.setAttribute('aria-label',floating?'Fixer le panneau Déplacer':'Détacher le panneau Déplacer');return;}
@@ -1903,7 +1953,11 @@ let plumeLatexPreviewTimer=null,plumeLatexPreviewVersion=0;
 function ensureMathJax(){
   if(window.MathJax?.typesetPromise)return Promise.resolve(window.MathJax);
   if(window.__plumeMathJaxPromise)return window.__plumeMathJaxPromise;
-  window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']],packages:{'[+]':['ams']}},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']},startup:{typeset:false}};
+  window.MathJax={tex:{
+    inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']],
+    packages:{'[+]':['ams','cancel','textmacros']},
+    macros:{llbracket:'\\mathopen{\\lbrack\\!\\lbrack}',rrbracket:'\\mathclose{\\rbrack\\!\\rbrack}'}
+  },options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']},startup:{typeset:false}};
   window.__plumeMathJaxPromise=new Promise((resolve,reject)=>{
     const sources=[
       'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js',
@@ -1941,7 +1995,8 @@ function openPlumeScienceKeyboard(){
   if(!plumeScienceKeyboard||!plumeScienceKeyboard.el?.isConnected){
     plumeScienceKeyboard=window.AuroreScienceKeyboard.create({
       toSource:(raw)=>'\\['+String(raw||'').trim()+'\\]',
-      render:(root)=>renderPlumeSciencePreview(root)
+      render:(root)=>renderPlumeSciencePreview(root),
+      onNative:(target)=>{if(target){try{target.focus({preventScroll:true})}catch{target.focus()}}}
     });
   }
   plumeScienceKeyboard.show(field);
