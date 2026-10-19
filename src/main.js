@@ -1375,25 +1375,19 @@ async function buildWorkPdfBlob(work) {
             const blockId=node.closest('[data-block-id]')?.getAttribute('data-block-id');
             const block=(pages[index]?.blocks||[]).find((item)=>String(item.id)===String(blockId));
             let source=String(block?.text??'').trim();
-            // Si une ancienne sauvegarde répète la même formule entre délimiteurs,
-            // réduire ces copies à une seule expression avant le rendu.
-            const wrapped=[...source.matchAll(/\\\\\[\s*([\s\S]*?)\s*\\\\\]|\\\\\(\s*([\s\S]*?)\s*\\\\\)|\$\$\s*([\s\S]*?)\s*\$\$/g)]
-              .map((match)=>String(match[1]??match[2]??match[3]??'').trim());
-            if(wrapped.length>1&&wrapped.every((part)=>part===wrapped[0]))source=wrapped[0];
-            else{
-              for(let pass=0;pass<4;pass++){
-                const unwrapped=source
-                  .replace(/^\\\\\[\s*([\s\S]*?)\s*\\\\\]$/,'$1')
-                  .replace(/^\\\\\(\s*([\s\S]*?)\s*\\\\\)$/,'$1')
-                  .replace(/^\$\$\s*([\s\S]*?)\s*\$\$$/,'$1')
-                  .replace(/^\$\s*([\s\S]*?)\s*\$$/,'$1');
-                if(unwrapped===source)break;
-                source=unwrapped.trim();
-              }
+            // Retirer les délimiteurs déjà enregistrés, même s'ils sont imbriqués.
+            for(let pass=0;pass<6;pass++){
+              let next=source;
+              if(next.startsWith('\\[')&&next.endsWith('\\]'))next=next.slice(2,-2).trim();
+              else if(next.startsWith('\\(')&&next.endsWith('\\)'))next=next.slice(2,-2).trim();
+              else if(next.startsWith('$$')&&next.endsWith('$$'))next=next.slice(2,-2).trim();
+              else if(next.startsWith('$')&&next.endsWith('$'))next=next.slice(1,-1).trim();
+              if(next===source)break;
+              source=next;
             }
             if(!source)throw new Error('Un bloc LaTeX est vide. Corrige sa formule avant le téléchargement.');
             try{math.typesetClear?.([node]);}catch{}
-            node.replaceChildren(document.createTextNode('\\\\['+source+'\\\\]'));
+            node.replaceChildren(document.createTextNode('\\['+source+'\\]'));
           }
           // Ne pas scanner la feuille entière : traiter les blocs ciblés uniquement.
           await math.typesetPromise(latexNodes);
@@ -1403,6 +1397,7 @@ async function buildWorkPdfBlob(work) {
             outputs.slice(1).forEach((duplicate)=>duplicate.remove());
           }
           fitLatexMath(surface);
+        }
         }
         }
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
