@@ -1201,3 +1201,7 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
 .plume-nudge.is-floating{touch-action:pan-y;}
 .plume-nudge.is-floating .plume-nudge-drag-handle{touch-action:none;user-select:none;-webkit-user-select:none;}
 @media(max-width:380px){.plume-nudge.is-floating .plume-nudge-head{grid-template-columns:minmax(0,1fr) auto;}.plume-nudge.is-floating .plume-nudge-drag-handle{grid-column:2;grid-row:1;}.plume-nudge.is-floating .plume-nudge-toggle{grid-column:1 / -1;width:100%;}}
+
+.plume-nudge.is-floating .plume-nudge-head>*{min-width:0;max-width:100%;}
+.plume-nudge.is-floating .plume-nudge-toggle{justify-self:end;}
+.plume-nudge.is-floating .plume-nudge-drag-handle{justify-self:center;}
