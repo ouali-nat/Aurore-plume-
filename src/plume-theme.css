@@ -139,3 +139,28 @@ html[data-theme="dark"] .plume-theme-close{background:#211c2c;border-color:#3930
 html[data-theme="dark"] .plume-theme-section-label,html[data-theme="dark"] .plume-theme-note{color:#bdb5c9}
 @media(max-width:560px){#aurore-plume-theme-dock{right:10px;top:calc(10px + env(safe-area-inset-top))}.plume-theme-trigger{min-height:42px;padding:0 11px}.plume-theme-panel{width:min(318px,calc(100vw - 20px));padding:12px;border-radius:17px}.plume-theme-palette{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.plume-theme-swatch{width:29px;height:29px;min-width:29px;min-height:29px}}
 @media(prefers-reduced-motion:reduce){#aurore-plume-theme-dock *,#aurore-plume-theme-dock *::before,#aurore-plume-theme-dock *::after{transition:none!important;animation:none!important}}
+
+
+/* Cartes privées : reprendre la même structure éditoriale que les œuvres publiées. */
+.workspace-draft-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.workspace-work-card{min-width:0;overflow:hidden;display:flex;flex-direction:column}
+.workspace-work-card .work-cover{min-height:132px}
+.workspace-work-card .work-card-body{display:flex;flex:1;flex-direction:column;gap:10px}
+.workspace-work-card .work-card-body h3{overflow-wrap:anywhere}
+.workspace-work-card .work-summary{margin:0}
+.workspace-work-card .draft-work-card-foot{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--plume-border)}
+.workspace-work-card .draft-work-card-foot .status-pill{max-width:100%;white-space:normal}
+.workspace-work-card .draft-work-card-foot .text-edit-button{margin-left:auto;flex:0 0 auto}
+@media(max-width:560px){.workspace-draft-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.workspace-work-card .work-cover{min-height:88px}.workspace-work-card .work-card-body{padding:10px;gap:7px}.workspace-work-card .card-meta{gap:5px;flex-wrap:wrap;font-size:9px}.workspace-work-card .work-card-body h3{font-size:13px}.workspace-work-card .work-summary{font-size:11px;line-height:1.45}.workspace-work-card .draft-work-card-foot{align-items:flex-start;flex-direction:column;gap:7px;padding-top:8px}.workspace-work-card .draft-work-card-foot .text-edit-button{margin-left:0;width:100%}}
+/* Contraste sombre homogène dans tous les espaces, cartes, listes et états secondaires. */
+html[data-theme="dark"] #app :is(.page-hero,.section-heading,.results-heading,.workspace-title-row,.panel-top,.my-work-copy,.work-card-body,.card-meta,.work-card-foot,.author-copy,.private-note,.draft-card-meta,.draft-card-summary,.work-summary,.work-subtitle,.result-count,.search-field,.empty-works,.published-collapsed-note,.creation-description,.editor-hint,.fine-print,.footer-links,.copyright){color:var(--plume-ink)!important}
+html[data-theme="dark"] #app :is(.page-hero p,.section-heading p,.workspace-title-row p,.draft-card-meta,.draft-card-summary,.work-summary,.work-subtitle,.author-copy small,.private-note p,.published-collapsed-note,.editor-hint,.fine-print,.card-meta,.result-count){color:var(--plume-muted)!important}
+html[data-theme="dark"] #app :is(.work-card,.my-works-panel,.my-work-item,.panel,.private-note,.search-field,.empty-state,.workspace-header,.workspace-grid,.video-workspace,.generic-creation-workspace,.creation-list-panel,.published-collapsed-note){background:var(--plume-surface)!important;border-color:var(--plume-border)!important}
+html[data-theme="dark"] #app .work-cover{background:var(--plume-surface-soft)!important;color:var(--plume-ink)!important}
+html[data-theme="dark"] #app :is(.cover-mark,.cover-category,.work-cover .cover-mark,.work-cover .cover-category){color:var(--plume-ink)!important}
+html[data-theme="dark"] #app :is(.count-pill,.status-pill){border-color:var(--plume-border)!important}
+html[data-theme="dark"] #app .workspace-work-card .draft-work-card-foot{border-color:var(--plume-border)!important}
+html[data-theme="dark"] #app .search-field input{background:transparent!important;color:var(--plume-ink)!important}
+html[data-theme="dark"] #app :is(.text-link,.footer-links button,.footer-links a){color:var(--plume-ink)!important}
+html[data-theme="dark"] #app .eyebrow{color:var(--theme-secondary,var(--plume-muted))!important}
+html[data-theme="dark"] #app :is(.my-work-symbol,.author-avatar){background:var(--plume-surface-soft)!important;color:var(--plume-ink)!important;border-color:var(--plume-border)!important}
