@@ -191,7 +191,7 @@ function editorRecoveryKey(workId) { return 'aurore-plume-editor-recovery:' + St
 function saveEditorRecovery() {
   try {
     if (!state.editing?.id || !state.editorPages?.length) return;
-    localStorage.setItem(editorRecoveryKey(state.editing.id), JSON.stringify({ savedAt: Date.now(), pageIndex: state.editorPageIndex, pages: state.editorPages }));
+    localStorage.setItem(editorRecoveryKey(state.editing.id), JSON.stringify({ savedAt: Date.now(), pageIndex: state.editorPageIndex, renderWidth: Number(state.editorRenderWidth) || 0, pages: state.editorPages }));
   } catch (error) { console.warn('Récupération locale indisponible', error); }
 }
 function clearEditorRecovery(workId) {
@@ -204,6 +204,8 @@ function parseEditorPages(body = '', work = null) {
     try {
       const saved = JSON.parse(raw.slice(EDITOR_DOCUMENT_PREFIX.length));
       const pages = Array.isArray(saved) ? saved : saved.pages;
+      const savedRenderWidth = Number(Array.isArray(saved) ? 0 : saved.renderWidth);
+      if (savedRenderWidth >= 120 && savedRenderWidth <= 2400) state.editorRenderWidth = Math.round(savedRenderWidth);
       state.editorPageIndex = Math.max(0, Math.min(Number(saved.currentPageIndex || 0), Math.max(0, (pages || []).length - 1)));
       if (Array.isArray(pages) && pages.length) parsedPages = normalizeEditorPages(pages);
     } catch {}
@@ -213,6 +215,8 @@ function parseEditorPages(body = '', work = null) {
       const recovery = JSON.parse(localStorage.getItem(editorRecoveryKey(work.id)) || 'null');
       const serverTime = work.updated_at ? new Date(work.updated_at).getTime() : 0;
       if (recovery?.pages?.length && Number(recovery.savedAt) > serverTime) {
+        const recoveredRenderWidth = Number(recovery.renderWidth);
+        if (recoveredRenderWidth >= 120 && recoveredRenderWidth <= 2400) state.editorRenderWidth = Math.round(recoveredRenderWidth);
         state.editorPageIndex = Math.max(0, Math.min(Number(recovery.pageIndex || 0), recovery.pages.length - 1));
         toast('Une progression locale plus récente a été restaurée.', 'success');
         return normalizeEditorPages(recovery.pages);
@@ -223,7 +227,17 @@ function parseEditorPages(body = '', work = null) {
   state.editorPageIndex = 0;
   return [{ blocks: raw ? [{ id: 'text-' + Date.now(), type: 'text', x: 9, y: 10, w: 82, h: 34, text: raw, font: 'Georgia', size: 18, color: '#302a35', align: 'left', bold: false, italic: false, editorialFont: true, editorialSize: true, editorialLineHeight: true }] : [] }];
 }
-function editorPagesToBody() { return EDITOR_DOCUMENT_PREFIX + JSON.stringify({ currentPageIndex: state.editorPageIndex, pages: state.editorPages.length ? state.editorPages : [{ blocks: [] }] }); }
+function editorPagesToBody() {
+  const paper = document.querySelector('#plume-editor-canvas');
+  const visibleWidth = Math.round(paper?.getBoundingClientRect().width || 0);
+  if (visibleWidth >= 120 && visibleWidth <= 2400) state.editorRenderWidth = visibleWidth;
+  const renderWidth = Math.max(120, Math.min(2400, Math.round(Number(state.editorRenderWidth) || 560)));
+  return EDITOR_DOCUMENT_PREFIX + JSON.stringify({
+    currentPageIndex: state.editorPageIndex,
+    renderWidth,
+    pages: state.editorPages.length ? state.editorPages : [{ blocks: [] }]
+  });
+}
 function recordEditorHistory() {
   if (!state.editorPages) return;
   const snapshot = JSON.stringify({ pages: state.editorPages, pageIndex: state.editorPageIndex });
@@ -288,7 +302,14 @@ function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
   }).join('');
 }
 function updateEditorCanvas() {
-  const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) { const settings=editorialSettingsFromForm(); canvas.style.aspectRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210'; canvas.innerHTML=editorCanvasMarkup(); void hydrateR2Images(canvas); }
+  const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) {
+    const settings=editorialSettingsFromForm();
+    canvas.style.aspectRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210';
+    const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
+    if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
+    canvas.innerHTML=editorCanvasMarkup();
+    void hydrateR2Images(canvas);
+  }
   const thumbs=document.querySelector('#plume-page-thumbnails');
   if(thumbs) thumbs.innerHTML=state.editorPages.map((page,index)=>'<button type="button" class="plume-page-thumb'+(index===state.editorPageIndex?' is-current':'')+'" data-select-page="'+index+'" aria-label="Ouvrir la page '+(index+1)+'"><span class="plume-page-thumb-preview">'+(page.blocks||[]).slice(0,5).map((block)=>'<i class="thumb-block thumb-'+e(block.type||'text')+'"></i>').join('')+'</span><b>Page '+(index+1)+'</b><small>'+((page.blocks||[]).length)+' élément'+((page.blocks||[]).length===1?'':'s')+'</small></button>').join('');
   const count=document.getElementById('editor-page-count'); if(count&&state.editorTab==='manuscript') count.textContent=String(state.editorPageIndex+1).padStart(2,'0')+' / '+String(state.editorPages.length).padStart(2,'0');
@@ -1084,23 +1105,37 @@ async function buildWorkPdfBlob(work) {
   // ajoute une couche de texte invisible pour conserver la sélection/recherche.
   if (body.startsWith(EDITOR_DOCUMENT_PREFIX)) {
     let pages = [];
+    let savedRenderWidth = 0;
     try {
       const saved = JSON.parse(body.slice(EDITOR_DOCUMENT_PREFIX.length));
       pages = normalizeEditorPages(Array.isArray(saved) ? saved : saved.pages);
+      savedRenderWidth = Number(Array.isArray(saved) ? 0 : saved.renderWidth) || 0;
     } catch { pages = []; }
     if (!pages.length) pages = [{ blocks: [] }];
 
     const { default: html2canvas } = await import('html2canvas');
+    const liveCanvas = document.querySelector('#plume-editor-canvas');
+    const liveWidth = Math.round(liveCanvas?.getBoundingClientRect().width || 0);
+    const previewPage = document.querySelector('.plume-rendered-page');
+    const previewWidth = Math.round(previewPage?.getBoundingClientRect().width || 0);
+    // L'éditeur positionne ses blocs en pourcentage, mais leurs polices sont
+    // exprimées en pixels CSS. Reprendre la largeur de conception sauvegardée
+    // évite de redimensionner la page sans redimensionner la typographie.
+    const renderWidth = Math.max(120, Math.min(2400,
+      liveWidth >= 120 ? liveWidth :
+      savedRenderWidth >= 120 && savedRenderWidth <= 2400 ? savedRenderWidth :
+      previewWidth >= 120 && previewWidth <= 900 ? previewWidth : 560
+    ));
+    const renderHeight = Math.round(renderWidth * pageHeight / pageWidth);
     const surface = document.createElement('div');
     surface.className = 'plume-canvas-paper plume-pdf-export-surface';
     surface.setAttribute('aria-hidden', 'true');
-    const renderWidth = 1200;
-    surface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+Math.round(renderWidth*pageHeight/pageWidth)+'px;min-height:0;aspect-ratio:auto;overflow:hidden;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;background:#fff;transform:none;';
+    surface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;box-shadow:none!important;margin:0!important;padding:0!important;background:#fff;transform:none;';
     document.body.appendChild(surface);
     try {
       for (let index = 0; index < pages.length; index++) {
         surface.style.width = renderWidth + 'px';
-        surface.style.height = Math.round(renderWidth * pageHeight / pageWidth) + 'px';
+        surface.style.height = renderHeight + 'px';
         surface.innerHTML = editorCanvasMarkup(pages[index], settings);
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
@@ -1119,11 +1154,11 @@ async function buildWorkPdfBlob(work) {
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const renderedCanvas = await html2canvas(surface, {
           backgroundColor: '#ffffff',
-          scale: 2,
+          scale: Math.max(2, Math.min(4, 2000 / renderWidth)),
           useCORS: true,
           logging: false,
           width: renderWidth,
-          height: Math.round(renderWidth * pageHeight / pageWidth),
+          height: renderHeight,
           windowWidth: Math.max(window.innerWidth, renderWidth),
           windowHeight: Math.max(window.innerHeight, Math.round(renderWidth * pageHeight / pageWidth))
         });
@@ -1138,13 +1173,14 @@ async function buildWorkPdfBlob(work) {
           if (!isText) continue;
           const value = String(block.type === 'shape' ? block.label : block.text || '');
           if (!value) continue;
-          const x = Math.max(0, Number(block.x ?? 9) / 100 * pageWidth + 5 * mmPerPx);
-          const y = Math.max(0, Number(block.y ?? 10) / 100 * pageHeight + 5 * mmPerPx);
-          const width = Math.max(1, Number(block.w ?? 82) / 100 * pageWidth - 10 * mmPerPx);
+          const x = Math.max(0, Number(block.x ?? 9) / 100 * pageWidth + 6 * mmPerPx);
+          const y = Math.max(0, Number(block.y ?? 10) / 100 * pageHeight + 6 * mmPerPx);
+          const width = Math.max(1, Number(block.w ?? 82) / 100 * pageWidth - 12 * mmPerPx);
           const useEditorialFont = block.type === 'text' && block.editorialFont !== false;
           const useEditorialSize = block.type === 'text' && block.editorialSize !== false;
           const fontFamily = useEditorialFont ? settings.body_font : (block.font || settings.body_font);
-          const fontPt = useEditorialSize ? Number(settings.font_size) : Math.max(5, Number(block.size || 18) * .75);
+          const cssFontPx = useEditorialSize ? Number(settings.font_size) * 96 / 72 : Math.max(5, Number(block.size || 18));
+          const fontPt = Math.max(1, cssFontPx * (pageWidth / renderWidth) * (72 / 25.4));
           const fontName = pdfFontName(fontFamily);
           const fontStyle = (block.bold ? 'bold' : '') + (block.italic ? 'italic' : '') || 'normal';
           doc.setFont(fontName, fontStyle);
