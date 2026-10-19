@@ -1161,6 +1161,8 @@ async function buildWorkPdfBlob(work) {
         surface.style.width = renderWidth + 'px';
         surface.style.height = renderHeight + 'px';
         surface.innerHTML = editorCanvasMarkup(pages[index], settings);
+        const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
+        if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');}
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
           if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
@@ -1193,7 +1195,7 @@ async function buildWorkPdfBlob(work) {
         // Le texte demeure disponible pour la sélection, la recherche et l'extraction.
         const mmPerPx = pageWidth / renderWidth;
         for (const block of (pages[index].blocks || [])) {
-          const isText = block.type === 'text' || (block.type === 'shape' && block.label);
+          const isText = !block.latex && (block.type === 'text' || (block.type === 'shape' && block.label));
           if (!isText) continue;
           const value = String(block.type === 'shape' ? block.label : block.text || '');
           if (!value) continue;
