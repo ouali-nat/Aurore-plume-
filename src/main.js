@@ -1524,6 +1524,13 @@ function filterEditorialElements() {
 app.addEventListener('input',(event)=>{
   if(event.target.matches('#plume-element-search'))filterEditorialElements();
 });
+document.addEventListener('keydown',(event)=>{
+  if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('#plume-elements-page[hidden]')){
+    event.preventDefault();
+    document.querySelector('#plume-element-search')?.focus();
+  }
+});
+
 
 app.addEventListener('click', async (event) => {
   if (!event.target.closest('.plume-block-actions-menu, .plume-block-actions-toggle')) {
