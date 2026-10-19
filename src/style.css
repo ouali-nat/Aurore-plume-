@@ -1181,3 +1181,23 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
 .editor-page-color-card{margin:18px 0;padding:18px;border:1px solid #e4dce9;border-radius:16px;background:#fff}.editor-page-color-card h3{margin:0 0 6px;font-size:15px;color:#3e334b}.editor-page-color-card p{margin:0 0 14px;color:#81768b;font-size:12px;line-height:1.5}.editor-page-color-swatches{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.editor-page-color-swatches button{width:32px;height:32px;border:2px solid #e1d9e6;border-radius:50%;background:var(--page-swatch);box-shadow:inset 0 0 0 2px #fff;cursor:pointer}.editor-page-custom-color{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}.editor-page-custom-color input{width:42px;height:34px;border:0;background:transparent;cursor:pointer}.editor-cover-select-image{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.editor-cover-select-image input{max-width:100%;font-size:11px}
 
 .plume-latex-editor{position:fixed;inset:0;z-index:2400;display:grid;place-items:center;padding:16px;background:#22182d88;backdrop-filter:blur(5px)}.plume-latex-editor[hidden]{display:none!important}.plume-latex-card{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;border:1px solid #e4d9ed;border-radius:20px;background:#fff;box-shadow:0 24px 80px #17101f44}.plume-latex-card header{display:flex;justify-content:space-between;align-items:center;gap:12px}.plume-latex-card h2{margin:0;font-size:24px;color:#3e304d}.plume-latex-card header button{width:36px;height:36px;border:0;border-radius:10px;background:#f3edf7;font-size:24px;color:#5d4770}.plume-latex-card>p{font-size:13px;line-height:1.55;color:#796e83}.plume-latex-card textarea{box-sizing:border-box;width:100%;min-height:120px;resize:vertical;padding:13px;border:1px solid #dcd0e6;border-radius:12px;background:#fcfaff;color:#33263d;font:15px/1.6 ui-monospace,monospace}.plume-latex-preview{margin:12px 0;padding:14px;border-radius:12px;background:#f7f3fa;overflow-wrap:anywhere}.plume-latex-preview small{display:block;margin-bottom:8px;color:#8a7b96;font-size:10px;text-transform:uppercase;letter-spacing:.08em}.plume-latex-preview div{white-space:pre-wrap;font:16px/1.6 Georgia,serif;color:#32263d}.plume-latex-card>[data-latex-apply]{padding:10px 18px;border:0;border-radius:10px;background:#6d5284;color:#fff;font-weight:700}
+
+/* LaTeX: aperçu et insertion utilisent un vrai moteur de composition mathématique. */
+.plume-latex-card{box-sizing:border-box;width:min(620px,calc(100vw - 24px));padding:clamp(14px,3vw,24px);}
+.plume-latex-input-label{display:block;margin:12px 0 6px;font-size:12px;font-weight:800;color:#51415f;}
+.plume-latex-preview{min-height:76px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:6px;}
+.plume-latex-preview #plume-latex-preview-text{min-height:42px;display:flex;align-items:center;justify-content:center;white-space:normal;overflow-x:auto;font:16px/1.5 Georgia,serif;}
+.plume-latex-preview #plume-latex-status{margin:4px 0 0;color:#766b82;font-size:11px;line-height:1.4;}
+.plume-latex-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;}
+.plume-latex-actions button{min-height:42px;padding:10px 14px;border:0;border-radius:10px;font-weight:800;}
+.plume-latex-actions [data-latex-apply]{background:#6d5284;color:#fff;}
+.plume-latex-actions [data-latex-apply]:disabled{opacity:.6;}
+.plume-latex-cancel{background:#f2edf6;color:#5b4869;}
+.plume-canvas-latex{display:flex;align-items:center;justify-content:center;}
+.plume-canvas-latex .plume-latex-render{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;font-size:1.12em;}
+.plume-canvas-latex .plume-latex-render mjx-container{max-width:100%;margin:0!important;overflow:visible!important;}
+.plume-nudge.is-floating .plume-nudge-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px;width:100%;box-sizing:border-box;}
+.plume-nudge.is-floating .plume-nudge-toggle{box-sizing:border-box;min-width:0;max-width:100%;padding:6px 9px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plume-nudge.is-floating{touch-action:pan-y;}
+.plume-nudge.is-floating .plume-nudge-drag-handle{touch-action:none;user-select:none;-webkit-user-select:none;}
+@media(max-width:380px){.plume-nudge.is-floating .plume-nudge-head{grid-template-columns:minmax(0,1fr) auto;}.plume-nudge.is-floating .plume-nudge-drag-handle{grid-column:2;grid-row:1;}.plume-nudge.is-floating .plume-nudge-toggle{grid-column:1 / -1;width:100%;}}
