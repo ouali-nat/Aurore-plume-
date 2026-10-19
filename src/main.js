@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
+import './editorial-studio.css';
 import './aurore-pdf-reader.css';
 import './aurore-science-keyboard.css';
 import './plume-latex-flow.css';
@@ -672,11 +673,11 @@ function renderTextEditor() {
       <label class="plume-elements-search"><span aria-hidden="true">⌕</span><input id="plume-element-search" type="search" placeholder="Rechercher une forme, un séparateur, une citation…" autocomplete="off" aria-label="Rechercher dans les éléments"><kbd>⌘ K</kbd></label>
       <div class="plume-elements-results"><span id="plume-element-results-count" aria-live="polite">37 éléments à explorer</span><span>Choisissez · Insérez · Personnalisez</span></div>
       <nav class="plume-elements-filters" aria-label="Catégories d’éléments">
-        <button type="button" data-element-filter="all" aria-pressed="true">Tout <span>37</span></button>
-        <button type="button" data-element-filter="forms" aria-pressed="false">Formes</button>
-        <button type="button" data-element-filter="layout" aria-pressed="false">Mise en page</button>
-        <button type="button" data-element-filter="separators" aria-pressed="false">Séparateurs</button>
-        <button type="button" data-element-filter="ornaments" aria-pressed="false">Ornements</button>
+        <button type="button" data-element-filter="all" aria-pressed="true">Tout <span data-filter-count>37</span></button>
+        <button type="button" data-element-filter="forms" aria-pressed="false">Formes <span data-filter-count>0</span></button>
+        <button type="button" data-element-filter="layout" aria-pressed="false">Mise en page <span data-filter-count>0</span></button>
+        <button type="button" data-element-filter="separators" aria-pressed="false">Séparateurs <span data-filter-count>0</span></button>
+        <button type="button" data-element-filter="ornaments" aria-pressed="false">Ornements <span data-filter-count>0</span></button>
       </nav>
     </div>
     <div class="plume-elements-grid">
@@ -705,8 +706,6 @@ function renderTextEditor() {
       <button type="button" data-add-shape="flower" data-element-category="ornaments"><span class="shape-preview flower">✿</span><span class="element-card-copy"><b>Fleur</b><small>Ornement littéraire</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="sunburst" data-element-category="ornaments"><span class="shape-preview sunburst">✺</span><span class="element-card-copy"><b>Rosace</b><small>Petit motif rayonnant</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="badge" data-element-category="ornaments"><span class="shape-preview badge">✦</span><span class="element-card-copy"><b>Médaillon</b><small>Un point d’attention</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
-    </div>
-
       <button type="button" data-add-shape="highlight" data-element-category="layout"><span class="shape-preview highlight">Texte</span><span class="element-card-copy"><b>Surlignage</b><small>Faire ressortir une phrase</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="underline" data-element-category="separators"><span class="shape-preview underline">Ligne</span><span class="element-card-copy"><b>Soulignement</b><small>Souligner un titre ou un mot</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="vertical-line" data-element-category="separators"><span class="shape-preview vertical-line"></span><span class="element-card-copy"><b>Trait vertical</b><small>Structurer deux zones</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
@@ -719,6 +718,7 @@ function renderTextEditor() {
       <button type="button" data-add-shape="plus" data-element-category="ornaments"><span class="shape-preview plus">＋</span><span class="element-card-copy"><b>Plus graphique</b><small>Ajouter un accent visuel</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="corner" data-element-category="forms"><span class="shape-preview corner">⌜</span><span class="element-card-copy"><b>Angle de cadre</b><small>Créer un repère minimaliste</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="dot-row" data-element-category="separators"><span class="shape-preview dot-row">•••</span><span class="element-card-copy"><b>Rangée de points</b><small>Transition typographique</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+    </div>
     <div class="plume-elements-empty" id="plume-elements-empty" hidden><span>⌕</span><b>Aucun élément trouvé</b><small>Essayez un autre mot ou une autre catégorie.</small></div>
     <footer class="plume-elements-library-footer"><span>✳ Chaque élément reste modifiable après insertion.</span><button type="button" data-elements-close>Retourner à ma page <span aria-hidden="true">↗</span></button></footer>
   </div>
@@ -1531,16 +1531,20 @@ function filterEditorialElements() {
   const query=(root.querySelector('#plume-element-search')?.value||'').trim().toLocaleLowerCase('fr');
   const category=root.querySelector('[data-element-filter][aria-pressed="true"]')?.dataset.elementFilter||'all';
   const buttons=[...root.querySelectorAll('[data-add-shape]')];
+  const matchesQuery=(button)=>!query||(button.textContent.toLocaleLowerCase('fr')+' '+(button.dataset.addShape||'')).includes(query);
   let visible=0;
   for(const button of buttons){
-    const text=button.textContent.toLocaleLowerCase('fr')+' '+(button.dataset.addShape||'');
     const group=button.dataset.elementCategory||'';
-    const matchesCategory=category==='all'||group===category;
-    const matchesQuery=!query||text.includes(query);
-    const show=matchesCategory&&matchesQuery;
+    const show=(category==='all'||group===category)&&matchesQuery(button);
     button.hidden=!show;
     if(show)visible++;
   }
+  // Compteurs calculés depuis les cartes réelles, y compris pendant une recherche.
+  root.querySelectorAll('[data-element-filter]').forEach((filter)=>{
+    const group=filter.dataset.elementFilter||'all';
+    const badge=filter.querySelector('[data-filter-count]');
+    if(badge)badge.textContent=String(buttons.filter((button)=>(group==='all'||button.dataset.elementCategory===group)&&matchesQuery(button)).length);
+  });
   const count=root.querySelector('#plume-element-results-count');
   if(count)count.textContent=visible+' élément'+(visible===1?'':'s')+(query?' trouvé'+(visible===1?'':'s'):' à explorer');
   const empty=root.querySelector('#plume-elements-empty');
