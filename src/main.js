@@ -593,7 +593,7 @@ function renderTextEditor() {
           </div>
           <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
-        <section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
+        <section id="plume-latex-editor" class="plume-latex-editor" hidden aria-label="Éditeur LaTeX"><div class="plume-latex-card"><header><h2>Écrire en LaTeX</h2><button type="button" data-latex-close aria-label="Fermer">×</button></header><p>Saisis ton code LaTeX dans cette fenêtre flottante. Le contenu sera reporté dans le bloc de la page.</p><textarea id="plume-latex-source" spellcheck="false" placeholder="Ex. : \\frac{a}{b}"></textarea><div class="plume-latex-preview"><small>Aperçu du code</small><div id="plume-latex-preview-text"></div></div><button type="button" data-latex-apply>Appliquer à la page</button></div></section><section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
@@ -1342,7 +1342,7 @@ app.addEventListener('click', async (event) => {
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
-    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');addEditorBlock('latex');const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const input=window.prompt('Saisis le code LaTeX à placer dans le bloc :',b?.text||'\\frac{a}{b}');if(input!==null&&b){b.text=input;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}}
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');addEditorBlock('latex');const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source');if(panel&&field&&b){field.value=b.text||'\\frac{a}{b}';const preview=document.querySelector('#plume-latex-preview-text');if(preview)preview.textContent=field.value;panel.hidden=false;field.focus();}}
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
@@ -1350,6 +1350,7 @@ app.addEventListener('click', async (event) => {
   }
   if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=true;return;}
   const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){const library=document.querySelector('#plume-elements-page');if(library)library.hidden=true;addEditorBlock('shape',shapeButton.dataset.addShape);return;}
+  if(event.target.closest('[data-latex-close]')){const panel=document.querySelector('#plume-latex-editor');if(panel)panel.hidden=true;return;}if(event.target.closest('[data-latex-apply]')){const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const field=document.querySelector('#plume-latex-source');if(b&&field){b.text=field.value;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}const panel=document.querySelector('#plume-latex-editor');if(panel)panel.hidden=true;return;}
   const pageColorButton=event.target.closest('[data-page-color]');if(pageColorButton){const p=state.editorPages[state.editorPageIndex];if(p){p.background=pageColorButton.dataset.pageColor;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;const custom=document.querySelector('#editor-page-color-custom');if(custom)custom.value=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   const cornerDelete = event.target.closest('[data-delete-block]');
   if (cornerDelete) {
@@ -1788,6 +1789,7 @@ app.addEventListener('cancel', (event) => {
   }
 });
 
+app.addEventListener('input',(event)=>{if(event.target.id==='plume-latex-source'){const preview=document.querySelector('#plume-latex-preview-text');if(preview)preview.textContent=event.target.value;}});
 app.addEventListener('change', (event) => {
   if(event.target.id==='editor-page-color-custom'){const p=state.editorPages[state.editorPageIndex];if(p){p.background=event.target.value;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   if(event.target.id==='editor-cover-image-file'){const f=event.target.files?.[0];if(f){const input=document.querySelector('#work-form [name="cover_file"]');if(input){const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;}const img=document.querySelector('#editor-cover-image');if(img){img.src=URL.createObjectURL(f);img.hidden=false;}toast('Image choisie comme couverture. Enregistre l’œuvre pour conserver ce choix.');}return;}
