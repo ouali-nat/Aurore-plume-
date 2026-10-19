@@ -323,6 +323,7 @@ function updateEditorCanvas() {
     const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
     if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
     canvas.innerHTML=editorCanvasMarkup();
+    applyEditorUiPreferences();
     if(canvas.querySelector('[data-latex-render]')){void ensureMathJax().then(async(math)=>{const nodes=[...canvas.querySelectorAll('[data-latex-render]')];await math.typesetPromise(nodes);fitLatexMath(canvas);}).catch((error)=>console.warn('Rendu LaTeX indisponible',error.message));}
     void hydrateR2Images(canvas);
   }
@@ -614,7 +615,9 @@ async function loadEditorCoverPreview(key) {
 
 function renderTextEditor() {
   const work = state.editing || {};
-  const settings = { ...DEFAULT_EDITORIAL_SETTINGS, ...(work.editorial_settings && typeof work.editorial_settings === 'object' ? work.editorial_settings : {}) };
+  let cachedSettings = {};
+  try { cachedSettings = JSON.parse(localStorage.getItem('aurore-plume-editor-settings:' + String(state.user?.id || 'local') + ':' + String(work.id || 'new')) || '{}'); } catch {}
+  const settings = { ...DEFAULT_EDITORIAL_SETTINGS, ...(work.editorial_settings && typeof work.editorial_settings === 'object' ? work.editorial_settings : {}), ...cachedSettings };
   const coverKey = work.cover_media_key || '';
   shell(`
     <section class="text-editor-shell">
@@ -665,7 +668,7 @@ function renderTextEditor() {
     <header class="plume-elements-page-top">
       <div class="plume-elements-identity">
         <span class="plume-elements-mark" aria-hidden="true">a.</span>
-        <div><span class="eyebrow">AURORE PLUME · ATELIER GRAPHIQUE</span><h2>Donnez du rythme à votre page.</h2><p>Des formes, repères et ornements à personnaliser librement. Choisissez un élément pour l’ajouter à votre composition.</p></div>
+        <div class="plume-elements-heading-spacer" aria-hidden="true"></div>
       </div>
       <button type="button" class="plume-elements-back" data-elements-close><span aria-hidden="true">↗</span> Revenir à l’édition</button>
     </header>
@@ -750,7 +753,7 @@ function renderTextEditor() {
           <div class="editor-layout-note"><span>✳</span><div><strong>Une œuvre, une mise en page cohérente.</strong><p>Les réglages s’appliqueront à l’aperçu imprimable. Le manuscrit enregistré conserve son contenu d’origine.</p></div></div>
         </section>
         <section class="editor-tab-panel preview-panel" id="editor-panel-preview" role="tabpanel" ${state.editorTab === 'preview' ? '' : 'hidden'}>
-          <div class="editor-panel-intro"><div><span class="eyebrow">VÉRIFICATION FINALE</span><h2>Votre œuvre prend forme.</h2><p>Vérifiez la couverture et la typographie avant de lancer l’impression ou l’enregistrement en PDF.</p></div><button class="button button-outline" type="button" data-editor-print>Imprimer / PDF ↗</button></div>
+          <div class="editor-panel-intro"><div><span class="eyebrow">VÉRIFICATION FINALE</span><h2>Votre œuvre prend forme.</h2><p>Vérifiez la couverture et la typographie avant de lancer l’impression ou l’enregistrement en PDF.</p></div><div class="editor-preview-actions"><button class="button button-outline" type="button" data-editor-return-edit>← Retour à l’édition</button><button class="button button-outline" type="button" data-editor-print>Imprimer / PDF ↗</button></div></div>
           <div class="editor-preview-spread">
             <div class="editor-print-cover" id="editor-print-cover">
               <div class="editor-cover-preview-stage editor-print-cover-stage">
@@ -787,7 +790,13 @@ function renderTextEditor() {
     if (saveLabel) saveLabel.textContent = 'Modifications à enregistrer';
   };
   workForm?.addEventListener('input', markEditorDirty);
-  workForm?.addEventListener('change', (event) => { markEditorDirty(); if (['page_format', 'body_font', 'font_size', 'line_height', 'margins'].includes(event.target?.name)) updateEditorCanvas(); });
+  workForm?.addEventListener('change', (event) => {
+    markEditorDirty();
+    if (['page_format', 'body_font', 'font_size', 'line_height', 'margins'].includes(event.target?.name)) {
+      updateEditorCanvas();
+      scheduleEditorialSettingsSave();
+    }
+  });
   if (coverKey) loadEditorCoverPreview(coverKey);
 }
 
@@ -1680,7 +1689,12 @@ app.addEventListener('click', async (event) => {
   if (insertTokenButton) { insertEditorToken(insertTokenButton.dataset.insertToken); return; }
   if (event.target.closest('[data-draft-cancel]')) { state.showDraftCreate = false; render(); return; }
   if (event.target.closest('[data-editor-back]')) { state.editorOpen = false; state.showDraftCreate = false; state.editing = null; state.showCreateForm = false; if (state.editorCoverPreview) URL.revokeObjectURL(state.editorCoverPreview); state.editorCoverPreview = null; render(); return; }
-  if (event.target.closest('[data-editor-print]')) { activateEditorTab('preview'); window.setTimeout(() => window.print(), 120); return; }
+  if (event.target.closest('[data-editor-return-edit]')) { activateEditorTab('manuscript'); document.querySelector('#plume-editor-canvas')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (event.target.closest('[data-editor-print]')) {
+    if (state.editorTab !== 'preview') activateEditorTab('preview');
+    window.setTimeout(() => window.print(), 120);
+    return;
+  }
   if (event.target.closest('[data-publish-open]')) {
     modalRoot.innerHTML='<div class="modal-backdrop" id="publish-overlay"><section class="auth-modal plume-publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-title"><button type="button" class="modal-close" data-publish-cancel aria-label="Fermer">×</button><div class="auth-symbol">↗</div><h2 id="publish-title">Publier votre œuvre</h2><p>Choisissez qui pourra la voir. Vous pourrez revenir modifier votre texte depuis votre atelier.</p><button type="button" class="button button-primary full-width" data-publish-visibility="public">Public — dans la bibliothèque</button><button type="button" class="button button-outline full-width" data-publish-visibility="private">Privé — moi uniquement</button><small class="auth-privacy">Le mode public rend le texte accessible à tous les visiteurs d’Aurore Plume.</small></section></div>';
     modalRoot.querySelectorAll('[data-publish-visibility]').forEach((choice) => {
@@ -1848,6 +1862,25 @@ let plumeNudgeDrag=null;
 app.addEventListener('pointerdown',(event)=>{const handle=event.target.closest('.plume-nudge-drag-handle');const panel=handle?.closest('.plume-nudge.is-floating');if(!panel)return;const rect=panel.getBoundingClientRect();plumeNudgeDrag={panel,startX:event.clientX,startY:event.clientY,left:rect.left,top:rect.top,width:rect.width,height:rect.height,pointerId:event.pointerId};panel.style.willChange='transform';try{handle.setPointerCapture(event.pointerId);}catch{}event.preventDefault();});
 window.addEventListener('pointermove',(event)=>{const drag=plumeNudgeDrag;if(!drag||(event.pointerId!==undefined&&event.pointerId!==drag.pointerId))return;const left=Math.max(8,Math.min(Math.max(8,window.innerWidth-drag.width-8),drag.left+event.clientX-drag.startX));const top=Math.max(8,Math.min(Math.max(8,window.innerHeight-drag.height-8),drag.top+event.clientY-drag.startY));drag.panel.style.transform='translate3d('+(left-drag.left)+'px,'+(top-drag.top)+'px,0)';event.preventDefault();},{passive:false});
 const finishNudgeDrag=()=>{if(!plumeNudgeDrag)return;const drag=plumeNudgeDrag,rect=drag.panel.getBoundingClientRect();drag.panel.style.left=Math.max(8,Math.min(window.innerWidth-rect.width-8,rect.left))+'px';drag.panel.style.top=Math.max(8,Math.min(window.innerHeight-rect.height-8,rect.top))+'px';drag.panel.style.transform='';drag.panel.style.willChange='';plumeNudgeDrag=null;};window.addEventListener('pointerup',finishNudgeDrag);window.addEventListener('pointercancel',finishNudgeDrag);window.addEventListener('resize',()=>{const panel=document.querySelector('.plume-nudge.is-floating');if(!panel)return;const rect=panel.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(window.innerWidth-rect.width-8,rect.left))+'px';panel.style.top=Math.max(8,Math.min(window.innerHeight-rect.height-8,rect.top))+'px';});
+app.addEventListener('click', (event) => {
+  if (!state.editorOpen) return;
+  const canvas = event.target.closest('#plume-editor-canvas');
+  if (!canvas) return;
+  const blockNode = event.target.closest('.plume-canvas-block');
+  if (blockNode) {
+    state.editorSelectedBlock = blockNode.dataset.blockId || null;
+    canvas.querySelectorAll('.plume-canvas-block').forEach((node) => node.classList.toggle('is-selected', node === blockNode));
+    return;
+  }
+  state.editorSelectedBlock = null;
+  canvas.querySelectorAll('.plume-canvas-block.is-selected').forEach((node) => node.classList.remove('is-selected'));
+  const popover = document.querySelector('#plume-color-popover');
+  if (popover) popover.hidden = true;
+  const rounding = document.querySelector('#plume-rounding-control');
+  if (rounding) rounding.hidden = true;
+  const roundingButton = document.querySelector('[data-editor-rounding]');
+  if (roundingButton) roundingButton.setAttribute('aria-expanded', 'false');
+});
 let plumeBlockDrag=null;
 app.addEventListener('pointerdown',(event)=>{if(event.target.closest('[data-delete-block], .plume-block-actions-toggle, .plume-block-actions-menu'))return;const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');if(!node||!canvas)return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;const resize=event.target.closest('[data-resize-dir]'),moveGrip=event.target.closest('.plume-block-move');if(event.target.closest('[contenteditable="true"]')&&!resize&&!moveGrip)return;state.editorSelectedBlock=block.id;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===block.id));const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=false;pop.style.left=Math.min(Math.max(8,event.clientX+12),window.innerWidth-260)+'px';pop.style.top=Math.min(Math.max(8,event.clientY+12),window.innerHeight-190)+'px';const palette=pop.querySelector('.plume-palette-scroll');if(palette)palette.hidden=true;const title=document.querySelector('#plume-palette-title');if(title)title.hidden=true;const colorsButton=pop.querySelector('[data-editor-colors]');if(colorsButton)colorsButton.setAttribute('aria-expanded','false');const round=document.querySelector('#plume-rounding-control');if(round)round.hidden=true;const roundButton=document.querySelector('[data-editor-rounding]');if(roundButton){roundButton.hidden=!(block.type==='shape'||block.type==='image');roundButton.setAttribute('aria-expanded','false');}const radius=pop.querySelector('#plume-corner-radius');if(radius){radius.value=String(block.radius??16);const output=pop.querySelector('#plume-corner-radius-value');if(output)output.textContent=radius.value+' px';}}const editableText=node.querySelector('[data-block-text]');
 const baseFontPx=block.type==='text'?(Number.parseFloat(getComputedStyle(editableText||node).fontSize)||18):0;
@@ -1865,19 +1898,21 @@ app.addEventListener('pointermove',(event)=>{
     if(d.includes('s'))h=Math.max(3,plumeBlockDrag.h+dy);
     if(d.includes('w')){w=Math.max(4,plumeBlockDrag.w-dx);x=plumeBlockDrag.x+dx;}
     if(d.includes('n')){h=Math.max(3,plumeBlockDrag.h-dy);y=plumeBlockDrag.y+dy;}
-    b.x=Math.max(0,Math.min(96,x));b.y=Math.max(0,Math.min(96,y));
-    b.w=Math.max(4,Math.min(100-b.x,w));b.h=Math.max(3,Math.min(100-b.y,h));
-    if(b.type==='text'){
-      const vertical=d.includes('n')||d.includes('s');
-      const startMeasure=Math.max(3,vertical?plumeBlockDrag.h:plumeBlockDrag.w);
-      const currentMeasure=vertical?b.h:b.w;
-      const ratio=Math.max(.5,Math.min(2.5,currentMeasure/startMeasure));
+    b.x=Math.max(0,Math.min(99,x)); b.y=Math.max(0,Math.min(99,y));
+    b.w=Math.max(4,Math.min(100-b.x,w)); b.h=Math.max(3,Math.min(100-b.y,h));
+    if(b.type==='text'&&(d.includes('e')||d.includes('w'))){
+      const ratio=Math.max(.55,Math.min(2.25,b.w/Math.max(4,plumeBlockDrag.w)));
       b.size=Math.round(Math.max(7,Math.min(72,plumeBlockDrag.baseFontPx*ratio))*10)/10;
       b.editorialSize=false;
     }
   }else if(plumeBlockDrag.moving){
-    b.x=Math.max(0,Math.min(100-b.w,plumeBlockDrag.x+dx));
-    b.y=Math.max(0,Math.min(100-b.h,plumeBlockDrag.y+dy));
+    let nextX=Math.max(0,Math.min(100-b.w,plumeBlockDrag.x+dx));
+    let nextY=Math.max(0,Math.min(100-b.h,plumeBlockDrag.y+dy));
+    if (readEditorUiPreferences().snap) {
+      nextX=Math.round(nextX/5)*5; nextY=Math.round(nextY/5)*5;
+      nextX=Math.max(0,Math.min(100-b.w,nextX)); nextY=Math.max(0,Math.min(100-b.h,nextY));
+    }
+    b.x=nextX; b.y=nextY;
   }
   const node=document.querySelector('.plume-canvas-block.is-selected');
   if(node){
@@ -2514,6 +2549,59 @@ async function saveWorkForm(formElement, submitter = null, options = {}) {
 
 
 
+const EDITOR_UI_DEFAULTS = { grid: false, guides: false, center: false, snap: false };
+function editorUiPreferenceKey() { return 'aurore-plume-editor-ui:' + String(state.user?.id || 'local') + ':' + String(state.editing?.id || 'new'); }
+function readEditorUiPreferences() {
+  try { return { ...EDITOR_UI_DEFAULTS, ...JSON.parse(localStorage.getItem(editorUiPreferenceKey()) || '{}') }; }
+  catch { return { ...EDITOR_UI_DEFAULTS }; }
+}
+function applyEditorUiPreferences() {
+  const prefs = readEditorUiPreferences(), canvas = document.querySelector('#plume-editor-canvas'), tools = document.querySelector('#plume-editor-smart-tools');
+  if (canvas) {
+    canvas.classList.toggle('plume-grid-visible', !!prefs.grid);
+    canvas.classList.toggle('plume-guides-visible', !!prefs.guides);
+    canvas.classList.toggle('plume-center-visible', !!prefs.center);
+    canvas.classList.toggle('plume-snap-active', !!prefs.snap);
+  }
+  tools?.querySelectorAll('[data-editor-pref]').forEach((button) => {
+    const active = !!prefs[button.dataset.editorPref];
+    button.setAttribute('aria-pressed', String(active)); button.classList.toggle('is-active', active);
+  });
+}
+function setEditorUiPreference(name, enabled) {
+  if (!Object.prototype.hasOwnProperty.call(EDITOR_UI_DEFAULTS, name)) return;
+  const prefs = readEditorUiPreferences(); prefs[name] = !!enabled;
+  try { localStorage.setItem(editorUiPreferenceKey(), JSON.stringify(prefs)); } catch (error) { console.warn('Préférences locales de mise en page indisponibles', error); }
+  applyEditorUiPreferences();
+}
+let editorialSettingsSaveTimer = null, editorialSettingsSaveRevision = 0;
+function scheduleEditorialSettingsSave() {
+  const form = document.querySelector('#work-form');
+  const workId = String(form?.querySelector('[name="id"]')?.value || state.editing?.id || '');
+  const settings = editorialSettingsFromForm(form);
+  if (state.editing) state.editing.editorial_settings = settings;
+  try { localStorage.setItem('aurore-plume-editor-settings:' + String(state.user?.id || 'local') + ':' + (workId || 'new'), JSON.stringify(settings)); } catch {}
+  if (!workId || !supabase || !state.user) return;
+  const revision = ++editorialSettingsSaveRevision;
+  window.clearTimeout(editorialSettingsSaveTimer);
+  editorialSettingsSaveTimer = window.setTimeout(async () => {
+    try {
+      const result = await supabase.from('plume_works').update({ editorial_settings: settings })
+        .eq('id', workId).eq('author_id', state.user.id).select('id').maybeSingle();
+      if (revision !== editorialSettingsSaveRevision) return;
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error('La préférence n’a pas été confirmée par la base.');
+      if (state.editing?.id === workId) state.editing.editorial_settings = settings;
+      const label = document.querySelector('#editor-save-label');
+      if (label) label.textContent = 'Préférences enregistrées';
+      label?.closest('.editor-save-state')?.classList.remove('is-dirty');
+    } catch (error) {
+      console.warn('Enregistrement automatique des préférences éditoriales', error);
+      const label = document.querySelector('#editor-save-label');
+      if (label) label.textContent = 'Préférences conservées sur cet appareil';
+    }
+  }, 650);
+}
 function enhanceEditorialWorkspace() {
   const commandbar = document.querySelector('.editor-commandbar');
   const canvas = document.querySelector('#plume-editor-canvas');
@@ -2524,10 +2612,10 @@ function enhanceEditorialWorkspace() {
     tools.id = 'plume-editor-smart-tools';
     tools.className = 'plume-editor-smart-tools';
     tools.setAttribute('aria-label', 'Outils avancés de mise en page');
-    tools.innerHTML = '<div class="plume-smart-tools-heading"><span class="eyebrow">MISE EN PAGE</span><span class="plume-smart-hint">Des outils rapides pour composer votre page</span></div><div class="plume-smart-tools-row"><label class="plume-template-picker">Modèle de bloc<select data-editor-template aria-label="Insérer un modèle de mise en page"><option value="">Choisir un modèle…</option><option value="title">Titre de section</option><option value="chapter">Ouverture de chapitre</option><option value="quote">Citation mise en valeur</option><option value="two-columns">Deux colonnes</option><option value="callout">Encadré de note</option></select></label><button type="button" data-editor-add-page class="plume-smart-button">＋ Page</button><button type="button" data-editor-duplicate-page class="plume-smart-button">▣ Dupliquer la page</button><button type="button" data-editor-grid aria-pressed="false" class="plume-smart-button">▦ Grille</button><span class="plume-smart-shortcuts">Raccourcis : Ctrl/⌘ Z · Ctrl/⌘ S · Suppr</span></div>';
+    tools.innerHTML = '<div class="plume-smart-tools-heading"><span class="eyebrow">MISE EN PAGE</span><span class="plume-smart-hint">Des outils rapides pour composer votre page</span></div><div class="plume-smart-tools-row"><label class="plume-template-picker">Modèle de bloc<select data-editor-template aria-label="Insérer un modèle de mise en page"><option value="">Choisir un modèle…</option><option value="title">Titre de section</option><option value="chapter">Ouverture de chapitre</option><option value="quote">Citation mise en valeur</option><option value="two-columns">Deux colonnes</option><option value="callout">Encadré de note</option></select></label><button type="button" data-editor-add-page class="plume-smart-button">＋ Page</button><button type="button" data-editor-duplicate-page class="plume-smart-button">▣ Dupliquer la page</button><button type="button" data-editor-pref="grid" aria-pressed="false" class="plume-smart-button">▦ Grille</button><button type="button" data-editor-pref="guides" aria-pressed="false" class="plume-smart-button">⌗ Marges</button><button type="button" data-editor-pref="center" aria-pressed="false" class="plume-smart-button">⊕ Centrage</button><button type="button" data-editor-pref="snap" aria-pressed="false" class="plume-smart-button">✣ Aimantation</button><span class="plume-smart-shortcuts">Réglages mémorisés · Ctrl/⌘ Z · Ctrl/⌘ S · Suppr</span></div>';
     commandbar.insertAdjacentElement('afterend', tools);
   }
-  canvas.classList.toggle('plume-grid-visible', tools.querySelector('[data-editor-grid]')?.getAttribute('aria-pressed') === 'true');
+  applyEditorUiPreferences();
   const status = document.querySelector('#editor-save-label');
   if (status && !status.dataset.statusEnhanced) {
     status.dataset.statusEnhanced = '1';
@@ -2568,11 +2656,10 @@ app.addEventListener('change', (event) => {
 app.addEventListener('click', (event) => {
   const addPage = event.target.closest('[data-editor-add-page]');
   const duplicatePage = event.target.closest('[data-editor-duplicate-page]');
-  const gridButton = event.target.closest('[data-editor-grid]');
-  if (gridButton) {
-    const enabled = gridButton.getAttribute('aria-pressed') !== 'true';
-    gridButton.setAttribute('aria-pressed', String(enabled));
-    document.querySelector('#plume-editor-canvas')?.classList.toggle('plume-grid-visible', enabled);
+  const preferenceButton = event.target.closest('[data-editor-pref]');
+  if (preferenceButton) {
+    const name = preferenceButton.dataset.editorPref;
+    setEditorUiPreference(name, preferenceButton.getAttribute('aria-pressed') !== 'true');
     return;
   }
   if (addPage || duplicatePage) {
