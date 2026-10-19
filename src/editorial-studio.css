@@ -349,3 +349,23 @@
   background: var(--page-swatch, #ffffff) !important;
   background-color: var(--page-swatch, #ffffff) !important;
 }
+
+
+/* Réactivité des outils de mise en page : aucun délai d'animation au basculement. */
+.editor-only-shell .plume-smart-button,
+.editor-only-shell .plume-smart-button:hover,
+.editor-only-shell .plume-smart-button[aria-pressed="true"] {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+.editor-only-shell .plume-canvas-paper.plume-grid-visible,
+.editor-only-shell .plume-canvas-paper.plume-guides-visible,
+.editor-only-shell .plume-canvas-paper.plume-center-visible,
+.editor-only-shell .plume-canvas-paper.plume-snap-active {
+  transition: none !important;
+}
+.editor-only-shell .editor-page-color-swatches button.is-selected {
+  outline: 2px solid #68458e !important;
+  outline-offset: 2px !important;
+}
