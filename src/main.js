@@ -1207,7 +1207,7 @@ async function buildWorkPdfBlob(work) {
     const coverSurface = document.createElement('div');
     coverSurface.className = 'editor-cover-preview-stage plume-pdf-export-cover';
     coverSurface.setAttribute('aria-hidden', 'true');
-    coverSurface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;padding:24px;background:#e9dfeb;transform:none;';
+    coverSurface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;padding:24px;background:radial-gradient(ellipse at 25% 18%,#e8ddf0,transparent 44%),linear-gradient(145deg,#f7eee1,#d9c9dc 58%,#a7bfae);transform:none;';
     coverSurface.innerHTML = '<div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · '+e(work.genre || 'Texte libre')+'</small><h2>'+e(work.title || 'Titre de votre œuvre')+'</h2><p '+(work.subtitle ? '' : 'hidden')+'>'+e(work.subtitle || '')+'</p><i>✳</i></div>'
       + '<img class="editor-cover-image" alt="" '+(coverKey ? 'src="r2:'+e(coverKey)+'"' : 'hidden')+'>'
       + '<div class="editor-cover-overlay"><span>'+e(work.genre || 'Texte libre')+'</span><h3>'+e(coverAuthor)+'</h3></div>';
