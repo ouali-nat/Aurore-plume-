@@ -201,7 +201,7 @@ function editorRecoveryKey(workId) { return 'aurore-plume-editor-recovery:' + St
 function saveEditorRecovery() {
   try {
     if (!state.editing?.id || !state.editorPages?.length) return;
-    localStorage.setItem(editorRecoveryKey(state.editing.id), JSON.stringify({ savedAt: Date.now(), pageIndex: state.editorPageIndex, renderWidth: Number(state.editorRenderWidth) || 0, pages: state.editorPages }));
+    localStorage.setItem(editorRecoveryKey(state.editing.id), JSON.stringify({ savedAt: Date.now(), serverUpdatedAt: state.editing.updated_at || null, pageIndex: state.editorPageIndex, renderWidth: Number(state.editorRenderWidth) || 0, pages: state.editorPages }));
   } catch (error) { console.warn('Récupération locale indisponible', error); }
 }
 function clearEditorRecovery(workId) {
@@ -224,7 +224,8 @@ function parseEditorPages(body = '', work = null) {
     try {
       const recovery = JSON.parse(localStorage.getItem(editorRecoveryKey(work.id)) || 'null');
       const serverTime = work.updated_at ? new Date(work.updated_at).getTime() : 0;
-      if (recovery?.pages?.length && Number(recovery.savedAt) > serverTime) {
+      const sameServerVersion = recovery?.serverUpdatedAt ? recovery.serverUpdatedAt === (work.updated_at || null) : !parsedPages;
+      if (recovery?.pages?.length && sameServerVersion && Number(recovery.savedAt) > serverTime) {
         const recoveredRenderWidth = Number(recovery.renderWidth);
         if (recoveredRenderWidth >= 120 && recoveredRenderWidth <= 2400) state.editorRenderWidth = Math.round(recoveredRenderWidth);
         state.editorPageIndex = Math.max(0, Math.min(Number(recovery.pageIndex || 0), recovery.pages.length - 1));
