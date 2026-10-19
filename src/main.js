@@ -396,7 +396,19 @@ function addEditorBlock(type, shape='round') {
     wave:{label:'〰',x:12,y:nextY,w:60,h:8,color:'#88709f',fill:'transparent',radius:0},
     frame:{label:'Votre texte',x:12,y:nextY,w:55,h:19,color:'#6f5a87',fill:'transparent',radius:6},
     callout:{label:'À retenir : votre note ici.',x:10,y:nextY,w:78,h:15,color:'#47623b',fill:'#edf5e7',radius:12},
-    number:{label:'01',x:15,y:nextY,w:18,h:12,color:'#5d4776',fill:'#eee6f7',radius:999}
+    number:{label:'01',x:15,y:nextY,w:18,h:12,color:'#5d4776',fill:'#eee6f7',radius:999},
+    highlight:{label:'Votre phrase à retenir',x:10,y:nextY,w:78,h:10,color:'#514323',fill:'#fff0a8',radius:3},
+    underline:{label:'Votre titre',x:12,y:nextY,w:52,h:9,color:'#5d4776',fill:'transparent',radius:0},
+    'vertical-line':{label:'',x:12,y:nextY,w:2,h:28,color:'#88709f',fill:'#88709f',radius:0},
+    bookmark:{label:'★',x:15,y:nextY,w:18,h:17,color:'#fff',fill:'#80639e',radius:3},
+    'check-list':{label:'✓',x:15,y:nextY,w:13,h:10,color:'#426849',fill:'#e2efe4',radius:999},
+    bullet:{label:'•',x:15,y:nextY,w:12,h:10,color:'#67527f',fill:'transparent',radius:0},
+    'page-number':{label:'03',x:82,y:90,w:10,h:7,color:'#756984',fill:'transparent',radius:0},
+    brackets:{label:'[ Votre texte ]',x:12,y:nextY,w:50,h:13,color:'#67527f',fill:'transparent',radius:0},
+    cross:{label:'✣',x:15,y:nextY,w:18,h:12,color:'#7d557e',fill:'#f5e7f2',radius:0},
+    plus:{label:'＋',x:15,y:nextY,w:14,h:10,color:'#80639e',fill:'transparent',radius:0},
+    corner:{label:'',x:12,y:nextY,w:24,h:18,color:'#88709f',fill:'transparent',radius:0},
+    'dot-row':{label:'•••',x:30,y:nextY,w:40,h:8,color:'#88709f',fill:'transparent',radius:0}
   };
   const preset=shapePresets[shape]||{label:'Votre élément',x:12,y:nextY,w:42,h:14,color:'#67527f',fill:'#eee6f7',radius:16};
   const block=type==='shape'
@@ -658,9 +670,9 @@ function renderTextEditor() {
     </header>
     <div class="plume-elements-explorer">
       <label class="plume-elements-search"><span aria-hidden="true">⌕</span><input id="plume-element-search" type="search" placeholder="Rechercher une forme, un séparateur, une citation…" autocomplete="off" aria-label="Rechercher dans les éléments"><kbd>⌘ K</kbd></label>
-      <div class="plume-elements-results"><span id="plume-element-results-count" aria-live="polite">25 éléments à explorer</span><span>Choisissez · Insérez · Personnalisez</span></div>
+      <div class="plume-elements-results"><span id="plume-element-results-count" aria-live="polite">37 éléments à explorer</span><span>Choisissez · Insérez · Personnalisez</span></div>
       <nav class="plume-elements-filters" aria-label="Catégories d’éléments">
-        <button type="button" data-element-filter="all" aria-pressed="true">Tout <span>25</span></button>
+        <button type="button" data-element-filter="all" aria-pressed="true">Tout <span>37</span></button>
         <button type="button" data-element-filter="forms" aria-pressed="false">Formes</button>
         <button type="button" data-element-filter="layout" aria-pressed="false">Mise en page</button>
         <button type="button" data-element-filter="separators" aria-pressed="false">Séparateurs</button>
@@ -694,6 +706,19 @@ function renderTextEditor() {
       <button type="button" data-add-shape="sunburst" data-element-category="ornaments"><span class="shape-preview sunburst">✺</span><span class="element-card-copy"><b>Rosace</b><small>Petit motif rayonnant</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
       <button type="button" data-add-shape="badge" data-element-category="ornaments"><span class="shape-preview badge">✦</span><span class="element-card-copy"><b>Médaillon</b><small>Un point d’attention</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
     </div>
+
+      <button type="button" data-add-shape="highlight" data-element-category="layout"><span class="shape-preview highlight">Texte</span><span class="element-card-copy"><b>Surlignage</b><small>Faire ressortir une phrase</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="underline" data-element-category="separators"><span class="shape-preview underline">Ligne</span><span class="element-card-copy"><b>Soulignement</b><small>Souligner un titre ou un mot</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="vertical-line" data-element-category="separators"><span class="shape-preview vertical-line"></span><span class="element-card-copy"><b>Trait vertical</b><small>Structurer deux zones</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="bookmark" data-element-category="layout"><span class="shape-preview bookmark">★</span><span class="element-card-copy"><b>Signet</b><small>Marquer un passage important</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="check-list" data-element-category="layout"><span class="shape-preview check-list">✓</span><span class="element-card-copy"><b>Repère validé</b><small>Mettre en avant une étape</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="bullet" data-element-category="layout"><span class="shape-preview bullet">•</span><span class="element-card-copy"><b>Puces décoratives</b><small>Introduire une idée ou une liste</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="page-number" data-element-category="layout"><span class="shape-preview page-number">03</span><span class="element-card-copy"><b>Numéro de page</b><small>Repère discret de pagination</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="brackets" data-element-category="forms"><span class="shape-preview brackets">[ ]</span><span class="element-card-copy"><b>Crochets</b><small>Encadrer un détail</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="cross" data-element-category="ornaments"><span class="shape-preview cross">✣</span><span class="element-card-copy"><b>Rosace croisée</b><small>Petit ornement géométrique</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="plus" data-element-category="ornaments"><span class="shape-preview plus">＋</span><span class="element-card-copy"><b>Plus graphique</b><small>Ajouter un accent visuel</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="corner" data-element-category="forms"><span class="shape-preview corner">⌜</span><span class="element-card-copy"><b>Angle de cadre</b><small>Créer un repère minimaliste</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="dot-row" data-element-category="separators"><span class="shape-preview dot-row">•••</span><span class="element-card-copy"><b>Rangée de points</b><small>Transition typographique</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
     <div class="plume-elements-empty" id="plume-elements-empty" hidden><span>⌕</span><b>Aucun élément trouvé</b><small>Essayez un autre mot ou une autre catégorie.</small></div>
     <footer class="plume-elements-library-footer"><span>✳ Chaque élément reste modifiable après insertion.</span><button type="button" data-elements-close>Retourner à ma page <span aria-hidden="true">↗</span></button></footer>
   </div>
