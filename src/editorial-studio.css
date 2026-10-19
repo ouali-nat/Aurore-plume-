@@ -288,3 +288,64 @@
   overflow: visible !important;
   max-height: none !important;
 }
+
+/* Correctifs ciblés — libellés du panneau Déplacer et vraies couleurs des pastilles. */
+.editor-only-shell .plume-nudge-head {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+.editor-only-shell .plume-nudge-title {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  line-height: 1.25 !important;
+}
+.editor-only-shell .plume-nudge-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 32px !important;
+  padding: 6px 9px !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+  text-overflow: clip !important;
+}
+.editor-only-shell .plume-nudge.is-floating .plume-nudge-head {
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+}
+.editor-only-shell .plume-nudge.is-floating .plume-nudge-toggle {
+  justify-self: stretch !important;
+}
+@media (max-width: 380px) {
+  .editor-only-shell .plume-nudge.is-floating .plume-nudge-head {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+  .editor-only-shell .plume-nudge.is-floating .plume-nudge-toggle {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+}
+/* Les styles globaux des boutons ne doivent jamais écraser la couleur propre à chaque pastille. */
+.editor-only-shell .plume-typography-bar .plume-customizer-color-wrap .plume-palette-scroll button[data-block-color] {
+  background: var(--swatch, #ffffff) !important;
+  background-color: var(--swatch, #ffffff) !important;
+  color: transparent !important;
+  border: 1px solid #00000024 !important;
+  box-shadow: inset 0 0 0 1px #ffffff30 !important;
+}
+.editor-only-shell .editor-page-color-swatches button[data-page-color] {
+  background: var(--page-swatch, #ffffff) !important;
+  background-color: var(--page-swatch, #ffffff) !important;
+}
