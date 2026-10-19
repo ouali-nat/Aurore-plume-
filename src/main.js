@@ -644,7 +644,7 @@ function renderTextEditor() {
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
-              <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}><label class="cover-upload-button editor-cover-select-image">▧ <span>Choisir une nouvelle image de couverture</span><input id="editor-cover-image-file" type="file" accept="image/*"></label>
+              <img class="editor-cover-image" id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}><label class="cover-upload-button editor-cover-select-image">▧ <span>Choisir une nouvelle image de couverture</span><input id="editor-cover-image-file" type="file" accept="image/*"></label>
               <div class="editor-cover-overlay"><span id="editor-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
             </div>
             <div class="cover-editor-controls"><label class="cover-upload-button">▧ <span>Importer une couverture</span><input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label></div>
@@ -1197,24 +1197,23 @@ async function buildWorkPdfBlob(work) {
     ));
     const renderHeight = Math.round(renderWidth * pageHeight / pageWidth);
 
-    // Exporter d'abord la couverture dessinée dans l'éditeur, avec les mêmes
-    // composants et règles CSS que l'aperçu à l'écran.
-    const coverKey = String(work.cover_media_key || '');
-    const coverAuthor = authorOf(work)?.display_name
-      || state.user?.user_metadata?.display_name
-      || state.user?.email?.split('@')[0]
-      || 'Auteur';
-    const coverSurface = document.createElement('div');
-    coverSurface.className = 'editor-cover-preview-stage plume-pdf-export-cover';
+    // Réutiliser l'aperçu de couverture de l'atelier : il contient déjà
+    // les valeurs réellement affichées, le thème de Claude et l'image choisie,
+    // même si le brouillon n'a pas encore été enregistré.
+    const coverSource = document.querySelector('#editor-cover-preview-stage');
+    if (!coverSource) throw new Error('Aperçu de couverture introuvable dans l’éditeur.');
+    const coverSurface = coverSource.cloneNode(true);
+    coverSurface.removeAttribute('id');
+    coverSurface.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+    coverSurface.classList.add('plume-pdf-export-cover');
     coverSurface.setAttribute('aria-hidden', 'true');
-    coverSurface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;padding:24px;background:radial-gradient(ellipse at 25% 18%,#e8ddf0,transparent 44%),linear-gradient(145deg,#f7eee1,#d9c9dc 58%,#a7bfae);transform:none;';
-    coverSurface.innerHTML = '<div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · '+e(work.genre || 'Texte libre')+'</small><h2>'+e(work.title || 'Titre de votre œuvre')+'</h2><p '+(work.subtitle ? '' : 'hidden')+'>'+e(work.subtitle || '')+'</p><i>✳</i></div>'
-      + '<img class="editor-cover-image" alt="" '+(coverKey ? 'src="r2:'+e(coverKey)+'"' : 'hidden')+'>'
-      + '<div class="editor-cover-overlay"><span>'+e(work.genre || 'Texte libre')+'</span><h3>'+e(coverAuthor)+'</h3></div>';
-    document.body.appendChild(coverSurface);
+    coverSurface.querySelectorAll('.cover-upload-button, input, label').forEach((node) => node.remove());
+    coverSurface.style.cssText += ';position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;transform:none;';
+    const coverHost = document.querySelector('.editor-only-shell') || document.body;
+    coverHost.appendChild(coverSurface);
     try {
       await hydrateR2Images(coverSurface);
-      const coverImage = coverSurface.querySelector('.editor-cover-image');
+      const coverImage = coverSurface.querySelector('img');
       if (coverImage) {
         await new Promise((resolve) => {
           if (coverImage.complete) return resolve();
@@ -1226,7 +1225,7 @@ async function buildWorkPdfBlob(work) {
       }
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const coverCanvas = await html2canvas(coverSurface, {
-        backgroundColor: '#e9dfeb',
+        backgroundColor: null,
         scale: Math.max(2, Math.min(4, 2000 / renderWidth)),
         useCORS: true,
         logging: false,
