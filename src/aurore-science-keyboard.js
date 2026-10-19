@@ -172,7 +172,7 @@ function tick(){try{if(navigator.vibrate)navigator.vibrate(5)}catch(e){}}
 
 function create(opts){
 opts=opts||{};
-var field=null,undo=[],lastOp="",lastT=0,hold=null,pv=null,cur=[],rendered=false;
+var field=null,fieldInputState=null,undo=[],lastOp="",lastT=0,hold=null,pv=null,cur=[],rendered=false;
 var catId=store(CATK)||"calc";if(!byId(catId))catId="calc";
 var el=document.createElement("section");el.className="asd";el.id="auroreScienceDock";el.hidden=true;el.setAttribute("aria-label","Clavier scientifique");
 el.innerHTML='<div class="asd-grip" aria-hidden="true"></div><div class="asd-top"><div class="asd-preview" aria-live="polite"><span class="asd-preview-empty">Aperçu de la formule</span><div class="asd-preview-math"></div><span class="asd-badge" hidden>□ cases à remplir</span></div><button type="button" class="asd-chip" data-a="native" aria-label="Utiliser le clavier normal" title="Clavier normal">ABC</button><button type="button" class="asd-chip" data-a="close" aria-label="Masquer le clavier scientifique" title="Masquer">⌄</button></div><div class="asd-tabs" role="tablist" aria-label="Catégories de symboles"></div><div class="asd-body"><div class="asd-keys" role="group" aria-label="Symboles"></div></div><div class="asd-foot"><button type="button" data-a="undo" aria-label="Annuler" title="Annuler">↶</button><button type="button" data-a="left" aria-label="Curseur à gauche" title="Curseur à gauche">◀</button><button type="button" data-a="right" aria-label="Curseur à droite" title="Curseur à droite">▶</button><button type="button" data-a="next" aria-label="Case suivante" title="Case suivante">□→</button><button type="button" data-a="space" aria-label="Espace" title="Espace">␣</button><button type="button" data-a="del" aria-label="Effacer" title="Effacer (maintenir pour répéter)">⌫</button><button type="button" class="asd-done" data-a="done" aria-label="Terminer" title="Terminer">✓</button></div>';
@@ -218,8 +218,35 @@ function startHold(fn){clearHold();fn();hold={t:setTimeout(function(){if(hold)ho
 if(window.__asdClear){["pointerup","pointercancel"].forEach(function(t){document.removeEventListener(t,window.__asdClear,true)})}
 window.__asdClear=clearHold;["pointerup","pointercancel"].forEach(function(t){document.addEventListener(t,clearHold,true)});
 
-function show(f){if(!f)return;var changed=field!==f||el.hidden;if(field&&field!==f){unbind();undo=[]}field=f;bind();el.hidden=false;document.body.classList.add("science-keyboard-open");if(!rendered){markTabs();renderKeys()}updatePreview();measure();if(changed){var ff=f;setTimeout(function(){try{ff.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){}},90)}}
-function hide(){clearHold();unbind();el.hidden=true;field=null;document.body.classList.remove("science-keyboard-open")}
+function restoreFieldMode(){
+ if(!field||!fieldInputState)return;
+ try{
+  field.readOnly=fieldInputState.readOnly;
+  if(fieldInputState.hadInputMode)field.setAttribute("inputmode",fieldInputState.inputMode);
+  else field.removeAttribute("inputmode");
+ }catch(e){}
+ fieldInputState=null;
+}
+function show(f){
+ if(!f)return;
+ var changed=field!==f||el.hidden;
+ if(field&&field!==f){unbind();restoreFieldMode();undo=[]}
+ if(field!==f){
+  field=f;
+  fieldInputState={readOnly:!!f.readOnly,hadInputMode:f.hasAttribute("inputmode"),inputMode:f.getAttribute("inputmode")||""};
+ }
+ // Le clavier scientifique prend le relais du clavier logiciel Android.
+ // Le champ reste sélectionnable et modifiable par setRangeText, mais pas par l’IME.
+ try{field.setAttribute("inputmode","none");field.readOnly=true;field.blur()}catch(e){}
+ bind();el.hidden=false;document.body.classList.add("science-keyboard-open");
+ if(!rendered){markTabs();renderKeys()}
+ updatePreview();measure();
+ if(changed){var ff=f;setTimeout(function(){try{ff.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){}},90)}
+}
+function hide(){
+ clearHold();unbind();restoreFieldMode();el.hidden=true;field=null;
+ document.body.classList.remove("science-keyboard-open");
+}
 function finish(){var f=field;hide();if(opts.onClose)opts.onClose(f)}
 
 el.addEventListener("pointerdown",function(e){var b=e.target.closest("button");if(!b)return;e.preventDefault();var a=b.getAttribute("data-a");if(a==="del")startHold(del);else if(a==="left")startHold(function(){move(-1)});else if(a==="right")startHold(function(){move(1)})});
