@@ -1721,7 +1721,7 @@ const finishNudgeDrag=()=>{if(!plumeNudgeDrag)return;const drag=plumeNudgeDrag,r
 let plumeBlockDrag=null;
 app.addEventListener('pointerdown',(event)=>{if(event.target.closest('[data-delete-block], .plume-block-actions-toggle, .plume-block-actions-menu'))return;const node=event.target.closest('.plume-canvas-block'),canvas=event.target.closest('#plume-editor-canvas');if(!node||!canvas)return;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===node.dataset.blockId);if(!block)return;const resize=event.target.closest('[data-resize-dir]'),moveGrip=event.target.closest('.plume-block-move');if(event.target.closest('[contenteditable="true"]')&&!resize&&!moveGrip)return;state.editorSelectedBlock=block.id;document.querySelectorAll('.plume-canvas-block').forEach((x)=>x.classList.toggle('is-selected',x.dataset.blockId===block.id));const pop=document.querySelector('#plume-color-popover');if(pop){pop.hidden=false;pop.style.left=Math.min(Math.max(8,event.clientX+12),window.innerWidth-260)+'px';pop.style.top=Math.min(Math.max(8,event.clientY+12),window.innerHeight-190)+'px';const palette=pop.querySelector('.plume-palette-scroll');if(palette)palette.hidden=true;const title=document.querySelector('#plume-palette-title');if(title)title.hidden=true;const colorsButton=pop.querySelector('[data-editor-colors]');if(colorsButton)colorsButton.setAttribute('aria-expanded','false');const round=document.querySelector('#plume-rounding-control');if(round)round.hidden=true;const roundButton=document.querySelector('[data-editor-rounding]');if(roundButton){roundButton.hidden=!(block.type==='shape'||block.type==='image');roundButton.setAttribute('aria-expanded','false');}const radius=pop.querySelector('#plume-corner-radius');if(radius){radius.value=String(block.radius??16);const output=pop.querySelector('#plume-corner-radius-value');if(output)output.textContent=radius.value+' px';}}const editableText=node.querySelector('[data-block-text]');
 const baseFontPx=block.type==='text'?(Number.parseFloat(getComputedStyle(editableText||node).fontSize)||18):0;
-plumeBlockDrag={id:block.id,startX:event.clientX,startY:event.clientY,x:Number(block.x),y:Number(block.y),w:Number(block.w),h:Number(block.h),cw:canvas.clientWidth,ch:canvas.clientHeight,baseFontPx,dir:resize?.dataset.resizeDir||'',moving:Boolean(moveGrip)||(!resize&&!event.target.closest('[contenteditable="true"]'))};if(plumeBlockDrag.moving||plumeBlockDrag.dir)event.preventDefault();});
+plumeBlockDrag={id:block.id,startX:event.clientX,startY:event.clientY,x:Number(block.x),y:Number(block.y),w:Number(block.w),h:Number(block.h),cw:canvas.clientWidth,ch:canvas.clientHeight,baseFontPx,dir:resize?.dataset.resizeDir||'',moving:Boolean(moveGrip)||(!resize&&!event.target.closest('[contenteditable="true"]'))};if(plumeBlockDrag.moving||plumeBlockDrag.dir){event.preventDefault();const captureTarget=resize||moveGrip||node;try{captureTarget.setPointerCapture(event.pointerId);}catch{}}});
 app.addEventListener('pointermove',(event)=>{
   if(!plumeBlockDrag)return;
   const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===plumeBlockDrag.id);
@@ -1757,7 +1757,9 @@ app.addEventListener('pointermove',(event)=>{
     if(textNode&&b.type==='text'&&plumeBlockDrag.dir)textNode.style.fontSize=b.size+'px';
   }
 });
-app.addEventListener('pointerup',()=>{if(plumeBlockDrag){plumeBlockDrag=null;syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}});
+const finishPlumeBlockDrag=()=>{if(!plumeBlockDrag)return;plumeBlockDrag=null;syncEditorCanvas();recordEditorHistory();saveEditorRecovery();};
+app.addEventListener('pointerup',finishPlumeBlockDrag);
+app.addEventListener('pointercancel',finishPlumeBlockDrag);
 function fitPastedTextBlock(node,block){
   const canvas=document.querySelector('#plume-editor-canvas'),blockNode=node?.closest('.plume-canvas-block');
   if(!canvas||!blockNode||!block||block.type!=='text')return;
