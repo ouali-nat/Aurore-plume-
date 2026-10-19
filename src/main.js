@@ -330,7 +330,8 @@ function updateEditorCanvas() {
   const count=document.getElementById('editor-page-count'); if(count&&state.editorTab==='manuscript') count.textContent=String(state.editorPageIndex+1).padStart(2,'0')+' / '+String(state.editorPages.length).padStart(2,'0');
   const prev=document.querySelector('[data-editor-page-prev]'); const next=document.querySelector('[data-editor-page-next]');
   if(prev&&state.editorTab==='manuscript') prev.disabled=state.editorPageIndex===0;
-  if(next&&state.editorTab==='manuscript') next.disabled=false;
+
+  enhanceEditorialWorkspace();
 }
 function syncEditorCanvas() {
   const field=document.querySelector('#work-form [name="body"]'); if(field) field.value=editorPagesToBody();
@@ -2382,6 +2383,109 @@ async function saveWorkForm(formElement, submitter = null, options = {}) {
 }
 
 
+
+
+function enhanceEditorialWorkspace() {
+  const commandbar = document.querySelector('.editor-commandbar');
+  const canvas = document.querySelector('#plume-editor-canvas');
+  if (!commandbar || !canvas) return;
+  let tools = document.querySelector('#plume-editor-smart-tools');
+  if (!tools) {
+    tools = document.createElement('section');
+    tools.id = 'plume-editor-smart-tools';
+    tools.className = 'plume-editor-smart-tools';
+    tools.setAttribute('aria-label', 'Outils avancés de mise en page');
+    tools.innerHTML = '<div class="plume-smart-tools-heading"><span class="eyebrow">MISE EN PAGE</span><span class="plume-smart-hint">Des outils rapides pour composer votre page</span></div><div class="plume-smart-tools-row"><label class="plume-template-picker">Modèle de bloc<select data-editor-template aria-label="Insérer un modèle de mise en page"><option value="">Choisir un modèle…</option><option value="title">Titre de section</option><option value="chapter">Ouverture de chapitre</option><option value="quote">Citation mise en valeur</option><option value="two-columns">Deux colonnes</option><option value="callout">Encadré de note</option></select></label><button type="button" data-editor-add-page class="plume-smart-button">＋ Page</button><button type="button" data-editor-duplicate-page class="plume-smart-button">▣ Dupliquer la page</button><button type="button" data-editor-grid aria-pressed="false" class="plume-smart-button">▦ Grille</button><span class="plume-smart-shortcuts">Raccourcis : Ctrl/⌘ Z · Ctrl/⌘ S · Suppr</span></div>';
+    commandbar.insertAdjacentElement('afterend', tools);
+  }
+  canvas.classList.toggle('plume-grid-visible', tools.querySelector('[data-editor-grid]')?.getAttribute('aria-pressed') === 'true');
+  const status = document.querySelector('#editor-save-label');
+  if (status && !status.dataset.statusEnhanced) {
+    status.dataset.statusEnhanced = '1';
+    const form = document.querySelector('#work-form');
+    form?.addEventListener('input', () => {
+      status.textContent = 'Modifications non enregistrées';
+      status.closest('.editor-save-state')?.classList.add('is-dirty');
+    });
+  }
+}
+function makeEditorialBlock(type, values = {}) {
+  return { id: 'block-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7), type: 'text', x: 9, y: 10, w: 82, h: 18, text: '', color: '#26252e', size: 24, font: 'Georgia', editorialFont: false, editorialSize: false, editorialLineHeight: false, ...values };
+}
+function insertEditorialTemplate(template) {
+  const page = state.editorPages[state.editorPageIndex];
+  if (!page) return;
+  const existing = page.blocks || (page.blocks = []);
+  const y = Math.min(82, 9 + existing.length * 5);
+  const templates = {
+    title: [makeEditorialBlock('text', { text: 'Titre de section', x: 9, y, w: 82, h: 12, size: 30, bold: true, color: '#493b72' })],
+    chapter: [makeEditorialBlock('text', { text: 'CHAPITRE I', x: 9, y, w: 82, h: 8, size: 12, bold: true, color: '#80639e' }), makeEditorialBlock('text', { text: 'Le commencement', x: 9, y: y + 9, w: 82, h: 17, size: 28, bold: true }), makeEditorialBlock('text', { text: 'Commencez votre texte ici…', x: 9, y: y + 28, w: 82, h: 18, size: 16 })],
+    quote: [makeEditorialBlock('shape', { shape: 'quote', label: '« Votre citation ici »', x: 12, y, w: 76, h: 23, size: 19, italic: true, color: '#493b72', fill: '#f0eaf7', radius: 12 })],
+    'two-columns': [makeEditorialBlock('text', { text: 'Colonne gauche…', x: 7, y, w: 40, h: 38, size: 15 }), makeEditorialBlock('text', { text: 'Colonne droite…', x: 53, y, w: 40, h: 38, size: 15 })],
+    callout: [makeEditorialBlock('shape', { shape: 'round', label: 'À retenir : ajoutez votre note ici.', x: 10, y, w: 80, h: 22, size: 16, bold: true, color: '#365314', fill: '#ecfccb', radius: 12 })]
+  };
+  const blocks = templates[template];
+  if (!blocks) return;
+  existing.push(...blocks);
+  state.editorSelectedBlock = blocks[0].id;
+  updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory();
+  const selector = document.querySelector('[data-editor-template]');
+  if (selector) selector.value = '';
+}
+app.addEventListener('change', (event) => {
+  const picker = event.target.closest('[data-editor-template]');
+  if (picker?.value) insertEditorialTemplate(picker.value);
+});
+app.addEventListener('click', (event) => {
+  const addPage = event.target.closest('[data-editor-add-page]');
+  const duplicatePage = event.target.closest('[data-editor-duplicate-page]');
+  const gridButton = event.target.closest('[data-editor-grid]');
+  if (gridButton) {
+    const enabled = gridButton.getAttribute('aria-pressed') !== 'true';
+    gridButton.setAttribute('aria-pressed', String(enabled));
+    document.querySelector('#plume-editor-canvas')?.classList.toggle('plume-grid-visible', enabled);
+    return;
+  }
+  if (addPage || duplicatePage) {
+    if (!Array.isArray(state.editorPages)) state.editorPages = [];
+    if (duplicatePage) {
+      const current = state.editorPages[state.editorPageIndex] || { blocks: [] };
+      state.editorPages.splice(state.editorPageIndex + 1, 0, JSON.parse(JSON.stringify(current)));
+    } else {
+      state.editorPages.splice(state.editorPageIndex + 1, 0, { background: '#ffffff', blocks: [] });
+    }
+    state.editorPageIndex += 1;
+    state.editorSelectedBlock = null;
+    updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory();
+    const canvas = document.querySelector('#plume-editor-canvas');
+    if (canvas) canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (!document.querySelector('.text-editor-shell') || event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+  const mod = event.ctrlKey || event.metaKey;
+  if (mod && event.key.toLowerCase() === 'z') {
+    event.preventDefault(); travelEditorHistory(event.shiftKey ? 1 : -1); return;
+  }
+  if (mod && event.key.toLowerCase() === 'y') {
+    event.preventDefault(); travelEditorHistory(1); return;
+  }
+  if (mod && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    const form = document.querySelector('#work-form');
+    if (form) form.requestSubmit(form.querySelector('[name="intent"][value="draft"]') || undefined);
+    return;
+  }
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    const selected = state.editorSelectedBlock;
+    if (!selected) return;
+    const page = state.editorPages[state.editorPageIndex];
+    if (!page) return;
+    page.blocks = (page.blocks || []).filter((block) => block.id !== selected);
+    state.editorSelectedBlock = null;
+    updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory();
+  }
+});
 
 // Affiche immédiatement l’application : l’attente de la session Supabase ne doit pas laisser l’écran de démarrage bloqué.
 render();
