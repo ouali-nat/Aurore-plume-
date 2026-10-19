@@ -1282,12 +1282,15 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   position: absolute;
   z-index: 1000;
   top: 18px;
-  right: -8px;
+  right: 4px;
   display: grid;
   gap: 9px;
   box-sizing: border-box;
   width: min(236px, calc(100vw - 32px));
   max-width: calc(100vw - 32px);
+  max-height: min(240px, calc(100dvh - 24px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
   border: 1px solid #dfd3e8;
   border-radius: 14px;
@@ -1300,6 +1303,8 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   -webkit-user-select: none;
 }
 .plume-block-actions-menu[hidden] { display: none !important; }
+.plume-block-actions-menu.opens-up { top: auto; bottom: 18px; }
+.plume-block-actions-menu.opens-right { right: auto; left: 0; }
 .plume-block-actions-menu > strong { font-size: 12px; font-weight: 800; }
 .plume-block-rotation-label {
   display: flex;
@@ -1368,5 +1373,7 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
     min-height: 34px;
     font-size: 22px;
   }
-  .plume-block-actions-menu { right: -7px; width: min(236px, calc(100vw - 24px)); }
+  .plume-block-actions-menu { right: 4px; width: min(236px, calc(100vw - 24px)); max-height: min(240px, calc(100dvh - 24px)); }
+  .plume-block-actions-menu.opens-up { top: auto; bottom: 18px; }
+  .plume-block-actions-menu.opens-right { right: auto; left: 0; }
 }
