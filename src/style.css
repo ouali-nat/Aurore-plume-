@@ -1820,3 +1820,10 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
  .plume-elements-page .plume-elements-grid button .shape-preview{width:48px;flex-basis:48px;height:45px}
 }
 @media(max-width:390px){.plume-elements-page .plume-elements-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.plume-elements-page .plume-elements-grid button{min-height:126px;padding:9px}.plume-elements-page .element-card-copy b{font-size:10px}}
+
+
+/* Accueil épuré : conserver uniquement une action d’écriture discrète. */
+.discover-intro-minimal{padding-top:18px;padding-bottom:18px;border-bottom:0;display:flex;justify-content:flex-end}
+.discover-write-button{padding:8px 12px;min-height:0;gap:7px;border-radius:10px;font-size:11px;font-weight:600;box-shadow:none;color:var(--muted);border-color:var(--line);background:transparent}
+.discover-write-button:hover{background:#eee8f3;color:var(--purple);transform:none}
+@media(max-width:790px){.discover-intro-minimal{padding-top:12px;padding-bottom:12px}.discover-intro-minimal .discover-write-button{width:auto;align-self:flex-end}}
