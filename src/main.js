@@ -1374,12 +1374,12 @@ async function buildWorkPdfBlob(work) {
           // les ré-encapsuler faisait apparaître un rendu en double à l'export.
           for(const node of latexNodes){
             let source=String(node.textContent||'').trim();
-            source=source.replace(/^\\\\\[\\s*([\\s\\S]*?)\\s*\\\\\]$/,'$1')
-              .replace(/^\\\\\(\\s*([\\s\\S]*?)\\s*\\\\\)$/,'$1')
-              .replace(/^\\$\\$?\\s*([\\s\\S]*?)\\s*\\$\\$?$/,'$1');
+            source=source.replace(/^\\\[\s*([\s\S]*?)\s*\\\]$/,'$1')
+              .replace(/^\\\(\s*([\s\S]*?)\s*\\\)$/,'$1')
+              .replace(/^\$\$?\s*([\s\S]*?)\s*\$\$?$/,'$1');
             try{math.typesetClear?.([node]);}catch{}
             node.replaceChildren();
-            node.textContent='\\\\['+source+'\\\\]';
+            node.textContent='\\['+source+'\\]';
           }
           await math.typesetPromise(latexNodes);
           if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');
