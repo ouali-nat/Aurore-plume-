@@ -407,6 +407,11 @@ function activateEditorTab(tab) {
   document.querySelectorAll('.editor-tab-panel').forEach((panel) => {
     panel.hidden = panel.id !== 'editor-panel-' + state.editorTab;
   });
+  if (state.editorTab === 'manuscript') {
+    const paper = document.querySelector('#plume-editor-canvas');
+    const measuredWidth = Math.round(paper?.getBoundingClientRect().width || 0);
+    if (measuredWidth >= 120 && measuredWidth <= 2400) state.editorRenderWidth = measuredWidth;
+  }
   const pageOrder = ['cover', 'manuscript', 'layout', 'preview'];
   const pageIndex = pageOrder.indexOf(state.editorTab);
   const pageCount = document.getElementById('editor-page-count');
