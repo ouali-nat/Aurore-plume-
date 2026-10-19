@@ -325,7 +325,7 @@ function addEditorBlock(type, shape='round') {
   if(!state.editorPages.length) state.editorPages=[{blocks:[]}];
   const page=state.editorPages[state.editorPageIndex]||(state.editorPages[state.editorPageIndex]={blocks:[]});
   const id='block-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
-  const block=type==='shape'?{id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}:{id,type:'text',x:10,y:12+(page.blocks.length%5)*7,w:78,h:24,text:'',font:'Georgia',size:18,color:'#302a35',align:'left',bold:false,italic:false,editorialFont:true,editorialSize:true,editorialLineHeight:true};
+  const block=type==='shape'?{id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}:{id,type:'text',latex:type==='latex',x:10,y:12+(page.blocks.length%5)*7,w:78,h:24,text:type==='latex'?'\\frac{a}{b}':'',font:'Georgia',size:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
   page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
   if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
 }
@@ -537,7 +537,7 @@ function renderTextEditor() {
       </div>
       <div class="editor-commandbar" aria-label="Outils de l’atelier">
         <div class="editor-command-group">
-          <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button>
+          <button type="button" class="editor-command" data-editor-tool="text"><span aria-hidden="true">T</span><b>Zone de texte</b></button><button type="button" class="editor-command" data-editor-tool="latex"><span aria-hidden="true">∑</span><b>LaTeX</b></button>
           <button type="button" class="editor-command" data-editor-tool="elements"><span aria-hidden="true">◇</span><b>Éléments</b></button>
           <button type="button" class="editor-command" data-editor-tool="images"><span aria-hidden="true">▧</span><b>Images</b></button>
           <button type="button" class="editor-command" data-editor-tool="page"><span aria-hidden="true">▤</span><b>Page</b></button><button type="button" class="editor-command editor-cover-shortcut" data-editor-tab="cover"><span aria-hidden="true">▧</span><b>Couverture</b></button>
@@ -570,7 +570,7 @@ function renderTextEditor() {
             <div class="editor-paper-ruler"><span>MANUSCRIT · PAGE DE TRAVAIL</span><span>MODIFIABLE</span></div>
             <div class="editor-paper-sheet">
               <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
-              <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable">${editorCanvasMarkup()}</div><div class="plume-page-thumbnails" id="plume-page-thumbnails" aria-label="Miniatures des pages"></div><div class="plume-color-popover" id="plume-color-popover" hidden><strong id="plume-palette-title" hidden>Couleur de l’élément</strong><div class="plume-palette-scroll" aria-label="Palette de couleurs" hidden><button type="button" class="plume-palette-close" data-close-editor-palette aria-label="Fermer la palette">× Fermer</button></div><input type="color" id="plume-custom-color" value="#000000" aria-label="Couleur personnalisée" hidden></div></div><section class="plume-elements-page" id="plume-elements-page" hidden aria-label="Bibliothèque d’éléments">
+              <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable" style="background-color:${e((state.editorPages[state.editorPageIndex]||{}).background||"#ffffff")}">${editorCanvasMarkup()}</div><div class="plume-page-thumbnails" id="plume-page-thumbnails" aria-label="Miniatures des pages"></div><div class="plume-color-popover" id="plume-color-popover" hidden><strong id="plume-palette-title" hidden>Couleur de l’élément</strong><div class="plume-palette-scroll" aria-label="Palette de couleurs" hidden><button type="button" class="plume-palette-close" data-close-editor-palette aria-label="Fermer la palette">× Fermer</button></div><input type="color" id="plume-custom-color" value="#000000" aria-label="Couleur personnalisée" hidden></div></div><section class="plume-elements-page" id="plume-elements-page" hidden aria-label="Bibliothèque d’éléments">
   <header class="plume-elements-page-top">
     <div><span class="eyebrow">ATELIER GRAPHIQUE</span><h2>Bibliothèque d’éléments</h2><p>Choisissez un élément pour l’ajouter à votre page, puis personnalisez sa taille, sa couleur et ses contours.</p></div>
     <button type="button" class="plume-elements-back" data-elements-close>← Retour à la page</button>
@@ -597,14 +597,14 @@ function renderTextEditor() {
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
-              <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}>
+              <img id="editor-cover-image" alt="Aperçu de la couverture importée" ${coverKey ? '' : 'hidden'}><label class="cover-upload-button editor-cover-select-image">▧ <span>Choisir une nouvelle image de couverture</span><input id="editor-cover-image-file" type="file" accept="image/*"></label>
               <div class="editor-cover-overlay"><span id="editor-cover-genre">${e(work.genre || 'Texte libre')}</span><h3>${e(state.user?.user_metadata?.display_name || state.user?.email?.split('@')[0] || 'Auteur')}</h3></div>
             </div>
             <div class="cover-editor-controls"><label class="cover-upload-button">▧ <span>Importer une couverture</span><input id="editor-cover-file" name="cover_file" type="file" accept="image/*"></label></div>
           </div>
         </section>
         <section class="editor-tab-panel layout-panel" id="editor-panel-layout" role="tabpanel" ${state.editorTab === 'layout' ? '' : 'hidden'}>
-          <div class="editor-panel-intro"><div><span class="eyebrow">PRÉPARATION DU LIVRE</span><h2>Une page qui vous ressemble.</h2><p>Ces réglages sont enregistrés avec votre œuvre et utilisés dans l’aperçu avant impression PDF.</p></div></div>
+          <div class="editor-panel-intro"><div><span class="eyebrow">PRÉPARATION DU LIVRE</span><h2>Une page qui vous ressemble.</h2><p>Ces réglages sont enregistrés avec votre œuvre et utilisés dans l’aperçu avant impression PDF.</p></div></div><section class="editor-page-color-card"><h3>Couleur de la page sélectionnée</h3><p>Sélectionne une page dans les miniatures, puis choisis sa couleur de fond.</p><div class="editor-page-color-swatches"><button type="button" data-page-color="#ffffff" style="--page-swatch:#ffffff" aria-label="Blanc"></button><button type="button" data-page-color="#fff3df" style="--page-swatch:#fff3df" aria-label="Crème"></button><button type="button" data-page-color="#f7e8ee" style="--page-swatch:#f7e8ee" aria-label="Rose"></button><button type="button" data-page-color="#e9f2ff" style="--page-swatch:#e9f2ff" aria-label="Bleu"></button><button type="button" data-page-color="#e9f5e9" style="--page-swatch:#e9f5e9" aria-label="Vert"></button><button type="button" data-page-color="#eee7f7" style="--page-swatch:#eee7f7" aria-label="Lavande"></button><button type="button" data-page-color="#272433" style="--page-swatch:#272433" aria-label="Charbon"></button><label class="editor-page-custom-color">Personnalisée <input type="color" id="editor-page-color-custom" value="#ffffff" aria-label="Couleur personnalisée"></label></div></section>
           <div class="editor-layout-grid">
             <label>Format de page<select name="page_format"><option value="A5" ${settings.page_format === 'A5' ? 'selected' : ''}>A5 — livre</option><option value="A4" ${settings.page_format === 'A4' ? 'selected' : ''}>A4 — document</option><option value="Letter" ${settings.page_format === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
             <label>Police du corps<select name="body_font"><option value="Georgia" ${settings.body_font === 'Georgia' ? 'selected' : ''}>Georgia — littéraire</option><option value="Arial" ${settings.body_font === 'Arial' ? 'selected' : ''}>Arial — moderne</option><option value="Times New Roman" ${settings.body_font === 'Times New Roman' ? 'selected' : ''}>Times New Roman — classique</option><option value="system-ui" ${settings.body_font === 'system-ui' ? 'selected' : ''}>Sans sérif — système</option></select></label>
@@ -1342,7 +1342,7 @@ app.addEventListener('click', async (event) => {
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
-    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');addEditorBlock('latex');const b=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((x)=>x.id===state.editorSelectedBlock);const input=window.prompt('Saisis le code LaTeX à placer dans le bloc :',b?.text||'\\frac{a}{b}');if(input!==null&&b){b.text=input;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}}
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
@@ -1350,6 +1350,7 @@ app.addEventListener('click', async (event) => {
   }
   if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=true;return;}
   const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){const library=document.querySelector('#plume-elements-page');if(library)library.hidden=true;addEditorBlock('shape',shapeButton.dataset.addShape);return;}
+  const pageColorButton=event.target.closest('[data-page-color]');if(pageColorButton){const p=state.editorPages[state.editorPageIndex];if(p){p.background=pageColorButton.dataset.pageColor;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;const custom=document.querySelector('#editor-page-color-custom');if(custom)custom.value=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   const cornerDelete = event.target.closest('[data-delete-block]');
   if (cornerDelete) {
     const page = state.editorPages[state.editorPageIndex], id = cornerDelete.dataset.deleteBlock;
@@ -1788,6 +1789,8 @@ app.addEventListener('cancel', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  if(event.target.id==='editor-page-color-custom'){const p=state.editorPages[state.editorPageIndex];if(p){p.background=event.target.value;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
+  if(event.target.id==='editor-cover-image-file'){const f=event.target.files?.[0];if(f){const input=document.querySelector('#work-form [name="cover_file"]');if(input){const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;}const img=document.querySelector('#editor-cover-image');if(img){img.src=URL.createObjectURL(f);img.hidden=false;}toast('Image choisie comme couverture. Enregistre l’œuvre pour conserver ce choix.');}return;}
   const styleControl=event.target.closest('[data-text-style]');
   if(styleControl && styleControl.tagName!=='BUTTON'){const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((b)=>b.id===state.editorSelectedBlock);if(block&&block.type==='text'){const kind=styleControl.dataset.textStyle;if(kind==='font'){block.font=styleControl.value;block.editorialFont=false;}else if(kind==='size'){block.size=Number(styleControl.value);block.editorialSize=false;}else if(kind==='color')block.color=styleControl.value;updateEditorCanvas();syncEditorCanvas();}}
   const imageInput=event.target;
