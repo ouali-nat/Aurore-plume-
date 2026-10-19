@@ -107,7 +107,7 @@ function renderDiscover() {
   const worksMarkup = works.length
     ? `<div class="work-grid">${works.slice(0, 9).map((work) => workCard(work)).join('')}</div>`
     : state.publicWorksError
-      ? `<div class="empty-state"><span>!</span><h3>La bibliothèque est momentanément indisponible.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
+      ? `<div class="empty-state"><span>!</span><h3>Les œuvres sont momentanément indisponibles.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
       : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Écrire la première œuvre <span aria-hidden="true">↗</span></button></div>`;
   shell(`
     <section class="discover-intro container discover-intro-minimal">
@@ -116,7 +116,7 @@ function renderDiscover() {
     <section class="section container home-library" id="library-section">
       <div class="section-heading">
         <div><div class="eyebrow">À LIRE · À DÉCOUVRIR</div><h2>Les œuvres publiées</h2><p>Retrouvez ici les œuvres réellement rendues publiques, des plus récentes aux plus anciennes.</p></div>
-        <button class="text-link" data-view="library">Toute la bibliothèque <span>↗</span></button>
+        <button class="text-link" data-view="library">Toutes les œuvres <span>↗</span></button>
       </div>
       ${worksMarkup}
     </section>
@@ -128,7 +128,7 @@ function renderLibrary() {
   const filtered = works.filter((work) => [work.title, work.subtitle, work.summary, work.genre, authorOf(work)?.display_name].join(' ').toLowerCase().includes(state.search.toLowerCase()));
   let listing = '';
   if (!works.length && state.publicWorksError) {
-    listing = '<div class="empty-state"><span>!</span><h3>La bibliothèque est momentanément indisponible.</h3><p>Actualisez la page dans un instant. Vos brouillons ne sont pas affectés.</p></div>';
+    listing = '<div class="empty-state"><span>!</span><h3>Les œuvres sont momentanément indisponibles.</h3><p>Actualisez la page dans un instant. Vos brouillons ne sont pas affectés.</p></div>';
   } else if (!works.length) {
     listing = '<div class="empty-state"><span>✳</span><h3>Aucune œuvre publique pour le moment.</h3><p>Les œuvres apparaîtront ici dès qu’un auteur les publiera en mode public. Les brouillons privés restent dans leur atelier.</p></div>';
   } else if (!filtered.length) {
@@ -138,9 +138,8 @@ function renderLibrary() {
   }
   shell(`
     <section class="page-hero container">
-      <div class="eyebrow"><span class="eyebrow-dot"></span> LA BIBLIOTHÈQUE</div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span> À DÉCOUVRIR</div>
       <h1>Des pages à <em>rencontrer.</em></h1>
-      <p>Découvrez uniquement les œuvres réellement publiées en mode public par leurs auteur·rices.</p>
       <label class="search-field"><span>⌕</span><input id="library-search" type="search" placeholder="Rechercher un titre, un genre, une idée…" value="${e(state.search)}" autocomplete="off"><kbd>/</kbd></label>
     </section>
     <section class="section container library-results">
@@ -847,7 +846,7 @@ function renderAtelier() {
     <section class="container workspace-grid workspace-grid-single">
       <aside class="my-works-panel">
         <div class="panel-top"><div><span class="eyebrow">MON CARNET</span><h2>Brouillons privés <span class="count-pill">${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).length}</span></h2></div><button class="button button-primary" data-action="new-text">Nouveau texte +</button></div>
-        ${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).length ? `<div class="my-work-list">${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).map((work) => { const [label, cls] = statusLabel(work); return `<article class="my-work-item draft-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><p class="draft-card-meta">${e(work.genre || 'Texte libre')} · ${e(formatDate(work.updated_at || work.created_at))}</p><span class="status-pill ${cls}">${e(label)}</span></div><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Aucun brouillon privé.</h3><p>Créez un texte ou continuez une œuvre déjà commencée.</p></div>'}
+        ${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).length ? `<div class="work-grid workspace-draft-grid">${state.myWorks.filter((work)=>work.publication_status!=='published'||!work.is_public).map((work) => { const [label, cls] = statusLabel(work); return `<article class="work-card workspace-work-card draft-work-card"><div class="work-cover ${cover}"><span class="cover-mark">a.</span><span class="cover-category">${e(work.genre || 'Texte libre')}</span><span class="cover-lines" aria-hidden="true"></span></div><div class="work-card-body"><div class="card-meta"><span>${e(work.genre || 'Texte libre')}</span><span>${e(formatDate(work.updated_at || work.created_at))}</span></div><h3>${e(work.title)}</h3><p class="work-summary">${e(work.summary || 'Aucun résumé pour le moment.')}</p><div class="work-card-foot draft-work-card-foot"><span class="status-pill ${cls}">${e(label)}</span><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}" title="Éditer cette œuvre" aria-label="Éditer ${e(work.title)}">Éditer ↗</button></div></div></article>`; }).join('')}</div>` : '<div class="empty-state empty-works"><span>✎</span><h3>Aucun brouillon privé.</h3><p>Créez un texte ou continuez une œuvre déjà commencée.</p></div>'}
         <div class="private-note"><span>♧</span><p><strong>Votre espace est privé.</strong><br>Les brouillons ne sont visibles que par vous.</p></div>
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
