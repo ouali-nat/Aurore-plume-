@@ -110,15 +110,8 @@ function renderDiscover() {
       ? `<div class="empty-state"><span>!</span><h3>La bibliothèque est momentanément indisponible.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
       : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Écrire la première œuvre <span aria-hidden="true">↗</span></button></div>`;
   shell(`
-    <section class="discover-intro container">
-      <div class="eyebrow"><span class="eyebrow-dot"></span> AURORE PLUME · BIBLIOTHÈQUE VIVANTE</div>
-      <div class="discover-intro-row">
-        <div>
-          <h1>Les œuvres trouvent <em>leur place.</em></h1>
-          <p>Poèmes, carnets, récits et idées à découvrir, publiés directement par leurs auteur·rices.</p>
-        </div>
-        <button class="button button-primary button-large" data-view="atelier">Écrire une œuvre <span aria-hidden="true">↗</span></button>
-      </div>
+    <section class="discover-intro container discover-intro-minimal">
+      <button class="button button-quiet discover-write-button" data-view="atelier">Écrire une œuvre <span aria-hidden="true">↗</span></button>
     </section>
     <section class="section container home-library" id="library-section">
       <div class="section-heading">
