@@ -160,13 +160,13 @@ export async function openArchivesPdfReader(blob, options = {}) {
     documentPdf=await pdfjs.getDocument({data:bytes,stopAtErrors:false}).promise;
     if(!documentPdf.numPages)throw new Error('Aucune page lisible.');
     for(let n=1;n<=documentPdf.numPages;n++){const wrap=document.createElement('div');wrap.className='pdf-reader-page-wrap';wrap.dataset.page=String(n);const canvas=document.createElement('canvas');canvas.className='pdf-reader-page';canvas.dataset.page=String(n);wrap.appendChild(canvas);pages.appendChild(wrap);}
-    overlay.querySelector('#pdfViewerLoading').hidden=true;overlay.querySelector('#pdfViewerProgress').classList.remove('is-visible');overlay.querySelector('#pdfViewerSphere').classList.add('is-visible');progress(100,'Document prêt');
+    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.display='none';const progressEl=overlay.querySelector('#pdfViewerProgress');progressEl.classList.remove('is-visible');progressEl.hidden=true;progressEl.style.display='none';overlay.querySelector('#pdfViewerSphere').classList.add('is-visible');progress(100,'Document prêt');
     if('IntersectionObserver'in window){observer=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting)renderPage(Number(entry.target.dataset.page)).catch(()=>{});}),{root:zone,rootMargin:'650px 0px'});pages.querySelectorAll('.pdf-reader-page-wrap').forEach((el)=>observer.observe(el));}
     await renderPage(1);updatePage(1,false);await renderVisible();
     if(resizeHandler)window.removeEventListener('resize',resizeHandler);resizeHandler=()=>renderVisible(true);window.addEventListener('resize',resizeHandler,{passive:true});
   } catch(error) {
     console.error('Lecteur PDF Aurore Plume',error);
-    overlay.querySelector('#pdfViewerLoading').hidden=true;const box=overlay.querySelector('#pdfViewerError');box.hidden=false;box.textContent='Impossible d’ouvrir ce PDF. Vérifie le fichier puis réessaie.';
+    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.display='none';const box=overlay.querySelector('#pdfViewerError');box.hidden=false;box.style.display='block';box.textContent='Impossible d’ouvrir ce PDF. Vérifie le fichier puis réessaie.';
     progress(0,'Ouverture impossible');
   }
 }
