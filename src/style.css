@@ -540,13 +540,22 @@ html:has(.editor-only-shell),body:has(.editor-only-shell){height:auto;min-height
 @media(max-width:760px){.plume-rounding-toolbar .plume-rounding-control{position:fixed;left:12px;right:12px;top:auto;bottom:calc(82px + env(safe-area-inset-bottom));width:auto;max-height:40vh;overflow:auto;}}
 
 /* Le réglage millimétrique peut se détacher et flotter partout dans l’écran. */
-.plume-nudge-toggle{font-weight:800!important;background:#eee7f5!important;border-color:#d9cbe7!important;}
-.plume-nudge-drag-handle{display:inline-flex;align-items:center;justify-content:center;width:30px;min-width:30px!important;padding:0!important;font-size:17px!important;cursor:grab;touch-action:none;user-select:none;}
+.plume-nudge{align-items:stretch;gap:7px;}
+.plume-nudge-head{display:flex;align-items:center;gap:8px;flex:1 0 100%;min-width:0;padding-bottom:5px;border-bottom:1px solid #e7dfed;}
+.plume-nudge-title{display:block;flex:1;min-width:0;color:#3f3150;font-size:13px;line-height:1.3;letter-spacing:.1px;white-space:nowrap;}
+.plume-nudge-controls{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;}
+.plume-nudge-toggle{min-height:32px;padding:5px 10px!important;font-size:11px!important;font-weight:800!important;white-space:nowrap;background:#eee7f5!important;border-color:#d9cbe7!important;}
+.plume-nudge-drag-handle{display:none;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px!important;padding:0!important;font-size:19px!important;cursor:grab;touch-action:none;user-select:none;border-radius:9px!important;}
 .plume-nudge-drag-handle:active{cursor:grabbing;}
-.plume-nudge.is-floating{position:fixed!important;z-index:2000;left:8px;top:80px;box-sizing:border-box;width:min(340px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;overscroll-behavior:contain;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px;border:1px solid #d7cbe2;border-radius:14px;background:#fffefa;box-shadow:0 16px 42px #30213b38;}
-.plume-nudge.is-floating .plume-nudge-toggle{flex:1 1 130px;}
-.plume-nudge.is-floating .plume-nudge-drag-handle{flex:0 0 30px;background:#f0e8f7!important;}
-.plume-nudge.is-floating select{min-width:62px;}
+.plume-nudge.is-floating{position:fixed!important;z-index:2000;left:8px;top:80px;box-sizing:border-box;width:min(340px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px;border:1px solid #d7cbe2;border-radius:14px;background:#fffefa;box-shadow:0 16px 42px #30213b38;}
+.plume-nudge.is-floating .plume-nudge-head{flex:0 0 auto;width:100%;}
+.plume-nudge.is-floating .plume-nudge-drag-handle{display:inline-flex;flex:0 0 34px;background:#f0e8f7!important;}
+.plume-nudge.is-floating .plume-nudge-controls{display:flex;justify-content:space-between;flex-wrap:nowrap;gap:6px;}
+.plume-nudge.is-floating .plume-nudge-controls button{flex:0 0 38px;width:38px;min-width:38px;height:38px;}
+.plume-nudge.is-floating select{min-width:68px;max-width:84px;}
+.plume-nudge.is-floating .plume-nudge-toggle{flex:0 0 auto;}
+.plume-elements-page-top{position:sticky;top:0;z-index:2;background:#f7f4f9;padding-top:8px;}
+@media(max-width:420px){.plume-nudge.is-floating{width:calc(100vw - 16px);}.plume-nudge.is-floating .plume-nudge-controls{gap:4px}.plume-nudge.is-floating .plume-nudge-controls button{flex-basis:34px;width:34px;min-width:34px;height:36px}.plume-nudge.is-floating select{min-width:58px;width:64px;font-size:11px}.plume-nudge-title{font-size:13px}}
 
 /* Bibliothèque d’éléments : écran dédié, utilisable aussi sur téléphone. */
 .plume-elements-page{position:fixed;inset:0;z-index:1800;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:clamp(18px,4vw,42px);background:#f7f4f9;color:#302a35;}
