@@ -49,7 +49,7 @@ function togglePanel(open){
 function initThemeDock(){
  if(document.getElementById('aurore-plume-theme-dock'))return;
  dock=document.createElement('div');dock.id='aurore-plume-theme-dock';
- dock.innerHTML=\`
+ dock.innerHTML=`
  <button type="button" id="plume-theme-trigger" class="plume-theme-trigger" aria-expanded="false" aria-controls="plume-theme-panel" title="Thème et couleurs du site">
  <span class="plume-theme-trigger-icon" aria-hidden="true">◐</span><span>Apparence</span><span class="plume-theme-trigger-dot" aria-hidden="true"></span></button>
  <section id="plume-theme-panel" class="plume-theme-panel" aria-label="Apparence du site" hidden>
@@ -62,7 +62,7 @@ function initThemeDock(){
  <section class="plume-theme-color-section" aria-label="Palette de couleurs du site">
  <div class="plume-theme-section-heading"><span class="plume-theme-section-label">Couleur du site</span><strong id="plume-theme-color-current">Violet</strong></div>
  <div class="plume-theme-palette"></div>
- <p class="plume-theme-note">Les accents, commandes et états actifs changent de couleur. Le fond personnalisé de tes pages reste intact.</p></section></section>\`;
+ <p class="plume-theme-note">Les accents, commandes et états actifs changent de couleur. Le fond personnalisé de tes pages reste intact.</p></section></section>`;
  dock.querySelector('.plume-theme-palette').innerHTML=PALETTES.map(p=>'<button type="button" class="plume-theme-swatch" data-color-choice="'+p.id+'" title="'+p.name+'" aria-label="Couleur '+p.name+'" aria-pressed="false" style="--swatch:'+p.color+'"><span aria-hidden="true"></span></button>').join('');
  document.body.appendChild(dock);
  trigger=dock.querySelector('#plume-theme-trigger');panel=dock.querySelector('#plume-theme-panel');
