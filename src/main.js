@@ -17,7 +17,7 @@ const app = document.querySelector('#app');
 const modalRoot = document.querySelector('#modal-root');
 const toastRoot = document.querySelector('#toast-root');
 
-const state = { user: null, view: 'discover', publicWorks: [], publicWorksError: !supabase, myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+const state = { user: null, view: 'discover', publicWorks: [], publicWorksError: !supabase, myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, showPublishedWorks: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
 
 // Limite par formule pour préserver la lisibilité et éviter des compositions excessives.
 const MAX_LATEX_SOURCE_LENGTH = 3000;
@@ -45,7 +45,7 @@ function shell(content) {
   }
   const nav = [
     ['discover', 'Découvrir'],
-    ['library', 'La bibliothèque'],
+    ['library', 'Accueil'],
     ['atelier', 'Mon atelier']
   ];
   app.innerHTML = `
@@ -852,11 +852,15 @@ function renderAtelier() {
         ${supabase ? '' : '<div class="notice notice-error">La configuration de Supabase manque. Ajoutez les variables Vercel indiquées dans le README.</div>'}
       </aside>
       <aside class="my-works-panel plume-published-panel">
-        <div class="panel-top"><div><span class="eyebrow">VOTRE BIBLIOTHÈQUE</span><h2>Mes publications <span class="count-pill">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).length}</span></h2></div></div>
-        ${state.myWorks.some((work)=>work.publication_status==='published'&&work.is_public) ? `<div class="my-work-list">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).map((work)=>`<article class="my-work-item published-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary||'Votre texte publié sur Aurore Plume.')}</p><p class="draft-card-meta">${e(work.genre||'Texte libre')} · Publié le ${e(formatDate(work.published_at||work.updated_at))}</p><span class="status-pill status-published">Publié · public</span></div><button class="button button-primary" data-read-id="${e(work.id)}">Lire ↗</button><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}">Éditer</button></article>`).join('')}</div>` : '<div class="empty-state empty-works"><span>↗</span><h3>Aucune publication pour le moment.</h3><p>Choisissez « Publier » dans l’éditeur lorsqu’un texte est prêt.</p></div>'}
+        <div class="panel-top"><div><span class="eyebrow">VOTRE ESPACE</span><h2>Mes publications <span class="count-pill">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).length}</span></h2></div><button class="button button-quiet published-toggle" type="button" data-toggle-published aria-expanded="${state.showPublishedWorks ? 'true' : 'false'}">${state.showPublishedWorks ? 'Masquer' : 'Afficher'} ↕</button></div>
+        ${state.showPublishedWorks ? (state.myWorks.some((work)=>work.publication_status==='published'&&work.is_public) ? `<div class="my-work-list plume-published-grid">${state.myWorks.filter((work)=>work.publication_status==='published'&&work.is_public).map((work)=>`<article class="my-work-item published-work-item"><div class="my-work-symbol">Aa</div><div class="my-work-copy"><h3>${e(work.title)}</h3><p class="draft-card-summary">${e(work.summary||'Votre texte publié sur Aurore Plume.')}</p><p class="draft-card-meta">${e(work.genre||'Texte libre')} · Publié le ${e(formatDate(work.published_at||work.updated_at))}</p><span class="status-pill status-published">Publié · public</span><div class="published-card-actions"><button class="button button-primary" data-read-id="${e(work.id)}">Lire ↗</button><button class="button button-quiet text-edit-button" data-edit-id="${e(work.id)}">Éditer</button></div></div></article>`).join('')}</div>` : '<div class="empty-state empty-works"><span>↗</span><h3>Aucune publication pour le moment.</h3><p>Choisissez « Publier » dans l’éditeur lorsqu’un texte est prêt.</p></div>') : '<p class="published-collapsed-note">Vos œuvres publiées sont masquées. Appuyez sur « Afficher » pour les retrouver.</p>'}
       </aside>
     </section>
   `);
+  document.querySelector('[data-toggle-published]')?.addEventListener('click', () => {
+    state.showPublishedWorks = !state.showPublishedWorks;
+    renderAtelier();
+  });
   document.querySelector('[name="body"]')?.addEventListener('input', (event) => {
     const counter = document.querySelector('#word-count');
     if (counter) counter.textContent = words(event.target.value);
