@@ -1467,3 +1467,35 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   .plume-latex-preview { padding: 5px 8px; }
   .plume-latex-preview #plume-latex-preview-text { min-height: 20px; }
 }
+
+
+/* Atelier éditorial — modernisation progressive, en conservant le rendu de base de Claude */
+.text-editor-shell{--atelier-ink:#262433;--atelier-muted:#777487;--atelier-line:#e5e0ec;--atelier-violet:#493b72}
+.text-editor-top{position:sticky;top:0;z-index:35;backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(43,34,65,.06)}
+.editor-commandbar{align-items:center;gap:12px;border:1px solid rgba(226,220,236,.9);border-radius:20px;background:rgba(255,255,255,.92);box-shadow:0 10px 32px rgba(44,35,64,.07);padding:12px;position:sticky;top:84px;z-index:30}
+.editor-command-group{gap:6px;flex-wrap:wrap}
+.editor-command{border:1px solid transparent;border-radius:12px;min-height:44px;padding:8px 12px;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.editor-command:hover{background:#f3eef9;border-color:#e3d9f0;transform:translateY(-1px)}
+.editor-command span{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#f0eaf7;color:#493b72;font-weight:700}
+.editor-history-nav,.editor-page-nav{border:1px solid var(--atelier-line);background:#faf9fc;border-radius:13px;padding:4px;gap:4px}
+.editor-history-nav button,.editor-page-nav button{width:36px;height:36px;border-radius:9px}
+.plume-editor-smart-tools{margin:12px 0 20px;padding:15px 17px;border:1px solid #e6e0ee;border-radius:18px;background:linear-gradient(120deg,#fff 0%,#faf7ff 100%);box-shadow:0 8px 24px rgba(47,37,67,.045)}
+.plume-smart-tools-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.plume-smart-hint,.plume-smart-shortcuts{font-size:12px;color:#777487}
+.plume-smart-tools-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.plume-template-picker{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;color:#4a4260}
+.plume-template-picker select{max-width:230px;min-height:39px;border:1px solid #ddd4e9;border-radius:11px;padding:0 11px;background:#fff;color:#342b4c}
+.plume-smart-button{min-height:39px;border:1px solid #ded6e9;background:#fff;border-radius:11px;padding:8px 12px;color:#493b72;font-size:12px;font-weight:700;transition:background .18s ease,border-color .18s ease}
+.plume-smart-button:hover,.plume-smart-button[aria-pressed=true]{background:#493b72;color:#fff;border-color:#493b72}
+.plume-smart-shortcuts{margin-left:auto}
+.plume-canvas-paper{position:relative;isolation:isolate;box-shadow:0 16px 45px rgba(48,39,63,.12);border:1px solid #e6e0e9;transition:box-shadow .2s ease}
+.plume-canvas-paper.plume-grid-visible:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(to right,rgba(103,81,144,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(103,81,144,.12) 1px,transparent 1px);background-size:5% 5%;mix-blend-mode:multiply}
+.plume-canvas-block{transition:box-shadow .14s ease,border-color .14s ease}
+.plume-canvas-block.is-selected{box-shadow:0 0 0 2px #7555a5,0 8px 24px rgba(73,59,114,.16)!important}
+.plume-page-thumbnails{gap:12px;padding:16px 4px}
+.plume-page-thumb{border:1px solid #e3dce9;border-radius:13px;background:#fff;padding:9px;box-shadow:0 4px 12px rgba(43,34,65,.04);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.plume-page-thumb:hover{transform:translateY(-2px);box-shadow:0 9px 20px rgba(43,34,65,.09)}
+.plume-page-thumb.is-current{border-color:#7355a2;box-shadow:0 0 0 2px rgba(115,85,162,.14),0 8px 20px rgba(43,34,65,.07)}
+.editor-save-state.is-dirty{color:#9a5a12}
+.editor-save-state.is-dirty .save-state-dot{background:#e6a23c;box-shadow:0 0 0 4px rgba(230,162,60,.14)}
+@media(max-width:760px){.editor-commandbar{top:68px;padding:8px;border-radius:15px}.editor-command b{font-size:11px}.plume-editor-smart-tools{padding:12px}.plume-smart-tools-heading{align-items:flex-start;flex-direction:column;gap:4px}.plume-smart-tools-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.plume-template-picker{grid-column:1/-1;display:grid}.plume-template-picker select{max-width:none;width:100%}.plume-smart-shortcuts{grid-column:1/-1;margin:0}.editor-history-nav,.editor-page-nav{flex-shrink:0}}
