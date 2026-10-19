@@ -214,22 +214,24 @@
 @media(max-width:370px){.editor-exit-label{display:none}.editor-exit-button{width:38px;padding:0}}
 
 
-/* Correction ciblée — poignée Déplacer et contrôles de redimensionnement toujours au premier plan */
+/* Correction ciblée v2 — poignée extérieure, six points exacts et texte non rogné */
 .editor-only-shell .plume-canvas-block.is-selected {
   z-index: 10000 !important;
+  overflow: visible !important;
 }
 .editor-only-shell .plume-canvas-block.is-selected .plume-block-move {
   position: absolute !important;
-  top: 10px !important;
-  left: 10px !important;
+  top: -36px !important;
+  left: -36px !important;
   right: auto !important;
   bottom: auto !important;
   z-index: 10020 !important;
   display: grid !important;
-  width: 29px !important;
-  height: 29px !important;
-  min-width: 29px !important;
-  min-height: 29px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
   border-radius: 9px !important;
   font-size: 0 !important;
   color: #5c3c86 !important;
@@ -242,20 +244,23 @@
 .editor-only-shell .plume-canvas-block.is-selected .plume-block-move:active {
   cursor: grabbing !important;
 }
-.editor-only-shell .plume-block-move::before {
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move::before,
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move::after {
   content: "";
   position: absolute;
-  top: calc(50% - 7px);
-  left: calc(50% - 2px);
+  top: 8px;
   width: 3px;
   height: 3px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow:
-    -5px 0 0 currentColor, 5px 0 0 currentColor,
-    -5px 5px 0 currentColor, 5px 5px 0 currentColor,
-    -5px 10px 0 currentColor, 5px 10px 0 currentColor;
+  box-shadow: 0 5px 0 currentColor, 0 10px 0 currentColor;
   pointer-events: none;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move::before {
+  left: 8px;
+}
+.editor-only-shell .plume-canvas-block.is-selected .plume-block-move::after {
+  left: 16px;
 }
 .editor-only-shell .plume-canvas-block.is-selected .plume-block-resize {
   z-index: 10030 !important;
@@ -276,4 +281,10 @@
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
+}
+/* Les zones texte s'étendent avec leur contenu : aucun défilement/cadrage interne. */
+.editor-only-shell .plume-canvas-block.plume-canvas-text,
+.editor-only-shell .plume-canvas-block.plume-canvas-text .plume-canvas-text-content {
+  overflow: visible !important;
+  max-height: none !important;
 }
