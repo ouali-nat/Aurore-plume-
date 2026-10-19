@@ -122,7 +122,7 @@ export async function openArchivesPdfReader(blob, options = {}) {
   };
   const setScale = async (next) => { currentScale = Math.max(.25, Math.min(5, Math.round(next * 100) / 100)); overlay.querySelector('#pdfViewerZoomLevel').textContent = Math.round(currentScale * 100) + '%'; await renderVisible(true); };
   overlay.querySelector('#pdfViewerRetour').addEventListener('click', closeArchivesPdfReader);
-  overlay.querySelector('#pdfViewerMenuToggle').addEventListener('click', (ev) => { const menu=overlay.querySelector('#pdfViewerMenuPanel'); menu.hidden=!menu.hidden; ev.currentTarget.setAttribute('aria-expanded', String(!menu.hidden)); });
+  overlay.querySelector('#pdfViewerMenuToggle').addEventListener('click', (ev) => { const menu=overlay.querySelector('#pdfViewerMenuPanel'); const opening=menu.hidden || !menu.classList.contains('open'); menu.hidden=!opening; menu.classList.toggle('open',opening); ev.currentTarget.setAttribute('aria-expanded', String(opening)); });
   overlay.querySelector('#pdfViewerZoomIn').addEventListener('click', () => setScale(currentScale + .01));
   overlay.querySelector('#pdfViewerZoomOut').addEventListener('click', () => setScale(currentScale - .01));
   overlay.querySelector('#pdfViewerAjuster').addEventListener('click', () => setScale(1));
@@ -160,13 +160,13 @@ export async function openArchivesPdfReader(blob, options = {}) {
     documentPdf=await pdfjs.getDocument({data:bytes,stopAtErrors:false}).promise;
     if(!documentPdf.numPages)throw new Error('Aucune page lisible.');
     for(let n=1;n<=documentPdf.numPages;n++){const wrap=document.createElement('div');wrap.className='pdf-reader-page-wrap';wrap.dataset.page=String(n);const canvas=document.createElement('canvas');canvas.className='pdf-reader-page';canvas.dataset.page=String(n);wrap.appendChild(canvas);pages.appendChild(wrap);}
-    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.display='none';const progressEl=overlay.querySelector('#pdfViewerProgress');progressEl.classList.remove('is-visible');progressEl.hidden=true;progressEl.style.display='none';overlay.querySelector('#pdfViewerSphere').classList.add('is-visible');progress(100,'Document prêt');
+    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.setProperty('display','none','important');const progressEl=overlay.querySelector('#pdfViewerProgress');progressEl.classList.remove('is-visible');progressEl.hidden=true;progressEl.style.setProperty('display','none','important');overlay.querySelector('#pdfViewerSphere').classList.remove('is-visible');overlay.querySelector('#pdfViewerSphere').hidden=true;progress(100,'Document prêt');
     if('IntersectionObserver'in window){observer=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting)renderPage(Number(entry.target.dataset.page)).catch(()=>{});}),{root:zone,rootMargin:'650px 0px'});pages.querySelectorAll('.pdf-reader-page-wrap').forEach((el)=>observer.observe(el));}
     await renderPage(1);updatePage(1,false);await renderVisible();
     if(resizeHandler)window.removeEventListener('resize',resizeHandler);resizeHandler=()=>renderVisible(true);window.addEventListener('resize',resizeHandler,{passive:true});
   } catch(error) {
     console.error('Lecteur PDF Aurore Plume',error);
-    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.display='none';const box=overlay.querySelector('#pdfViewerError');box.hidden=false;box.style.display='block';box.textContent='Impossible d’ouvrir ce PDF. Vérifie le fichier puis réessaie.';
+    const loadingEl=overlay.querySelector('#pdfViewerLoading');loadingEl.hidden=true;loadingEl.style.setProperty('display','none','important');const box=overlay.querySelector('#pdfViewerError');box.hidden=false;box.style.setProperty('display','block','important');box.textContent='Impossible d’ouvrir ce PDF. Vérifie le fichier puis réessaie.';const progressEl=overlay.querySelector('#pdfViewerProgress');progressEl.classList.remove('is-visible');progressEl.hidden=true;progressEl.style.setProperty('display','none','important');overlay.querySelector('#pdfViewerSphere').hidden=true;
     progress(0,'Ouverture impossible');
   }
 }
