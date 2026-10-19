@@ -1612,7 +1612,7 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
 .plume-canvas-shape.shape-diamond{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0!important;border-radius:0!important}
 .plume-canvas-shape.shape-dotted-line{height:4px!important;min-height:4px!important;padding:0!important;border:0!important;border-top:2px dotted #88709f!important;border-radius:0!important;background:transparent!important}
 .plume-canvas-shape.shape-double-line{height:5px!important;min-height:5px!important;padding:0!important;border:0!important;border-top:2px solid #88709f!important;border-bottom:1px solid #b8a4ca!important;border-radius:0!important;background:transparent!important}
-.plume-canvas-shape.shape-wave{height:10px!important;min-height:10px!important;padding:0!important;border:0!important;border-bottom:2px wavy #88709f!important;border-radius:0!important;background:transparent!important}
+.plume-canvas-shape.shape-wave{height:18px!important;min-height:18px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#88709f!important}.plume-canvas-shape.shape-wave .plume-shape-text{font:700 22px/1 Georgia,serif;white-space:nowrap;overflow:hidden}
 .plume-canvas-shape.shape-line,.plume-canvas-shape.shape-dotted-line,.plume-canvas-shape.shape-double-line,.plume-canvas-shape.shape-wave{overflow:visible!important}
 .plume-canvas-shape.shape-number{font:800 15px/1 system-ui,sans-serif;border-radius:50%!important;background:#eee6f7}
 .plume-elements-page{
@@ -1736,3 +1736,7 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   .plume-elements-library-footer{align-items:flex-start;flex-direction:column;font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.text-editor-shell *, .plume-elements-page *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+.plume-canvas-shape.shape-number .plume-shape-text{font:800 15px/1 system-ui,sans-serif}
+.plume-canvas-shape.shape-ribbon .plume-shape-text,.plume-canvas-shape.shape-banner .plume-shape-text{font-weight:800;letter-spacing:.04em}
+.plume-canvas-shape.shape-frame .plume-shape-text{padding:5px 9px}
