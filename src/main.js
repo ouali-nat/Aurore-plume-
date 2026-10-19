@@ -302,7 +302,7 @@ function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
     const useEditorialSize = b.type === 'text' && b.editorialSize !== false;
     const useEditorialLeading = b.type === 'text' && b.editorialLineHeight !== false;
     const fontFamily = useEditorialFont ? settings.body_font : (b.font || settings.body_font);
-    const fontSize = useEditorialSize ? Number(settings.font_size) * 96 / 72 : Number(b.size || 18);
+    const fontSize = b.latex ? Number(b.size || 9) * 96 / 72 : (useEditorialSize ? Number(settings.font_size) * 96 / 72 : Number(b.size || 18));
     const leading = useEditorialLeading ? Number(settings.line_height) : 1.35;
     const rotation = Math.max(-180, Math.min(180, Number(b.rotation ?? 0) || 0));
     const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#000000')+';font-family:'+e(fontFamily)+';font-size:'+fontSize+'px;line-height:'+leading+';text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+' ;font-style:'+(b.italic?'italic':'normal')+';opacity:'+Math.max(0.1,Math.min(1,Number(b.opacity??100)/100))+';--plume-block-rotation:'+rotation+'deg;transform:rotate('+rotation+'deg);transform-origin:center center;'+(b.fill?'background-color:'+e(b.fill)+';':'');
@@ -371,7 +371,7 @@ function addEditorBlock(type, shape='round') {
   }
   const block=type==='shape'
     ? {id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}
-    : {id,type:'text',latex:type==='latex',x:latexPosition?.x ?? 10,y:latexPosition?.y ?? 12+(page.blocks.length%5)*7,w:latexPosition?.w ?? 78,h:latexPosition?.h ?? 24,text:type==='latex'?String(shape||'\\frac{a}{b}'):'',font:'Georgia',size:type==='latex'?22:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
+    : {id,type:'text',latex:type==='latex',x:latexPosition?.x ?? 10,y:latexPosition?.y ?? 12+(page.blocks.length%5)*7,w:latexPosition?.w ?? 78,h:latexPosition?.h ?? 24,text:type==='latex'?String(shape||'\\frac{a}{b}'):'',font:'Georgia',size:type==='latex'?9:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
   page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
   if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
 }
@@ -421,7 +421,7 @@ function manuscriptPreviewHtml(value = '', editorialSettings = {}) {
         const useEditorialSize = b.type === 'text' && b.editorialSize !== false;
         const useEditorialLeading = b.type === 'text' && b.editorialLineHeight !== false;
         const fontFamily = useEditorialFont ? settings.body_font : (b.font || settings.body_font);
-        const fontSize = useEditorialSize ? Number(settings.font_size) * 96 / 72 : Number(b.size || 18);
+        const fontSize = b.latex ? Number(b.size || 9) * 96 / 72 : (useEditorialSize ? Number(settings.font_size) * 96 / 72 : Number(b.size || 18));
         const leading = useEditorialLeading ? Number(settings.line_height) : 1.35;
         const rotation = Math.max(-180,Math.min(180,Number(b.rotation??0)||0));
         const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#302a35')+';font-family:'+e(fontFamily)+';font-size:'+fontSize+'px;line-height:'+leading+';text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+';font-style:'+(b.italic?'italic':'normal')+';opacity:'+Math.max(0.1,Math.min(1,Number(b.opacity??100)/100))+';transform:rotate('+rotation+'deg);transform-origin:center center;'+(b.fill?'background-color:'+e(b.fill)+';':'');
