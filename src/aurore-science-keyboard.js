@@ -22,7 +22,7 @@ var CATS=[
 ["1","1","Un"],["2","2","Deux"],["3","3","Trois"],["+","+","Plus"],["-","−","Moins"],
 ["0","0","Zéro"],["{,}",",","Virgule décimale"],[".",".","Point"],["\\times","×","Multiplication"],["\\div","÷","Division"],
 ["=","=","Égal"],["<","<","Inférieur"],[">",">","Supérieur"],["\\leq","≤","Inférieur ou égal"],["\\geq","≥","Supérieur ou égal"],
-["/","/","Barre oblique"],["^{\\square}","xⁿ","Exposant"],["_{\\square}","xₙ","Indice"],["|","|","Barre verticale"],["!","!","Factorielle"],
+["/","/","Barre oblique"],["\\square^{\\square}","xⁿ","Base et exposant"],["\\square_{\\square}","xₙ","Base et indice"],["|","|","Barre verticale"],["!","!","Factorielle"],
 ["\\{","{","Accolade ouvrante"],["\\}","}","Accolade fermante"],[",",",","Virgule"],[";",";","Point-virgule"],[":",":","Deux-points"],
 ["\\%","%","Pourcentage"],["'","′","Apostrophe (prime)"],["\\infty","∞","Infini"],["\\pi","π","Pi"],["\\mathrm{e}","e","Nombre e"]
 ]},
@@ -33,7 +33,7 @@ var CATS=[
 ["\\square^{\\square}","xⁿ","Puissance"],
 ["\\square_{\\square}","xₙ","Indice"],
 ["\\square_{\\square}^{\\square}","xₙᵖ","Indice et exposant"],
-["^{2}","x²","Au carré"],["^{3}","x³","Au cube"],["^{-1}","x⁻¹","Exposant moins un"],["\\times10^{\\square}","×10ⁿ","Notation scientifique"],
+["\\square^{2}","x²","Carré"],["\\square^{3}","x³","Cube"],["\\square^{-1}","x⁻¹","Inverse"],["\\times10^{\\square}","×10ⁿ","Notation scientifique"],
 ["\\left(\\square\\right)","( )","Parenthèses ajustées"],
 ["\\left[\\square\\right]","[ ]","Crochets ajustés"],
 ["\\left\\{\\square\\right\\}","{ }","Accolades ajustées"],
@@ -104,7 +104,7 @@ var CATS=[
 ["\\triangle","△","Triangle"],["\\triangle ABC","△ABC","Triangle ABC"],["\\Box","□","Carré"],["\\bigcirc","○","Cercle"],["\\diamond","◇","Losange"],
 ["\\perp","⊥","Perpendiculaire"],["\\parallel","∥","Parallèle"],["\\nparallel","∦","Non parallèle"],["\\cong","≅","Congruent"],["\\sim","∼","Semblable"],
 ["#","Angles et trigonométrie"],
-["^{\\circ}","°","Degré"],["{}'","′","Minute d'arc"],["{}''","″","Seconde d'arc"],["\\pi","π","Pi"],["\\text{rad}","rad","Radian"],["\\sin\\widehat{\\square}","sin Â","Sinus d'un angle"],["\\cos\\widehat{\\square}","cos Â","Cosinus d'un angle"],["\\tan\\widehat{\\square}","tan Â","Tangente d'un angle"],
+["{}^{\\circ}","°","Degré"],["{}'","′","Minute d'arc"],["{}''","″","Seconde d'arc"],["\\pi","π","Pi"],["\\text{rad}","rad","Radian"],["\\sin\\widehat{\\square}","sin Â","Sinus d'un angle"],["\\cos\\widehat{\\square}","cos Â","Cosinus d'un angle"],["\\tan\\widehat{\\square}","tan Â","Tangente d'un angle"],
 ["\\mathcal{C}","𝒞","Cercle (nom)"],["\\mathcal{D}","𝒟","Droite (nom)"],["\\mathcal{P}","𝒫","Plan (nom)"]
 ]},
 {id:"mat",icon:"▦",name:"Matrices",cap:1,wide:1,keys:[
@@ -193,7 +193,35 @@ function setCat(id){if(!byId(id))return;catId=id;store(CATK,id);markTabs();rende
 function snap(op){var now=Date.now();if(op&&op===lastOp&&now-lastT<700){lastT=now;return}lastOp=op||"";lastT=now;undo.push({v:field.value,s:field.selectionStart,e:field.selectionEnd});if(undo.length>80)undo.shift()}
 function commit(){field.dispatchEvent(new Event("input",{bubbles:true}))}
 function setSel(a,b){try{field.setSelectionRange(a,b)}catch(e){}if(document.activeElement!==field){try{field.focus({preventScroll:true})}catch(e){}}}
-function insert(tpl,sel){if(!field)return;snap("");var v=field.value,st=field.selectionStart||0,en=field.selectionEnd||st,cut=v.slice(st,en),wasPh=cut===SQ,wrap=!!cut&&!wasPh,text=tpl;
+function hasAlignmentContext(value){return /\\begin\s*\{(?:aligned|alignedat|array|cases|dcases|rcases|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix)\}/.test(value)}
+function insert(tpl,sel){
+ if(!field)return;
+ var v=field.value,st=field.selectionStart||0,en=field.selectionEnd||st;
+ var before=v.slice(0,st),after=v.slice(en);
+ // Les séparateurs d'alignement ne sont valides que dans un environnement adapté.
+ // Si l'utilisateur les choisit hors contexte, créer un petit squelette valide.
+ var needsAligned=(tpl==="&"||tpl==="\\\\")&&!hasAlignmentContext(v);
+ var needsArray=tpl==="\\hline"&&!/\\begin\s*\{array\}/.test(v);
+ if(needsAligned||needsArray){
+  snap("");
+  var left=before||SQ,right=SQ+after,prefix,selectionStart;
+  if(tpl==="&"){
+   prefix="\\begin{aligned}";
+   field.value=prefix+left+"&"+right+"\\end{aligned}";
+   selectionStart=prefix.length+left.length+1;
+  }else if(tpl==="\\\\"){
+   prefix="\\begin{aligned}";
+   field.value=prefix+left+"\\\\"+right+"\\end{aligned}";
+   selectionStart=prefix.length+left.length+2;
+  }else{
+   prefix="\\begin{array}{c|c}";
+   field.value=prefix+left+"&"+SQ+"\\\\\\hline"+SQ+"&"+(after||SQ)+"\\end{array}";
+   selectionStart=prefix.length+left.length+1;
+  }
+  setSel(selectionStart,selectionStart+SQ.length);commit();tick();return;
+ }
+ snap("");
+ var cut=v.slice(st,en),wasPh=cut===SQ,wrap=!!cut&&!wasPh,text=tpl;
 if(wrap&&text.indexOf(SQ)>=0)text=text.replace(SQ,function(){return cut});
 field.setRangeText(text,st,en,"end");
 var a,b,i=text.indexOf(SQ);
