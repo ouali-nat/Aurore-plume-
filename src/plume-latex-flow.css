@@ -1,0 +1,118 @@
+/* Ajustements locaux pour l’éditeur LaTeX de Plume et le clavier repris de Mémoire. */
+.asd {
+  z-index: 2600;
+}
+
+.plume-latex-input-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 12px 0 6px;
+}
+
+.plume-latex-input-meta .plume-latex-input-label {
+  margin: 0;
+}
+
+#plume-latex-count {
+  color: #82758d;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#plume-latex-count.is-near-limit {
+  color: #985a21;
+  font-weight: 800;
+}
+
+.plume-latex-editor-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 9px;
+}
+
+.plume-latex-keyboard {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d7c8e2;
+  border-radius: 12px;
+  background: #f5effa;
+  color: #57406c;
+  font: 800 12px/1.25 system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.plume-latex-keyboard:hover,
+.plume-latex-keyboard:focus-visible {
+  background: #eae0f4;
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.plume-latex-keyboard-note {
+  flex: 1 1 170px;
+  min-width: 0;
+  color: #80758a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#plume-latex-help {
+  margin: 7px 0 0;
+  color: #84788e;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.plume-latex-preview #plume-latex-preview-text {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+.plume-canvas-latex {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.plume-canvas-latex .plume-latex-render {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.plume-canvas-latex .plume-latex-render mjx-container {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 420px) {
+  .plume-latex-keyboard {
+    width: 100%;
+  }
+
+  .plume-latex-keyboard-note {
+    flex-basis: 100%;
+  }
+}
