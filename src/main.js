@@ -370,8 +370,37 @@ function addEditorBlock(type, shape='round') {
       toast('La page était trop occupée : une nouvelle page a été créée pour placer la formule sans chevauchement.');
     }
   }
+  const nextY=Math.min(84,12+(page.blocks.length%7)*8);
+  const shapePresets={
+    round:{label:'Votre texte',x:12,y:nextY,w:45,h:15,color:'#5d4776',fill:'#eee6f7',radius:14},
+    circle:{label:'',x:15,y:nextY,w:18,h:12,color:'#46654d',fill:'#e2ece4',radius:999},
+    square:{label:'Votre texte',x:12,y:nextY,w:45,h:15,color:'#745b37',fill:'#f4eadb',radius:5},
+    line:{label:'',x:10,y:nextY,w:80,h:1,color:'#88709f',radius:0},
+    'dotted-line':{label:'',x:10,y:nextY,w:80,h:1,color:'#88709f',radius:0},
+    'double-line':{label:'',x:10,y:nextY,w:80,h:2,color:'#88709f',radius:0},
+    quote:{label:'« Votre citation ici »',x:12,y:nextY,w:66,h:16,color:'#66543e',fill:'#f7f2e9',radius:12},
+    label:{label:'REPÈRE',x:12,y:nextY,w:29,h:9,color:'#8b5264',fill:'#f7e8ec',radius:7},
+    pill:{label:'NOTE',x:12,y:nextY,w:30,h:9,color:'#5d4776',fill:'#e8def3',radius:999},
+    banner:{label:'TITRE DE SECTION',x:10,y:nextY,w:78,h:12,color:'#765b3c',fill:'#f2e7d8',radius:7},
+    ribbon:{label:'SECTION',x:12,y:nextY,w:58,h:12,color:'#624b7e',fill:'#ece4f6',radius:3},
+    badge:{label:'✦',x:15,y:nextY,w:18,h:12,color:'#4e7758',fill:'#e1eee4',radius:999},
+    diamond:{label:'✦',x:15,y:nextY,w:18,h:12,color:'#975f70',fill:'#f6e3e7',radius:2},
+    triangle:{label:'▲',x:15,y:nextY,w:18,h:12,color:'#67527f',fill:'#eee6f7',radius:0},
+    heart:{label:'♡',x:15,y:nextY,w:18,h:12,color:'#a54e68',fill:'#f8e5ec',radius:0},
+    arrow:{label:'➜',x:12,y:nextY,w:35,h:10,color:'#5d4776',fill:'#eee6f7',radius:0},
+    'arrow-left':{label:'←',x:12,y:nextY,w:35,h:10,color:'#5d4776',fill:'#eee6f7',radius:0},
+    star:{label:'✦',x:15,y:nextY,w:18,h:12,color:'#8a6b2f',fill:'#f8efcf',radius:0},
+    sparkle:{label:'✧',x:15,y:nextY,w:18,h:12,color:'#80639e',fill:'#f0eafb',radius:0},
+    flower:{label:'✿',x:15,y:nextY,w:18,h:12,color:'#7d557e',fill:'#f5e7f2',radius:0},
+    sunburst:{label:'✺',x:15,y:nextY,w:18,h:12,color:'#916b36',fill:'#fbefd9',radius:0},
+    wave:{label:'〰',x:12,y:nextY,w:60,h:8,color:'#88709f',fill:'transparent',radius:0},
+    frame:{label:'Votre texte',x:12,y:nextY,w:55,h:19,color:'#6f5a87',fill:'transparent',radius:6},
+    callout:{label:'À retenir : votre note ici.',x:10,y:nextY,w:78,h:15,color:'#47623b',fill:'#edf5e7',radius:12},
+    number:{label:'01',x:15,y:nextY,w:18,h:12,color:'#5d4776',fill:'#eee6f7',radius:999}
+  };
+  const preset=shapePresets[shape]||{label:'Votre élément',x:12,y:nextY,w:42,h:14,color:'#67527f',fill:'#eee6f7',radius:16};
   const block=type==='shape'
-    ? {id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}
+    ? {id,type,shape,...preset}
     : {id,type:'text',latex:type==='latex',x:latexPosition?.x ?? 10,y:latexPosition?.y ?? 12+(page.blocks.length%5)*7,w:latexPosition?.w ?? 78,h:latexPosition?.h ?? 24,text:type==='latex'?String(shape||'\\frac{a}{b}'):'',font:'Georgia',size:type==='latex'?9:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
   page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
   if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
@@ -619,21 +648,54 @@ function renderTextEditor() {
             <div class="editor-paper-sheet">
               <div class="editor-paper-sheet-top"><span>AURORE PLUME</span><span id="editor-paper-title">${e(work.title || 'Titre de votre œuvre')}</span></div>
               <input type="file" id="plume-image-file" accept="image/*" hidden><textarea name="body" class="plume-document-store" hidden>${e(work.body || '')}</textarea><div class="plume-editor-workspace"><div class="plume-canvas-desk"><div class="plume-canvas-paper" id="plume-editor-canvas" aria-label="Page éditable" style="background-color:${e((state.editorPages[state.editorPageIndex]||{}).background||"#ffffff")}">${editorCanvasMarkup()}</div><div class="plume-page-thumbnails" id="plume-page-thumbnails" aria-label="Miniatures des pages"></div><div class="plume-color-popover" id="plume-color-popover" hidden><strong id="plume-palette-title" hidden>Couleur de l’élément</strong><div class="plume-palette-scroll" aria-label="Palette de couleurs" hidden><button type="button" class="plume-palette-close" data-close-editor-palette aria-label="Fermer la palette">× Fermer</button></div><input type="color" id="plume-custom-color" value="#000000" aria-label="Couleur personnalisée" hidden></div></div><section class="plume-elements-page" id="plume-elements-page" hidden aria-label="Bibliothèque d’éléments">
-  <header class="plume-elements-page-top">
-    <div><span class="eyebrow">ATELIER GRAPHIQUE</span><h2>Bibliothèque d’éléments</h2><p>Choisissez un élément pour l’ajouter à votre page, puis personnalisez sa taille, sa couleur et ses contours.</p></div>
-    <button type="button" class="plume-elements-back" data-elements-close>← Retour à la page</button>
-  </header>
-  <div class="plume-elements-grid">
-    <button type="button" data-add-shape="round"><span class="shape-preview round"></span><b>Bloc arrondi</b><small>Fond souple pour un texte</small></button>
-    <button type="button" data-add-shape="circle"><span class="shape-preview circle"></span><b>Cercle</b><small>Forme ronde</small></button>
-    <button type="button" data-add-shape="square"><span class="shape-preview square"></span><b>Rectangle</b><small>Bloc classique</small></button>
-    <button type="button" data-add-shape="line"><span class="shape-preview line"></span><b>Ligne</b><small>Séparateur visuel</small></button>
-    <button type="button" data-add-shape="quote"><span class="shape-preview quote">“</span><b>Citation</b><small>Mettre une phrase en valeur</small></button>
-    <button type="button" data-add-shape="label"><span class="shape-preview label">Aa</span><b>Étiquette</b><small>Petit repère de page</small></button>
-    <button type="button" data-add-shape="pill"><span class="shape-preview pill">Aa</span><b>Pilule</b><small>Encart très arrondi</small></button>
-    <button type="button" data-add-shape="banner"><span class="shape-preview banner">TITRE</span><b>Bandeau</b><small>Pour un titre ou une section</small></button>
-    <button type="button" data-add-shape="badge"><span class="shape-preview badge">✦</span><b>Médaillon</b><small>Accent décoratif</small></button>
-    <button type="button" data-add-shape="diamond"><span class="shape-preview diamond">✦</span><b>Losange</b><small>Décoration géométrique</small></button>
+  <div class="plume-elements-library-shell">
+    <header class="plume-elements-page-top">
+      <div class="plume-elements-identity">
+        <span class="plume-elements-mark" aria-hidden="true">a.</span>
+        <div><span class="eyebrow">AURORE PLUME · ATELIER GRAPHIQUE</span><h2>Donnez du rythme à votre page.</h2><p>Des formes, repères et ornements à personnaliser librement. Choisissez un élément pour l’ajouter à votre composition.</p></div>
+      </div>
+      <button type="button" class="plume-elements-back" data-elements-close><span aria-hidden="true">↗</span> Revenir à l’édition</button>
+    </header>
+    <div class="plume-elements-explorer">
+      <label class="plume-elements-search"><span aria-hidden="true">⌕</span><input id="plume-element-search" type="search" placeholder="Rechercher une forme, un séparateur, une citation…" autocomplete="off" aria-label="Rechercher dans les éléments"><kbd>⌘ K</kbd></label>
+      <div class="plume-elements-results"><span id="plume-element-results-count" aria-live="polite">25 éléments à explorer</span><span>Choisissez · Insérez · Personnalisez</span></div>
+      <nav class="plume-elements-filters" aria-label="Catégories d’éléments">
+        <button type="button" data-element-filter="all" aria-pressed="true">Tout <span>25</span></button>
+        <button type="button" data-element-filter="forms" aria-pressed="false">Formes</button>
+        <button type="button" data-element-filter="layout" aria-pressed="false">Mise en page</button>
+        <button type="button" data-element-filter="separators" aria-pressed="false">Séparateurs</button>
+        <button type="button" data-element-filter="ornaments" aria-pressed="false">Ornements</button>
+      </nav>
+    </div>
+    <div class="plume-elements-grid">
+      <button type="button" data-add-shape="round" data-element-category="forms"><span class="shape-preview round">Aa</span><span class="element-card-copy"><b>Bloc arrondi</b><small>Fond doux pour un texte</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="square" data-element-category="forms"><span class="shape-preview square">Aa</span><span class="element-card-copy"><b>Rectangle</b><small>Encadré classique</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="circle" data-element-category="forms"><span class="shape-preview circle"></span><span class="element-card-copy"><b>Cercle</b><small>Accent circulaire</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="triangle" data-element-category="forms"><span class="shape-preview triangle">▲</span><span class="element-card-copy"><b>Triangle</b><small>Repère géométrique</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="diamond" data-element-category="forms"><span class="shape-preview diamond">✦</span><span class="element-card-copy"><b>Losange</b><small>Accent graphique</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="heart" data-element-category="ornaments"><span class="shape-preview heart">♡</span><span class="element-card-copy"><b>Cœur</b><small>Une touche sensible</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="quote" data-element-category="layout"><span class="shape-preview quote">“</span><span class="element-card-copy"><b>Citation</b><small>Faire respirer une phrase</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="callout" data-element-category="layout"><span class="shape-preview callout">À retenir</span><span class="element-card-copy"><b>Note importante</b><small>Mettre une idée en avant</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="frame" data-element-category="layout"><span class="shape-preview frame">Votre texte</span><span class="element-card-copy"><b>Cadre fin</b><small>Créer une zone de lecture</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="banner" data-element-category="layout"><span class="shape-preview banner">TITRE</span><span class="element-card-copy"><b>Bandeau</b><small>Ouvrir une nouvelle section</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="ribbon" data-element-category="layout"><span class="shape-preview ribbon">SECTION</span><span class="element-card-copy"><b>Ruban</b><small>Baliser un chapitre</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="label" data-element-category="layout"><span class="shape-preview label">REPÈRE</span><span class="element-card-copy"><b>Étiquette</b><small>Ajouter un petit libellé</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="pill" data-element-category="layout"><span class="shape-preview pill">NOTE</span><span class="element-card-copy"><b>Pilule</b><small>Petit badge arrondi</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="number" data-element-category="layout"><span class="shape-preview number">01</span><span class="element-card-copy"><b>Numéro de section</b><small>Structurer son texte</small><em>MISE EN PAGE</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="line" data-element-category="separators"><span class="shape-preview line"></span><span class="element-card-copy"><b>Trait simple</b><small>Séparation discrète</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="dotted-line" data-element-category="separators"><span class="shape-preview dotted-line"></span><span class="element-card-copy"><b>Pointillés</b><small>Rythmer une page</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="double-line" data-element-category="separators"><span class="shape-preview double-line"></span><span class="element-card-copy"><b>Double ligne</b><small>Un séparateur éditorial</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="wave" data-element-category="separators"><span class="shape-preview wave">〰</span><span class="element-card-copy"><b>Onde</b><small>Transition légère</small><em>SÉPARATEUR</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="arrow" data-element-category="forms"><span class="shape-preview arrow">➜</span><span class="element-card-copy"><b>Flèche</b><small>Indiquer une direction</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="arrow-left" data-element-category="forms"><span class="shape-preview arrow-left">←</span><span class="element-card-copy"><b>Flèche retour</b><small>Pointer vers la gauche</small><em>FORME</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="star" data-element-category="ornaments"><span class="shape-preview star">✦</span><span class="element-card-copy"><b>Étoile</b><small>Mettre en lumière</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="sparkle" data-element-category="ornaments"><span class="shape-preview sparkle">✧</span><span class="element-card-copy"><b>Étincelle</b><small>Un accent délicat</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="flower" data-element-category="ornaments"><span class="shape-preview flower">✿</span><span class="element-card-copy"><b>Fleur</b><small>Ornement littéraire</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="sunburst" data-element-category="ornaments"><span class="shape-preview sunburst">✺</span><span class="element-card-copy"><b>Rosace</b><small>Petit motif rayonnant</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+      <button type="button" data-add-shape="badge" data-element-category="ornaments"><span class="shape-preview badge">✦</span><span class="element-card-copy"><b>Médaillon</b><small>Un point d’attention</small><em>ORNEMENT</em></span><span class="element-card-add">＋</span></button>
+    </div>
+    <div class="plume-elements-empty" id="plume-elements-empty" hidden><span>⌕</span><b>Aucun élément trouvé</b><small>Essayez un autre mot ou une autre catégorie.</small></div>
+    <footer class="plume-elements-library-footer"><span>✳ Chaque élément reste modifiable après insertion.</span><button type="button" data-elements-close>Retourner à ma page <span aria-hidden="true">↗</span></button></footer>
   </div>
 </section></div>
               <div class="editor-paper-footer"><span>Une phrase après l’autre.</span><span id="editor-paper-word-count">${words(work.body || '')} mots</span></div>
@@ -1438,6 +1500,38 @@ function positionBlockActionMenu(owner,menu){
   if(blockRect.right-4-width<paperRect.left)menu.classList.add('opens-right');
 }
 
+function filterEditorialElements() {
+  const root=document.querySelector('#plume-elements-page');
+  if(!root)return;
+  const query=(root.querySelector('#plume-element-search')?.value||'').trim().toLocaleLowerCase('fr');
+  const category=root.querySelector('[data-element-filter][aria-pressed="true"]')?.dataset.elementFilter||'all';
+  const buttons=[...root.querySelectorAll('[data-add-shape]')];
+  let visible=0;
+  for(const button of buttons){
+    const text=button.textContent.toLocaleLowerCase('fr')+' '+(button.dataset.addShape||'');
+    const group=button.dataset.elementCategory||'';
+    const matchesCategory=category==='all'||group===category;
+    const matchesQuery=!query||text.includes(query);
+    const show=matchesCategory&&matchesQuery;
+    button.hidden=!show;
+    if(show)visible++;
+  }
+  const count=root.querySelector('#plume-element-results-count');
+  if(count)count.textContent=visible+' élément'+(visible===1?'':'s')+(query?' trouvé'+(visible===1?'':'s'):' à explorer');
+  const empty=root.querySelector('#plume-elements-empty');
+  if(empty)empty.hidden=visible!==0;
+}
+app.addEventListener('input',(event)=>{
+  if(event.target.matches('#plume-element-search'))filterEditorialElements();
+});
+document.addEventListener('keydown',(event)=>{
+  if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('#plume-elements-page[hidden]')){
+    event.preventDefault();
+    document.querySelector('#plume-element-search')?.focus();
+  }
+});
+
+
 app.addEventListener('click', async (event) => {
   if (!event.target.closest('.plume-block-actions-menu, .plume-block-actions-toggle')) {
     document.querySelectorAll('.plume-block-actions-menu:not([hidden])').forEach((menu)=>{menu.hidden=true;menu.closest('.plume-canvas-block')?.querySelector('[data-block-menu-toggle]')?.setAttribute('aria-expanded','false');});
@@ -1470,6 +1564,12 @@ app.addEventListener('click', async (event) => {
     return;
   }
   if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=true;activateEditorTab('manuscript');document.querySelector('#plume-editor-canvas')?.scrollIntoView({block:'nearest',behavior:'smooth'});return;}
+  const elementFilter=event.target.closest('[data-element-filter]');
+  if(elementFilter){
+    document.querySelectorAll('[data-element-filter]').forEach((button)=>{button.setAttribute('aria-pressed',String(button===elementFilter));});
+    filterEditorialElements();
+    return;
+  }
   const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){const library=document.querySelector('#plume-elements-page');if(library)library.hidden=true;addEditorBlock('shape',shapeButton.dataset.addShape);return;}
   if(event.target.closest('[data-latex-keyboard]')){openPlumeScienceKeyboard();return;}
   if(event.target.closest('[data-latex-close]')){hidePlumeScienceKeyboard();const panel=document.querySelector('#plume-latex-editor');if(panel)panel.hidden=true;return;}
