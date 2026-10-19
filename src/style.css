@@ -1944,3 +1944,118 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
     justify-content:center;
   }
 }
+
+
+/* Accueil — œuvres publiées en cartes compactes, deux par ligne sur mobile et desktop. */
+#app .home-library .work-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px;
+  align-items:stretch;
+}
+#app .home-library .work-card{
+  min-width:0;
+  border-radius:14px;
+  box-shadow:none;
+  display:flex;
+  flex-direction:column;
+}
+#app .home-library .work-cover{
+  height:92px;
+  min-height:0;
+  padding:11px 12px;
+}
+#app .home-library .cover-mark{font-size:22px}
+#app .home-library .cover-category{
+  max-width:68%;
+  padding:4px 7px;
+  font-size:8px;
+  letter-spacing:.6px;
+  line-height:1.2;
+}
+#app .home-library .work-card-body{
+  min-width:0;
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  gap:6px;
+  padding:12px;
+}
+#app .home-library .card-meta{
+  justify-content:flex-start;
+  flex-wrap:wrap;
+  gap:4px 8px;
+  font-size:8px;
+  letter-spacing:.45px;
+  line-height:1.35;
+}
+#app .home-library .work-card h3{
+  margin:2px 0 0;
+  font-size:17px;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+}
+#app .home-library .work-subtitle{
+  margin:0;
+  font-size:10px;
+  line-height:1.4;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+}
+#app .home-library .work-summary{
+  min-height:0;
+  margin:0;
+  font-size:11px;
+  line-height:1.45;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+}
+#app .home-library .work-card-foot{
+  gap:7px;
+  margin-top:auto;
+  padding-top:9px;
+}
+#app .home-library .author-avatar{
+  width:25px;
+  height:25px;
+  font-size:9px;
+  flex:0 0 25px;
+}
+#app .home-library .author-copy strong{font-size:9px}
+#app .home-library .author-copy small{font-size:8px}
+#app .home-library .icon-button{width:28px;height:28px;font-size:13px}
+@media(max-width:560px){
+  #app .home-library .work-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px;
+  }
+  #app .home-library .work-cover{height:64px;padding:8px}
+  #app .home-library .cover-mark{font-size:17px}
+  #app .home-library .cover-category{font-size:7px;padding:3px 5px}
+  #app .home-library .work-card-body{padding:9px;gap:6px}
+  #app .home-library .card-meta{font-size:7px;gap:3px 5px}
+  #app .home-library .work-card h3{font-size:13px;line-height:1.25}
+  #app .home-library .work-subtitle{font-size:9px}
+  #app .home-library .work-summary{font-size:10px;line-height:1.4}
+  #app .home-library .work-card-foot{gap:5px;padding-top:7px}
+  #app .home-library .author-avatar{width:22px;height:22px;flex-basis:22px;font-size:8px}
+  #app .home-library .author-copy strong{font-size:8px}
+  #app .home-library .author-copy small{font-size:7px}
+  #app .home-library .icon-button{width:25px;height:25px;flex:0 0 25px}
+}
+/* Mode clair doux : gris neutres sur la zone de lecture, sans modifier les couvertures choisies. */
+html[data-theme="light"] #app .home-library .work-card{
+  background:#f7f7f8;
+  border-color:#e3e3e8;
+}
