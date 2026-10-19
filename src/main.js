@@ -1196,6 +1196,50 @@ async function buildWorkPdfBlob(work) {
       previewWidth >= 120 && previewWidth <= 900 ? previewWidth : 560
     ));
     const renderHeight = Math.round(renderWidth * pageHeight / pageWidth);
+
+    // Exporter d'abord la couverture dessinée dans l'éditeur, avec les mêmes
+    // composants et règles CSS que l'aperçu à l'écran.
+    const coverKey = String(work.cover_media_key || '');
+    const coverAuthor = authorOf(work)?.display_name
+      || state.user?.user_metadata?.display_name
+      || state.user?.email?.split('@')[0]
+      || 'Auteur';
+    const coverSurface = document.createElement('div');
+    coverSurface.className = 'editor-cover-preview-stage plume-pdf-export-cover';
+    coverSurface.setAttribute('aria-hidden', 'true');
+    coverSurface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;padding:24px;background:radial-gradient(ellipse at 25% 18%,#e8ddf0,transparent 44%),linear-gradient(145deg,#f7eee1,#d9c9dc 58%,#a7bfae);transform:none;';
+    coverSurface.innerHTML = '<div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · '+e(work.genre || 'Texte libre')+'</small><h2>'+e(work.title || 'Titre de votre œuvre')+'</h2><p '+(work.subtitle ? '' : 'hidden')+'>'+e(work.subtitle || '')+'</p><i>✳</i></div>'
+      + '<img class="editor-cover-image" alt="" '+(coverKey ? 'src="r2:'+e(coverKey)+'"' : 'hidden')+'>'
+      + '<div class="editor-cover-overlay"><span>'+e(work.genre || 'Texte libre')+'</span><h3>'+e(coverAuthor)+'</h3></div>';
+    document.body.appendChild(coverSurface);
+    try {
+      await hydrateR2Images(coverSurface);
+      const coverImage = coverSurface.querySelector('.editor-cover-image');
+      if (coverImage) {
+        await new Promise((resolve) => {
+          if (coverImage.complete) return resolve();
+          coverImage.addEventListener('load', resolve, { once: true });
+          coverImage.addEventListener('error', resolve, { once: true });
+          window.setTimeout(resolve, 10000);
+        });
+        if (!coverImage.naturalWidth) coverImage.hidden = true;
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const coverCanvas = await html2canvas(coverSurface, {
+        backgroundColor: '#e9dfeb',
+        scale: Math.max(2, Math.min(4, 2000 / renderWidth)),
+        useCORS: true,
+        logging: false,
+        width: renderWidth,
+        height: renderHeight,
+        windowWidth: Math.max(window.innerWidth, renderWidth),
+        windowHeight: Math.max(window.innerHeight, renderHeight)
+      });
+      doc.addImage(coverCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+    } finally {
+      coverSurface.remove();
+    }
+
     const surface = document.createElement('div');
     surface.className = 'plume-canvas-paper plume-pdf-export-surface';
     surface.setAttribute('aria-hidden', 'true');
@@ -1233,7 +1277,8 @@ async function buildWorkPdfBlob(work) {
           windowWidth: Math.max(window.innerWidth, renderWidth),
           windowHeight: Math.max(window.innerHeight, Math.round(renderWidth * pageHeight / pageWidth))
         });
-        if (index > 0) doc.addPage(formatConfig.format, 'portrait');
+        // La couverture occupe déjà la première page du PDF.
+        doc.addPage(formatConfig.format, 'portrait');
         doc.addImage(renderedCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
 
         // Couche invisible : le rendu visible reste strictement celui de la feuille.
