@@ -309,7 +309,7 @@ function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
     const style = 'left:'+Number(b.x??9)+'%;top:'+Number(b.y??10)+'%;width:'+Number(b.w??82)+'%;height:'+Number(b.h??24)+'%;color:'+e(b.color||'#000000')+';font-family:'+e(fontFamily)+';font-size:'+fontSize+'px;line-height:'+leading+';text-align:'+e(b.align||'left')+';font-weight:'+(b.bold?'700':'400')+' ;font-style:'+(b.italic?'italic':'normal')+';opacity:'+Math.max(0.1,Math.min(1,Number(b.opacity??100)/100))+';--plume-block-rotation:'+rotation+'deg;transform:rotate('+rotation+'deg);transform-origin:center center;'+(b.fill?'background-color:'+e(b.fill)+';':'');
     const selected = b.id === state.editorSelectedBlock ? ' is-selected' : '';
     const rotationLabel = Math.round(rotation) + '°';
-    const handles = '<button type="button" class="plume-block-move" aria-label="Déplacer le bloc" title="Déplacer">⠿</button><button type="button" class="plume-block-actions-toggle" data-block-menu-toggle aria-expanded="false" aria-label="Options de l’élément" title="Rotation ou suppression">⋮</button><div class="plume-block-actions-menu" hidden role="group" aria-label="Options de l’élément"><strong>Options de l’élément</strong><label class="plume-block-rotation-label">Rotation <output data-rotation-output>'+rotationLabel+'</output></label><div class="plume-block-rotation-controls"><button type="button" data-rotate-delta="-15" aria-label="Tourner de 15 degrés vers la gauche" title="−15°">↶</button><input type="range" min="-180" max="180" step="5" value="'+rotation+'" data-block-rotation aria-label="Angle de rotation"><button type="button" data-rotate-delta="15" aria-label="Tourner de 15 degrés vers la droite" title="+15°">↷</button></div><button type="button" class="plume-block-rotation-reset" data-rotate-reset>Réinitialiser la rotation</button><button type="button" class="plume-block-delete-action" data-delete-block="'+e(b.id)+'">Supprimer l’élément</button></div>'+['nw','n','ne','e','se','s','sw','w'].map((dir)=>'<button type="button" class="plume-block-resize resize-'+dir+'" data-resize-dir="'+dir+'" aria-label="Redimensionner"></button>').join('');
+    const handles = '<button type="button" class="plume-block-move" aria-label="Déplacer le bloc" title="Déplacer" aria-describedby="plume-move-hint"></button><button type="button" class="plume-block-actions-toggle" data-block-menu-toggle aria-expanded="false" aria-label="Options de l’élément" title="Rotation ou suppression">⋮</button><div class="plume-block-actions-menu" hidden role="group" aria-label="Options de l’élément"><strong>Options de l’élément</strong><label class="plume-block-rotation-label">Rotation <output data-rotation-output>'+rotationLabel+'</output></label><div class="plume-block-rotation-controls"><button type="button" data-rotate-delta="-15" aria-label="Tourner de 15 degrés vers la gauche" title="−15°">↶</button><input type="range" min="-180" max="180" step="5" value="'+rotation+'" data-block-rotation aria-label="Angle de rotation"><button type="button" data-rotate-delta="15" aria-label="Tourner de 15 degrés vers la droite" title="+15°">↷</button></div><button type="button" class="plume-block-rotation-reset" data-rotate-reset>Réinitialiser la rotation</button><button type="button" class="plume-block-delete-action" data-delete-block="'+e(b.id)+'">Supprimer l’élément</button></div>'+['nw','n','ne','e','se','s','sw','w'].map((dir)=>'<button type="button" class="plume-block-resize resize-'+dir+'" data-resize-dir="'+dir+'" aria-label="Redimensionner"></button>').join('');
     if (b.type === 'image') return '<div class="plume-canvas-block plume-canvas-image'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+';border-radius:'+Math.max(0,Number(b.radius??16))+'px;overflow:visible"><img alt="Image ajoutée" src="'+e(b.src||'')+'" style="border-radius:'+Math.max(0,Number(b.radius??16))+'px">'+handles+'</div>';
     if (b.type === 'shape') return '<div class="plume-canvas-block plume-canvas-shape shape-'+e(b.shape||'round')+selected+'" data-block-id="'+e(b.id)+'" style="'+style+';border-radius:'+Math.max(0,Number(b.radius??16))+'px"><div class="plume-shape-text" contenteditable="true" spellcheck="true" data-block-text="'+e(b.id)+'">'+e(b.label||'')+'</div>'+handles+'</div>';
     if (b.latex) return '<div class="plume-canvas-block plume-canvas-text plume-canvas-latex'+selected+'" data-block-id="'+e(b.id)+'" style="'+style+'"><div class="plume-latex-render" data-latex-render>'+'\\['+e(b.text||'')+'\\]'+'</div>'+handles+'</div>';
@@ -1926,32 +1926,32 @@ app.addEventListener('pointermove',(event)=>{
     if(textNode&&b.type==='text'&&plumeBlockDrag.dir)textNode.style.fontSize=b.size+'px';
   }
 });
-const finishPlumeBlockDrag=()=>{if(!plumeBlockDrag)return;plumeBlockDrag=null;syncEditorCanvas();recordEditorHistory();saveEditorRecovery();};
+const finishPlumeBlockDrag=()=>{if(!plumeBlockDrag)return;const finished=plumeBlockDrag;plumeBlockDrag=null;const block=(state.editorPages[state.editorPageIndex]?.blocks||[]).find((item)=>item.id===finished.id);if(block?.type==='text'){const textNode=document.querySelector('#plume-editor-canvas [data-block-text="'+block.id+'"]');if(textNode)fitPastedTextBlock(textNode,block);}syncEditorCanvas();recordEditorHistory();saveEditorRecovery();};
 app.addEventListener('pointerup',finishPlumeBlockDrag);
 app.addEventListener('pointercancel',finishPlumeBlockDrag);
 function fitPastedTextBlock(node,block){
   const canvas=document.querySelector('#plume-editor-canvas'),blockNode=node?.closest('.plume-canvas-block');
   if(!canvas||!blockNode||!block||block.type!=='text')return;
-  const pageHeight=Math.max(1,canvas.clientHeight),remainingPercent=Math.max(8,100-Number(block.y||0));
-  const remainingPx=pageHeight*remainingPercent/100;
-  const originalSize=Number.parseFloat(getComputedStyle(node).fontSize)||Number(block.size)||18;
-  node.style.height='auto';node.style.maxHeight='none';node.style.overflow='visible';
-  let contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
-  if(contentHeight>remainingPx){
-    let size=Math.max(10,originalSize*remainingPx/contentHeight);
-    blockNode.style.fontSize=size+'px';
-    block.size=size;block.editorialSize=false;
-    node.style.fontSize='inherit';
-    contentHeight=Math.max(node.scrollHeight,node.getBoundingClientRect().height)+12;
-  }
-  const needed=Math.max(12,Math.ceil(contentHeight/pageHeight*100)+1);
-  block.h=Math.min(remainingPercent,Math.max(Number(block.h)||0,needed));
+  const pageHeight=Math.max(1,canvas.clientHeight);
+  const currentHeight=Math.max(3,Number(block.h)||3);
+  // Mesurer le texte sans la contrainte de hauteur du cadre, puis agrandir le cadre.
+  blockNode.style.overflow='visible';
+  node.style.height='auto';
+  node.style.maxHeight='none';
+  node.style.overflow='visible';
+  node.style.overflowWrap='anywhere';
+  node.style.whiteSpace='pre-wrap';
+  const contentHeight=Math.ceil(Math.max(node.scrollHeight,node.getBoundingClientRect().height)+10);
+  const needed=Math.max(3,Math.ceil(contentHeight/pageHeight*100)+0.5);
+  // L'adaptation peut dépasser le bas de la page : le texte reste visible au lieu d'être coupé.
+  // On n'écrase jamais la taille de police pour faire rentrer le texte dans un cadre trop petit.
+  block.h=block.autoFitHeight ? needed : Math.max(currentHeight,needed);
+  block.autoFitHeight=true;
   blockNode.style.height=block.h+'%';
-  node.style.height='100%';node.style.maxHeight='100%';
-  node.style.overflow=contentHeight>remainingPx?'auto':'hidden';
-  node.style.overflowWrap='anywhere';node.style.whiteSpace='pre-wrap';
-  if(contentHeight>remainingPx){node.style.overflow='auto';}
-  if(!block.editorialSize)block.size=Number.parseFloat(blockNode.style.fontSize)||block.size;
+  blockNode.style.overflow='visible';
+  node.style.height='100%';
+  node.style.maxHeight='none';
+  node.style.overflow='visible';
 }
 app.addEventListener('paste',(event)=>{
   const node=event.target.closest?.('[data-block-text]');
