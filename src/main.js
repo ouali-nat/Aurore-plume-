@@ -1398,8 +1398,6 @@ async function buildWorkPdfBlob(work) {
           }
           fitLatexMath(surface);
         }
-        }
-        }
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
           if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
