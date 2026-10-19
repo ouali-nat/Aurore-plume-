@@ -1347,6 +1347,12 @@ async function buildWorkPdfBlob(work) {
 
     const surface = document.createElement('div');
     surface.className = 'plume-canvas-paper plume-pdf-export-surface';
+    // Le PDF reprend les aides visuelles réellement activées dans l'éditeur.
+    // Ces classes pilotent la grille et les repères CSS (::before / ::after).
+    const liveCanvasForPreferences = document.querySelector('#plume-editor-canvas');
+    ['plume-grid-visible', 'plume-guides-visible', 'plume-center-visible'].forEach((className) => {
+      surface.classList.toggle(className, !!liveCanvasForPreferences?.classList.contains(className));
+    });
     surface.setAttribute('aria-hidden', 'true');
     surface.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;box-shadow:none!important;margin:0!important;padding:0!important;transform:none;';
     // Le clone doit rester dans .editor-only-shell : ses règles CSS sont
@@ -1361,7 +1367,24 @@ async function buildWorkPdfBlob(work) {
         surface.style.backgroundColor = page.background || '#ffffff';
         surface.innerHTML = editorCanvasMarkup(page, settings);
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
-        if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');fitLatexMath(surface);}
+        if(latexNodes.length){
+          const math=await ensureMathJax();
+          // Chaque bloc doit contenir une seule source mathématique. Certains
+          // brouillons anciens ont déjà les délimiteurs TeX dans le texte ;
+          // les ré-encapsuler faisait apparaître un rendu en double à l'export.
+          for(const node of latexNodes){
+            let source=String(node.textContent||'').trim();
+            source=source.replace(/^\\\\\[\\s*([\\s\\S]*?)\\s*\\\\\]$/,'$1')
+              .replace(/^\\\\\(\\s*([\\s\\S]*?)\\s*\\\\\)$/,'$1')
+              .replace(/^\\$\\$?\\s*([\\s\\S]*?)\\s*\\$\\$?$/,'$1');
+            try{math.typesetClear?.([node]);}catch{}
+            node.replaceChildren();
+            node.textContent='\\\\['+source+'\\\\]';
+          }
+          await math.typesetPromise(latexNodes);
+          if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');
+          fitLatexMath(surface);
+        }
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
           if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
