@@ -1346,7 +1346,7 @@ app.addEventListener('click', async (event) => {
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
-    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');if(panel&&field){field.value='\\frac{a}{b}';if(preview)preview.textContent='';if(status)status.textContent='Aperçu en cours de préparation…';panel.hidden=false;void refreshLatexPreview();field.focus();}}
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');if(panel&&field){field.value='';if(preview){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();}if(status)status.textContent='Saisis une expression pour voir l’aperçu.';panel.hidden=false;field.focus();}}
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
@@ -1794,7 +1794,32 @@ app.addEventListener('cancel', (event) => {
 });
 
 let plumeLatexPreviewTimer=null,plumeLatexPreviewVersion=0;
-function ensureMathJax(){if(window.MathJax?.typesetPromise)return Promise.resolve(window.MathJax);if(window.__plumeMathJaxPromise)return window.__plumeMathJaxPromise;window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']],packages:{'[+]':['ams']}},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']},startup:{typeset:false}};window.__plumeMathJaxPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';script.async=true;script.onload=()=>window.MathJax?.typesetPromise?resolve(window.MathJax):reject(new Error('Le moteur LaTeX n’a pas pu démarrer.'));script.onerror=()=>reject(new Error('Le moteur LaTeX est inaccessible. Vérifie la connexion Internet puis réessaie.'));document.head.appendChild(script);});return window.__plumeMathJaxPromise;}
+function ensureMathJax(){
+  if(window.MathJax?.typesetPromise)return Promise.resolve(window.MathJax);
+  if(window.__plumeMathJaxPromise)return window.__plumeMathJaxPromise;
+  window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']],packages:{'[+]':['ams']}},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']},startup:{typeset:false}};
+  window.__plumeMathJaxPromise=new Promise((resolve,reject)=>{
+    const sources=[
+      'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.js',
+      'https://unpkg.com/mathjax@3/es5/tex-chtml.js'
+    ];
+    let index=0;
+    const loadNext=()=>{
+      if(index>=sources.length){window.__plumeMathJaxPromise=null;reject(new Error('Impossible de charger le moteur LaTeX depuis les serveurs disponibles. Vérifie la connexion ou réessaie plus tard.'));return;}
+      const script=document.createElement('script');
+      script.src=sources[index++];script.async=true;script.crossOrigin='anonymous';
+      script.onload=()=>{
+        if(window.MathJax?.typesetPromise)resolve(window.MathJax);
+        else {script.remove();loadNext();}
+      };
+      script.onerror=()=>{script.remove();loadNext();};
+      document.head.appendChild(script);
+    };
+    loadNext();
+  });
+  return window.__plumeMathJaxPromise;
+}
 async function renderLatexMath(root,formula){if(!root)throw new Error('Zone d’aperçu introuvable.');const math=await ensureMathJax();try{math.typesetClear?.([root]);}catch{}root.textContent='\\['+formula+'\\]';await math.typesetPromise([root]);if(root.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('La formule contient une erreur de syntaxe.');return true;}
 async function refreshLatexPreview(){const field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');if(!field||!preview)return;const version=++plumeLatexPreviewVersion,formula=field.value.trim();if(!formula){preview.textContent='';if(status)status.textContent='Saisis une expression pour voir l’aperçu.';return;}if(status)status.textContent='Conversion mathématique…';try{await renderLatexMath(preview,formula);if(version===plumeLatexPreviewVersion&&status)status.textContent='Aperçu mathématique prêt. Valide pour insérer la formule.';}catch(error){if(version===plumeLatexPreviewVersion&&status)status.textContent=error.message||'Conversion impossible.';}}
 app.addEventListener('input',(event)=>{if(event.target.id==='plume-latex-source'){clearTimeout(plumeLatexPreviewTimer);plumeLatexPreviewTimer=setTimeout(()=>void refreshLatexPreview(),220);}});
