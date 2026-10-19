@@ -1373,15 +1373,24 @@ async function buildWorkPdfBlob(work) {
           // brouillons anciens ont déjà les délimiteurs TeX dans le texte ;
           // les ré-encapsuler faisait apparaître un rendu en double à l'export.
           for(const node of latexNodes){
-            let source=String(node.textContent||'').trim();
-            source=source.replace(/^\\\[\s*([\s\S]*?)\s*\\\]$/,'$1')
-              .replace(/^\\\(\s*([\s\S]*?)\s*\\\)$/,'$1')
-              .replace(/^\$\$?\s*([\s\S]*?)\s*\$\$?$/,'$1');
+            // La source canonique vient du bloc, jamais du DOM déjà composé.
+            const blockId=node.closest('[data-block-id]')?.getAttribute('data-block-id');
+            const block=(pages[index]?.blocks||[]).find((item)=>String(item.id)===String(blockId));
+            let source=String(block?.text??node.textContent??'').trim();
+            // Nettoyer d'éventuels délimiteurs déjà présents dans d'anciens brouillons.
+            for(let pass=0;pass<4;pass++){
+              const unwrapped=source
+                .replace(/^\\\[\s*([\s\S]*?)\s*\\\]$/,'$1')
+                .replace(/^\\\(\s*([\s\S]*?)\s*\\\)$/,'$1')
+                .replace(/^\$\$?\s*([\s\S]*?)\s*\$\$?$/,'$1');
+              if(unwrapped===source)break;
+              source=unwrapped.trim();
+            }
             try{math.typesetClear?.([node]);}catch{}
-            node.replaceChildren();
-            node.textContent='\\['+source+'\\]';
+            node.replaceChildren(document.createTextNode('\\['+source+'\\]'));
           }
-          await math.typesetPromise(latexNodes);
+          // Une seule passe sur le conteneur complet d'export.
+          await math.typesetPromise([surface]);
           if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');
           fitLatexMath(surface);
         }
