@@ -319,7 +319,9 @@ function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
 function updateEditorCanvas() {
   const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) {
     const settings=editorialSettingsFromForm();
+    const page=state.editorPages[state.editorPageIndex]||{};
     canvas.style.aspectRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210';
+    canvas.style.backgroundColor=page.background||'#ffffff';
     const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
     if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
     canvas.innerHTML=editorCanvasMarkup();
@@ -440,6 +442,9 @@ function editorialSettingsFromForm(form = document.querySelector('#work-form')) 
 }
 function normalizeEditorPages(pages) {
   return (Array.isArray(pages) ? pages : []).map((page) => ({
+    // La couleur de fond appartient à la page et doit survivre au chargement,
+    // à l'historique, à la récupération locale et à l'export PDF.
+    background: /^#[0-9a-f]{6}$/i.test(String(page?.background || '')) ? String(page.background) : '#ffffff',
     blocks: (Array.isArray(page?.blocks) ? page.blocks : []).map((block) => {
       const normalized = { ...block };
       if (normalized.type === 'text') {
@@ -1305,7 +1310,7 @@ async function buildWorkPdfBlob(work) {
     coverSurface.classList.add('plume-pdf-export-cover');
     coverSurface.setAttribute('aria-hidden', 'true');
     coverSurface.querySelectorAll('.cover-upload-button, input, label').forEach((node) => node.remove());
-    coverSurface.style.cssText += ';position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;transform:none;';
+    coverSurface.style.cssText += ';position:fixed;left:-10000px;top:0;z-index:2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;border-radius:0;box-shadow:none!important;margin:0!important;transform:none;';
     const coverHost = document.querySelector('.editor-only-shell') || document.body;
     coverHost.appendChild(coverSurface);
     try {
@@ -1339,13 +1344,18 @@ async function buildWorkPdfBlob(work) {
     const surface = document.createElement('div');
     surface.className = 'plume-canvas-paper plume-pdf-export-surface';
     surface.setAttribute('aria-hidden', 'true');
-    surface.style.cssText = 'position:fixed;left:0;top:0;z-index:-2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;box-shadow:none!important;margin:0!important;padding:0!important;background:#fff;transform:none;';
-    document.body.appendChild(surface);
+    surface.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:2147483000;pointer-events:none;width:'+renderWidth+'px;max-width:none;height:'+renderHeight+'px;min-height:0;aspect-ratio:auto;overflow:hidden;box-sizing:border-box;box-shadow:none!important;margin:0!important;padding:0!important;transform:none;';
+    // Le clone doit rester dans .editor-only-shell : ses règles CSS sont
+    // scoppées à cet ancêtre. Dans body, les styles de blocs étaient perdus.
+    const exportHost = document.querySelector('.editor-only-shell') || document.body;
+    exportHost.appendChild(surface);
     try {
       for (let index = 0; index < pages.length; index++) {
+        const page = pages[index] || {};
         surface.style.width = renderWidth + 'px';
         surface.style.height = renderHeight + 'px';
-        surface.innerHTML = editorCanvasMarkup(pages[index], settings);
+        surface.style.backgroundColor = page.background || '#ffffff';
+        surface.innerHTML = editorCanvasMarkup(page, settings);
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
         if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');fitLatexMath(surface);}
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
@@ -1364,7 +1374,7 @@ async function buildWorkPdfBlob(work) {
         }));
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const renderedCanvas = await html2canvas(surface, {
-          backgroundColor: '#ffffff',
+          backgroundColor: null,
           scale: Math.max(2, Math.min(4, 2000 / renderWidth)),
           useCORS: true,
           logging: false,
