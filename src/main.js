@@ -1369,30 +1369,41 @@ async function buildWorkPdfBlob(work) {
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
         if(latexNodes.length){
           const math=await ensureMathJax();
-          // Chaque bloc doit contenir une seule source mathématique. Certains
-          // brouillons anciens ont déjà les délimiteurs TeX dans le texte ;
-          // les ré-encapsuler faisait apparaître un rendu en double à l'export.
+          // Nettoyer l'état MathJax puis composer chaque bloc une seule fois.
+          try{math.typesetClear?.([surface]);}catch{}
           for(const node of latexNodes){
-            // La source canonique vient du bloc, jamais du DOM déjà composé.
             const blockId=node.closest('[data-block-id]')?.getAttribute('data-block-id');
             const block=(pages[index]?.blocks||[]).find((item)=>String(item.id)===String(blockId));
-            let source=String(block?.text??node.textContent??'').trim();
-            // Nettoyer d'éventuels délimiteurs déjà présents dans d'anciens brouillons.
-            for(let pass=0;pass<4;pass++){
-              const unwrapped=source
-                .replace(/^\\\[\s*([\s\S]*?)\s*\\\]$/,'$1')
-                .replace(/^\\\(\s*([\s\S]*?)\s*\\\)$/,'$1')
-                .replace(/^\$\$?\s*([\s\S]*?)\s*\$\$?$/,'$1');
-              if(unwrapped===source)break;
-              source=unwrapped.trim();
+            let source=String(block?.text??'').trim();
+            // Si une ancienne sauvegarde répète la même formule entre délimiteurs,
+            // réduire ces copies à une seule expression avant le rendu.
+            const wrapped=[...source.matchAll(/\\\\\[\s*([\s\S]*?)\s*\\\\\]|\\\\\(\s*([\s\S]*?)\s*\\\\\)|\$\$\s*([\s\S]*?)\s*\$\$/g)]
+              .map((match)=>String(match[1]??match[2]??match[3]??'').trim());
+            if(wrapped.length>1&&wrapped.every((part)=>part===wrapped[0]))source=wrapped[0];
+            else{
+              for(let pass=0;pass<4;pass++){
+                const unwrapped=source
+                  .replace(/^\\\\\[\s*([\s\S]*?)\s*\\\\\]$/,'$1')
+                  .replace(/^\\\\\(\s*([\s\S]*?)\s*\\\\\)$/,'$1')
+                  .replace(/^\$\$\s*([\s\S]*?)\s*\$\$$/,'$1')
+                  .replace(/^\$\s*([\s\S]*?)\s*\$$/,'$1');
+                if(unwrapped===source)break;
+                source=unwrapped.trim();
+              }
             }
+            if(!source)throw new Error('Un bloc LaTeX est vide. Corrige sa formule avant le téléchargement.');
             try{math.typesetClear?.([node]);}catch{}
-            node.replaceChildren(document.createTextNode('\\['+source+'\\]'));
+            node.replaceChildren(document.createTextNode('\\\\['+source+'\\\\]'));
           }
-          // Une seule passe sur le conteneur complet d'export.
-          await math.typesetPromise([surface]);
+          // Ne pas scanner la feuille entière : traiter les blocs ciblés uniquement.
+          await math.typesetPromise(latexNodes);
           if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');
+          for(const node of latexNodes){
+            const outputs=[...node.querySelectorAll('mjx-container')];
+            outputs.slice(1).forEach((duplicate)=>duplicate.remove());
+          }
           fitLatexMath(surface);
+        }
         }
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-actions-toggle,.plume-block-actions-menu,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
