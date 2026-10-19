@@ -1,0 +1,68 @@
+/* Aurore Plume — barre d'outils de l'éditeur en « pilule flottante » (variante B : indicateur actif en tuile).
+   Couche purement visuelle et additive : aucun sélecteur JS, aucun markup modifié.
+   Pour revenir en arrière : retirer le <link> de index.html (ou supprimer ce fichier). Voir docs/HANDOFF-pill-bar.md */
+.text-editor-shell{--pill-red:#c8102e;--pill-red-deep:#a50d25;--pill-on:#fff}
+
+.text-editor-shell .editor-commandbar{
+  gap:6px;padding:7px;
+  border:0!important;border-radius:999px;
+  background:var(--pill-red)!important;
+  box-shadow:0 12px 28px rgba(200,16,46,.28);
+  backdrop-filter:none;
+}
+.text-editor-shell .editor-command-group{gap:4px;flex-wrap:nowrap}
+
+.text-editor-shell .editor-commandbar .editor-command{
+  position:relative;flex-direction:column;gap:3px;min-height:54px;padding:8px 12px;
+  border:0;border-radius:18px;background:transparent;color:rgba(255,255,255,.9);
+  font-size:11px;font-weight:600;
+  transition:background .16s ease,color .16s ease;
+}
+.text-editor-shell .editor-commandbar .editor-command span{
+  width:auto;height:auto;flex:0 0 auto;border:0;border-radius:0;background:transparent;
+  color:inherit;font-size:20px;line-height:1;
+}
+.text-editor-shell .editor-commandbar .editor-command:hover,
+.text-editor-shell .editor-commandbar .editor-command:focus-visible{
+  border:0;background:rgba(255,255,255,.14);color:var(--pill-on);transform:none;
+}
+.text-editor-shell .editor-commandbar .editor-command:focus-visible{outline:2px solid var(--pill-on);outline-offset:2px}
+
+/* Élément actif : tuile plus sombre + petit point dessous */
+.text-editor-shell .editor-commandbar .editor-command[aria-pressed=true],
+.text-editor-shell .editor-commandbar .editor-command.is-active{
+  background:var(--pill-red-deep);color:var(--pill-on);padding-bottom:16px;
+}
+.text-editor-shell .editor-commandbar .editor-command[aria-pressed=true]::after,
+.text-editor-shell .editor-commandbar .editor-command.is-active::after{
+  content:"";position:absolute;left:50%;bottom:6px;width:5px;height:5px;margin-left:-2.5px;
+  border-radius:50%;background:var(--pill-on);
+}
+
+/* Historique et navigation de pages, intégrés à la pilule */
+.text-editor-shell .editor-commandbar .editor-history-nav,
+.text-editor-shell .editor-commandbar .editor-page-nav{
+  border:0;border-radius:999px;background:rgba(255,255,255,.14);
+}
+.text-editor-shell .editor-commandbar .editor-history-nav button,
+.text-editor-shell .editor-commandbar .editor-page-nav button{color:var(--pill-on)}
+.text-editor-shell .editor-commandbar .editor-history-nav button:hover:not(:disabled),
+.text-editor-shell .editor-commandbar .editor-page-nav button:hover:not(:disabled){
+  border-color:transparent;background:rgba(255,255,255,.2);
+}
+.text-editor-shell .editor-commandbar #editor-page-count{color:var(--pill-on)}
+
+@media(max-width:760px){
+  .text-editor-shell .editor-commandbar{border-radius:26px;padding:6px}
+  .text-editor-shell .editor-command-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  .text-editor-shell .editor-commandbar .editor-command{min-height:50px;padding:6px 4px;border-radius:16px;font-size:10px}
+  .text-editor-shell .editor-commandbar .editor-command span{font-size:18px}
+  .text-editor-shell .editor-commandbar .editor-command[aria-pressed=true],
+  .text-editor-shell .editor-commandbar .editor-command.is-active{padding-bottom:14px}
+}
+@media(max-width:370px){
+  .text-editor-shell .editor-commandbar .editor-command span{display:grid}
+}
+@media(prefers-reduced-motion:reduce){
+  .text-editor-shell .editor-commandbar .editor-command{transition:none}
+}
