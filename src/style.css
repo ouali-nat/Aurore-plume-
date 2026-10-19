@@ -1377,3 +1377,93 @@ html[style*="zoom"] body #pdfViewerOverlay .pdf-reader-shell{
   .plume-block-actions-menu.opens-up { top: auto; bottom: 18px; }
   .plume-block-actions-menu.opens-right { right: auto; left: 0; }
 }
+
+
+/* LaTeX mobile : fenêtre compacte ancrée en haut pour rester visible avec le clavier Android. */
+.plume-latex-editor {
+  box-sizing: border-box;
+  place-items: start center;
+  padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.plume-latex-card {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 16px);
+  padding: 14px 15px 12px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.plume-latex-card header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  margin: -2px 0 0;
+  padding: 0 0 4px;
+  background: #fff;
+}
+.plume-latex-card h2 { font-size: 19px; line-height: 1.2; }
+.plume-latex-card header button { width: 32px; height: 32px; flex: 0 0 32px; }
+.plume-latex-card > p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.plume-latex-input-meta { margin: 3px 0 0; gap: 4px 8px; }
+.plume-latex-input-meta .plume-latex-input-label { font-size: 11px; }
+#plume-latex-count { font-size: 10px; }
+.plume-latex-card textarea {
+  min-height: 74px;
+  height: 74px;
+  max-height: 120px;
+  resize: vertical;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.plume-latex-editor-tools { margin-top: 0; gap: 5px 8px; }
+.plume-latex-keyboard { min-height: 35px; padding: 7px 10px; border-radius: 10px; font-size: 11px; }
+.plume-latex-keyboard-note { flex-basis: 100%; font-size: 10px; line-height: 1.3; }
+#plume-latex-help { margin: 0; font-size: 10px; line-height: 1.3; }
+.plume-latex-preview {
+  min-height: 0;
+  margin: 1px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  gap: 3px;
+}
+.plume-latex-preview small { margin-bottom: 2px; font-size: 9px; }
+.plume-latex-preview #plume-latex-preview-text { min-height: 26px; font-size: 14px; line-height: 1.25; }
+.plume-latex-preview #plume-latex-status { margin: 0; font-size: 10px; line-height: 1.25; }
+.plume-latex-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  margin: 1px -2px -2px;
+  padding: 6px 2px 2px;
+  background: #fff;
+  gap: 7px;
+}
+.plume-latex-actions button { min-height: 36px; padding: 8px 11px; font-size: 11px; }
+@media (max-width: 480px) {
+  .plume-latex-editor { padding-left: 8px; padding-right: 8px; }
+  .plume-latex-card { padding: 11px 12px 9px; gap: 6px; }
+  .plume-latex-card h2 { font-size: 18px; }
+  .plume-latex-card textarea { height: 66px; min-height: 66px; }
+  .plume-latex-keyboard { min-height: 33px; }
+  .plume-latex-preview { padding: 7px 9px; }
+  .plume-latex-actions { gap: 6px; }
+  .plume-latex-actions button { min-height: 34px; padding: 7px 9px; }
+}
+@media (max-height: 560px) {
+  .plume-latex-card { gap: 5px; padding-top: 8px; padding-bottom: 8px; }
+  .plume-latex-card textarea { height: 52px; min-height: 52px; }
+  .plume-latex-preview { padding: 5px 8px; }
+  .plume-latex-preview #plume-latex-preview-text { min-height: 20px; }
+}
