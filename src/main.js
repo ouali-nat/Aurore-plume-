@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
 import './aurore-pdf-reader.css';
+import './aurore-science-keyboard.css';
+import './plume-latex-flow.css';
+import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
@@ -11,6 +14,11 @@ const modalRoot = document.querySelector('#modal-root');
 const toastRoot = document.querySelector('#toast-root');
 
 const state = { user: null, view: 'discover', publicWorks: [], publicWorksError: !supabase, myWorks: [], myVideos: [], editing: null, editingVideo: null, workspaceTab: 'textes', showCreateForm: false, showDraftCreate: false, editorOpen: false, editorTab: 'cover', editorCoverPreview: null, editorPages: [], editorPageIndex: 0, editorSelectedBlock: null, editorHistory: [], editorHistoryIndex: -1, myCreations: [], editingCreation: null, search: '', storageFiles: [], r2PickerOpen: false, r2PendingRender: false };
+
+// Limite par formule pour préserver la lisibilité et éviter des compositions excessives.
+const MAX_LATEX_SOURCE_LENGTH = 3000;
+let plumeScienceKeyboard = null;
+const plumeSciencePreviewVersions = new WeakMap();
 
 const e = (value = '') => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profiles[0] : (work.plume_profiles || null);
@@ -25,6 +33,8 @@ function toast(message, kind = 'success') {
 }
 
 function shell(content) {
+  // Le clavier conserve une référence vers le champ actif : la détacher avant de remplacer le DOM.
+  if (plumeScienceKeyboard) plumeScienceKeyboard.hide();
   if (state.editorOpen) {
     app.innerHTML = `<main class="editor-only-shell">${content}</main>`;
     return;
@@ -309,7 +319,7 @@ function updateEditorCanvas() {
     const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
     if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
     canvas.innerHTML=editorCanvasMarkup();
-    if(canvas.querySelector('[data-latex-render]')){void ensureMathJax().then((math)=>math.typesetPromise([...canvas.querySelectorAll('[data-latex-render]')])).catch((error)=>console.warn('Rendu LaTeX indisponible',error.message));}
+    if(canvas.querySelector('[data-latex-render]')){void ensureMathJax().then(async(math)=>{const nodes=[...canvas.querySelectorAll('[data-latex-render]')];await math.typesetPromise(nodes);fitLatexMath(canvas);}).catch((error)=>console.warn('Rendu LaTeX indisponible',error.message));}
     void hydrateR2Images(canvas);
   }
   const thumbs=document.querySelector('#plume-page-thumbnails');
@@ -323,11 +333,42 @@ function syncEditorCanvas() {
   const field=document.querySelector('#work-form [name="body"]'); if(field) field.value=editorPagesToBody();
   updateEditorPreviews(); const label=document.querySelector('#editor-save-label'); if(label) label.textContent='Modifications à enregistrer';
 }
+function findFreeLatexPosition(page) {
+  const x = 9, w = 82, h = 18, gap = 1.5;
+  const occupied = (page.blocks || []).map((block) => ({
+    x: Number(block.x ?? 10), y: Number(block.y ?? 10),
+    w: Number(block.w ?? 78), h: Number(block.h ?? 24)
+  }));
+  for (let y = 7; y <= 78; y += 2.5) {
+    const collision = occupied.some((box) =>
+      x < box.x + box.w + gap &&
+      x + w + gap > box.x &&
+      y < box.y + box.h + gap &&
+      y + h + gap > box.y
+    );
+    if (!collision) return { x, y, w, h };
+  }
+  return null;
+}
 function addEditorBlock(type, shape='round') {
   if(!state.editorPages.length) state.editorPages=[{blocks:[]}];
-  const page=state.editorPages[state.editorPageIndex]||(state.editorPages[state.editorPageIndex]={blocks:[]});
+  let page=state.editorPages[state.editorPageIndex]||(state.editorPages[state.editorPageIndex]={blocks:[]});
   const id='block-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
-  const block=type==='shape'?{id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}:{id,type:'text',latex:type==='latex',x:10,y:12+(page.blocks.length%5)*7,w:78,h:type==='latex'?18:24,text:type==='latex'?String(shape||'\\frac{a}{b}'):'',font:'Georgia',size:type==='latex'?22:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
+  let latexPosition = null;
+  if (type === 'latex') {
+    latexPosition = findFreeLatexPosition(page);
+    if (!latexPosition) {
+      // Ne jamais poser une formule sur le texte existant : ouvrir une page dédiée.
+      state.editorPages.push({ blocks: [] });
+      state.editorPageIndex = state.editorPages.length - 1;
+      page = state.editorPages[state.editorPageIndex];
+      latexPosition = { x: 9, y: 8, w: 82, h: 18 };
+      toast('La page était trop occupée : une nouvelle page a été créée pour placer la formule sans chevauchement.');
+    }
+  }
+  const block=type==='shape'
+    ? {id,type,shape,radius:16,x:12,y:14+(page.blocks.length%4)*8,w:35,h:13,color:'#67527f',label:['line','circle'].includes(shape)?'':'Votre élément'}
+    : {id,type:'text',latex:type==='latex',x:latexPosition?.x ?? 10,y:latexPosition?.y ?? 12+(page.blocks.length%5)*7,w:latexPosition?.w ?? 78,h:latexPosition?.h ?? 24,text:type==='latex'?String(shape||'\\frac{a}{b}'):'',font:'Georgia',size:type==='latex'?22:18,color:'#302a35',align:type==='latex'?'center':'left',bold:false,italic:false,editorialFont:type!=='latex',editorialSize:type!=='latex',editorialLineHeight:type!=='latex'};
   page.blocks.push(block); state.editorSelectedBlock=id; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
   if(type==='text') document.querySelector('[data-block-text="'+id+'"]')?.focus();
 }
@@ -595,7 +636,7 @@ function renderTextEditor() {
           </div>
           <p class="editor-hint"><span>✳</span> Votre texte reste privé. Les modifications sont conservées lorsque vous enregistrez le brouillon.</p>
         </section>
-        <section id="plume-latex-editor" class="plume-latex-editor" hidden aria-label="Éditeur LaTeX"><div class="plume-latex-card"><header><h2>Écrire en LaTeX</h2><button type="button" data-latex-close aria-label="Fermer">×</button></header><p>Écris une expression mathématique. L’aperçu est calculé par MathJax. Aucun élément ne sera ajouté à la page avant validation.</p><label class="plume-latex-input-label" for="plume-latex-source">Code LaTeX</label><textarea id="plume-latex-source" spellcheck="false" placeholder="Ex. : \\frac{a}{b}"></textarea><div class="plume-latex-preview"><small>Aperçu mathématique</small><div id="plume-latex-preview-text" aria-live="polite"></div><p id="plume-latex-status" role="status">Saisis une expression pour voir l’aperçu.</p></div><div class="plume-latex-actions"><button type="button" class="plume-latex-cancel" data-latex-close>Annuler</button><button type="button" data-latex-apply>Valider et insérer</button></div></div></section><section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
+        <section id="plume-latex-editor" class="plume-latex-editor" hidden aria-label="Éditeur LaTeX"><div class="plume-latex-card"><header><h2>Écrire en LaTeX</h2><button type="button" data-latex-close aria-label="Fermer">×</button></header><p>Écris une expression mathématique. L’aperçu est calculé par MathJax. Aucun élément ne sera ajouté à la page avant validation.</p><div class="plume-latex-input-meta"><label class="plume-latex-input-label" for="plume-latex-source">Code LaTeX brut</label><span id="plume-latex-count" aria-live="polite">0 / 3 000 caractères</span></div><textarea id="plume-latex-source" spellcheck="false" maxlength="3000" aria-describedby="plume-latex-help plume-latex-status" placeholder="Ex. : \\frac{a}{b}"></textarea><div class="plume-latex-editor-tools"><button type="button" class="plume-latex-keyboard" data-latex-keyboard>∑ Ouvrir le clavier scientifique</button><span class="plume-latex-keyboard-note">Le clavier insère les symboles au curseur. Vous pouvez toujours écrire ou coller le LaTeX brut.</span></div><p id="plume-latex-help">Limite : 3 000 caractères par formule. Pour un calcul très long, répartissez les étapes en plusieurs formules ou pages afin de garder une mise en page lisible.</p><div class="plume-latex-preview"><small>Aperçu mathématique</small><div id="plume-latex-preview-text" aria-live="polite"></div><p id="plume-latex-status" role="status">Saisis une expression pour voir l’aperçu.</p></div><div class="plume-latex-actions"><button type="button" class="plume-latex-cancel" data-latex-close>Annuler</button><button type="button" data-latex-apply>Valider et insérer</button></div></div></section><section class="editor-tab-panel cover-panel" id="editor-panel-cover" role="tabpanel" ${state.editorTab === 'cover' ? '' : 'hidden'}>
           <div class="cover-editor-grid">
             <div class="editor-cover-preview-stage" id="editor-cover-preview-stage">
               <div class="editor-cover-placeholder"><span>a.</span><small>AURORE PLUME · ${e(work.genre || 'Texte libre')}</small><h2 id="editor-cover-title">${e(work.title || 'Titre de votre œuvre')}</h2><p id="editor-cover-subtitle" ${work.subtitle ? '' : 'hidden'}>${e(work.subtitle || '')}</p><i>✳</i></div>
@@ -1162,7 +1203,7 @@ async function buildWorkPdfBlob(work) {
         surface.style.height = renderHeight + 'px';
         surface.innerHTML = editorCanvasMarkup(pages[index], settings);
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
-        if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');}
+        if(latexNodes.length){const math=await ensureMathJax();await math.typesetPromise(latexNodes);if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');fitLatexMath(surface);}
         surface.querySelectorAll('.is-selected,.plume-block-move,.plume-block-delete-corner,.plume-block-resize').forEach((node) => {
           node.classList.remove('is-selected');
           if (node.matches('.plume-block-move,.plume-block-delete-corner,.plume-block-resize')) node.remove();
@@ -1346,7 +1387,7 @@ app.addEventListener('click', async (event) => {
   const editorTool = event.target.closest('[data-editor-tool]');
   if (editorTool) {
     const tool=editorTool.dataset.editorTool;
-    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');if(panel&&field){field.value='';if(preview){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();}if(status)status.textContent='Saisis une expression pour voir l’aperçu.';panel.hidden=false;field.focus();}}
+    if(tool==='text'){activateEditorTab('manuscript');addEditorBlock('text');}else if(tool==='latex'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-latex-editor'),field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');hidePlumeScienceKeyboard();if(panel&&field){field.value='';updateLatexSourceCount(field);if(preview){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();}if(status)status.textContent='Saisis une expression pour voir l’aperçu.';panel.hidden=false;field.focus();}}
     else if(tool==='elements'){activateEditorTab('manuscript');const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=false;}
     else if(tool==='images'){activateEditorTab('manuscript');document.querySelector('#plume-image-file')?.click();}
     else if(tool==='page')activateEditorTab('layout');
@@ -1354,7 +1395,25 @@ app.addEventListener('click', async (event) => {
   }
   if(event.target.closest('[data-elements-close]')){const panel=document.querySelector('#plume-elements-page');if(panel)panel.hidden=true;activateEditorTab('manuscript');document.querySelector('#plume-editor-canvas')?.scrollIntoView({block:'nearest',behavior:'smooth'});return;}
   const shapeButton=event.target.closest('[data-add-shape]');if(shapeButton){const library=document.querySelector('#plume-elements-page');if(library)library.hidden=true;addEditorBlock('shape',shapeButton.dataset.addShape);return;}
-  if(event.target.closest('[data-latex-close]')){const panel=document.querySelector('#plume-latex-editor');if(panel)panel.hidden=true;return;}if(event.target.closest('[data-latex-apply]')){const button=event.target.closest('[data-latex-apply]'),field=document.querySelector('#plume-latex-source'),panel=document.querySelector('#plume-latex-editor'),status=document.querySelector('#plume-latex-status');if(!field||!field.value.trim()){toast('Saisis une expression LaTeX avant de valider.','error');return;}button.disabled=true;button.textContent='Vérification…';void (async()=>{try{const preview=document.querySelector('#plume-latex-preview-text');await renderLatexMath(preview,field.value.trim());if(preview?.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('La formule contient une erreur de syntaxe.');addEditorBlock('latex',field.value.trim());if(panel)panel.hidden=true;toast('Formule LaTeX convertie et insérée.');}catch(error){if(status)status.textContent=error.message||'Impossible de convertir cette formule.';toast(error.message||'Conversion LaTeX impossible.','error');}finally{button.disabled=false;button.textContent='Valider et insérer';}})();return;}
+  if(event.target.closest('[data-latex-keyboard]')){openPlumeScienceKeyboard();return;}
+  if(event.target.closest('[data-latex-close]')){hidePlumeScienceKeyboard();const panel=document.querySelector('#plume-latex-editor');if(panel)panel.hidden=true;return;}
+  if(event.target.closest('[data-latex-apply]')){
+    const button=event.target.closest('[data-latex-apply]'),field=document.querySelector('#plume-latex-source'),panel=document.querySelector('#plume-latex-editor'),status=document.querySelector('#plume-latex-status');
+    if(!field||!field.value.trim()){toast('Saisis une expression LaTeX avant de valider.','error');return;}
+    if(field.value.length>MAX_LATEX_SOURCE_LENGTH){updateLatexSourceCount(field);if(status)status.textContent='Cette formule dépasse la limite de '+MAX_LATEX_SOURCE_LENGTH.toLocaleString('fr-FR')+' caractères. Sépare-la en plusieurs étapes.';toast('La formule est trop longue pour un bloc unique.','error');return;}
+    button.disabled=true;button.textContent='Vérification…';
+    void (async()=>{
+      try{
+        const formula=field.value.trim(),preview=document.querySelector('#plume-latex-preview-text');
+        await renderLatexMath(preview,formula);
+        if(preview?.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('La formule contient une erreur de syntaxe.');
+        addEditorBlock('latex',formula);hidePlumeScienceKeyboard();if(panel)panel.hidden=true;
+        toast('Formule LaTeX vérifiée et insérée sans chevaucher les blocs existants.');
+      }catch(error){if(status)status.textContent=error.message||'Impossible de convertir cette formule.';toast(error.message||'Conversion LaTeX impossible.','error');}
+      finally{button.disabled=false;button.textContent='Valider et insérer';}
+    })();
+    return;
+  }
   const pageColorButton=event.target.closest('[data-page-color]');if(pageColorButton){const p=state.editorPages[state.editorPageIndex];if(p){p.background=pageColorButton.dataset.pageColor;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;const custom=document.querySelector('#editor-page-color-custom');if(custom)custom.value=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   const cornerDelete = event.target.closest('[data-delete-block]');
   if (cornerDelete) {
@@ -1868,8 +1927,68 @@ function ensureMathJax(){
   return window.__plumeMathJaxPromise;
 }
 async function renderLatexMath(root,formula){if(!root)throw new Error('Zone d’aperçu introuvable.');const math=await ensureMathJax();try{math.typesetClear?.([root]);}catch{}root.textContent='\\['+formula+'\\]';await math.typesetPromise([root]);if(root.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('La formule contient une erreur de syntaxe.');return true;}
-async function refreshLatexPreview(){const field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');if(!field||!preview)return;const version=++plumeLatexPreviewVersion,formula=field.value.trim();if(!formula){preview.textContent='';if(status)status.textContent='Saisis une expression pour voir l’aperçu.';return;}if(status)status.textContent='Conversion mathématique…';try{await renderLatexMath(preview,formula);if(version===plumeLatexPreviewVersion&&status)status.textContent='Aperçu mathématique prêt. Valide pour insérer la formule.';}catch(error){if(version===plumeLatexPreviewVersion&&status)status.textContent=error.message||'Conversion impossible.';}}
-app.addEventListener('input',(event)=>{if(event.target.id==='plume-latex-source'){clearTimeout(plumeLatexPreviewTimer);plumeLatexPreviewTimer=setTimeout(()=>void refreshLatexPreview(),220);}});
+function updateLatexSourceCount(field=document.querySelector('#plume-latex-source')){
+  const counter=document.querySelector('#plume-latex-count');
+  if(!field||!counter)return;
+  const length=field.value.length;
+  counter.textContent=length.toLocaleString('fr-FR')+' / '+MAX_LATEX_SOURCE_LENGTH.toLocaleString('fr-FR')+' caractères';
+  counter.classList.toggle('is-near-limit',length>=MAX_LATEX_SOURCE_LENGTH-300);
+}
+function openPlumeScienceKeyboard(){
+  const field=document.querySelector('#plume-latex-source');
+  if(!field){toast('Le champ LaTeX est introuvable.','error');return;}
+  if(!window.AuroreScienceKeyboard?.create){toast('Le clavier scientifique n’a pas pu être chargé.','error');return;}
+  if(!plumeScienceKeyboard||!plumeScienceKeyboard.el?.isConnected){
+    plumeScienceKeyboard=window.AuroreScienceKeyboard.create({
+      toSource:(raw)=>'\\['+String(raw||'').trim()+'\\]',
+      render:(root)=>renderPlumeSciencePreview(root)
+    });
+  }
+  plumeScienceKeyboard.show(field);
+}
+function hidePlumeScienceKeyboard(){if(plumeScienceKeyboard)plumeScienceKeyboard.hide();}
+function renderPlumeSciencePreview(root){
+  if(!root)return;
+  const version=(plumeSciencePreviewVersions.get(root)||0)+1;
+  plumeSciencePreviewVersions.set(root,version);
+  void ensureMathJax().then(async(math)=>{
+    if(!root.isConnected||plumeSciencePreviewVersions.get(root)!==version)return;
+    try{math.typesetClear?.([root]);}catch{}
+    if(!root.isConnected||plumeSciencePreviewVersions.get(root)!==version)return;
+    await math.typesetPromise([root]);
+  }).catch(()=>{ /* L’aperçu du clavier ne doit jamais bloquer la saisie brute. */ });
+}
+function fitLatexMath(root){
+  const nodes=root?.matches?.('[data-latex-render]')?[root]:[...(root?.querySelectorAll?.('[data-latex-render]')||[])];
+  for(const node of nodes){
+    node.style.removeProperty('font-size');
+    const minFont=7.5;
+    for(let attempt=0;attempt<8;attempt++){
+      const width=node.clientWidth,height=node.clientHeight;
+      if(width<1||height<1)break;
+      const measuredWidth=Math.max(node.scrollWidth,node.firstElementChild?.scrollWidth||0);
+      const measuredHeight=Math.max(node.scrollHeight,node.firstElementChild?.scrollHeight||0);
+      const ratio=Math.min(measuredWidth>width+1?width/measuredWidth:1,measuredHeight>height+1?height/measuredHeight:1);
+      if(!Number.isFinite(ratio)||ratio>=0.995)break;
+      const current=parseFloat(getComputedStyle(node).fontSize)||18;
+      const next=Math.max(minFont,current*ratio*0.96);
+      if(next>=current-0.1)break;
+      node.style.fontSize=next.toFixed(2)+'px';
+    }
+  }
+}
+async function refreshLatexPreview(){
+  const field=document.querySelector('#plume-latex-source'),preview=document.querySelector('#plume-latex-preview-text'),status=document.querySelector('#plume-latex-status');
+  if(!field||!preview)return;
+  const version=++plumeLatexPreviewVersion,formula=field.value.trim();
+  updateLatexSourceCount(field);
+  if(field.value.length>MAX_LATEX_SOURCE_LENGTH){if(status)status.textContent='Limite de '+MAX_LATEX_SOURCE_LENGTH.toLocaleString('fr-FR')+' caractères dépassée. Sépare cette formule en plusieurs blocs.';return;}
+  if(!formula){try{window.MathJax?.typesetClear?.([preview]);}catch{}preview.replaceChildren();if(status)status.textContent='Saisis une expression pour voir l’aperçu.';return;}
+  if(status)status.textContent='Conversion mathématique…';
+  try{await renderLatexMath(preview,formula);if(version===plumeLatexPreviewVersion&&status)status.textContent='Aperçu mathématique prêt. Valide pour insérer la formule.';}
+  catch(error){if(version===plumeLatexPreviewVersion&&status)status.textContent=error.message||'Conversion impossible.';}
+}
+app.addEventListener('input',(event)=>{if(event.target.id==='plume-latex-source'){updateLatexSourceCount(event.target);clearTimeout(plumeLatexPreviewTimer);plumeLatexPreviewTimer=setTimeout(()=>void refreshLatexPreview(),220);}});
 app.addEventListener('change', (event) => {
   if(event.target.id==='editor-page-color-custom'){const p=state.editorPages[state.editorPageIndex];if(p){p.background=event.target.value;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   if(event.target.id==='editor-cover-image-file'){const f=event.target.files?.[0];if(f){const input=document.querySelector('#work-form [name="cover_file"]');if(input){const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;}const img=document.querySelector('#editor-cover-image');if(img){img.src=URL.createObjectURL(f);img.hidden=false;}toast('Image choisie comme couverture. Enregistre l’œuvre pour conserver ce choix.');}return;}
