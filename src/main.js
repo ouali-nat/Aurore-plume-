@@ -9,6 +9,7 @@ import './plume-pill-bar.css';
 import './plume-theme.css';
 import './plume-dossier-design.css';
 import './plume-memoire-parity.css';
+import './plume-memoire-foundation.css';
 import './plume-theme.js';
 import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
