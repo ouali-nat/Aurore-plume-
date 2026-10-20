@@ -1,0 +1,164 @@
+/* Aurore Plume — socle de reconstruction inspiré du système réel d’Aurore Mémoire.
+   Phase 1 : chrome applicatif uniquement. Les pages de documents éditoriaux sont exclues. */
+:root {
+  --plume-bg: #09080F;
+  --plume-surface: #12101A;
+  --plume-surface-raised: #181523;
+  --plume-text: #F8F7FF;
+  --plume-muted: #A9A3B8;
+  --plume-border: #2A2438;
+  --plume-accent: var(--accent, #8B5CF6);
+  --plume-accent-light: var(--accent-light, #C084FC);
+  --plume-accent-deep: var(--accent-deep, #6D28D9);
+  --plume-radius: 22px;
+  --plume-shadow: 0 12px 34px rgba(0,0,0,.26);
+  --plume-ease: cubic-bezier(.22,.7,.2,1);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --plume-bg: #09080F;
+  --plume-surface: #12101A;
+  --plume-surface-raised: #181523;
+  --plume-text: #F8F7FF;
+  --plume-muted: #A9A3B8;
+  --plume-border: #2A2438;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+  --plume-bg: #F3F1F8;
+  --plume-surface: #FFFFFF;
+  --plume-surface-raised: #F0EBF8;
+  --plume-text: #17131F;
+  --plume-muted: #5F5970;
+  --plume-border: #DAD2E5;
+}
+html, body { min-height: 100%; }
+body:has(> #app) {
+  background: var(--plume-bg);
+  color: var(--plume-text);
+  transition: background-color .18s ease, color .18s ease;
+}
+body:has(> #app)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--plume-accent) 16%, transparent), transparent 34%),
+    radial-gradient(circle at 96% 12%, color-mix(in srgb, var(--plume-accent-light) 11%, transparent), transparent 30%);
+}
+#app { color: var(--plume-text); }
+.site-header {
+  background: color-mix(in srgb, var(--plume-bg) 84%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--plume-accent-light) 14%, var(--plume-border));
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+}
+.header-inner { min-height: 76px; }
+.brand-sigil {
+  background: var(--plume-accent-deep);
+  color: #fff;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--plume-accent) 25%, transparent);
+}
+.brand-name, .brand-name b { color: var(--plume-text); }
+.brand-name small { color: var(--plume-muted); }
+.desktop-nav {
+  padding: 5px;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--plume-accent-light) 25%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--plume-accent-deep), color-mix(in srgb, var(--plume-accent-deep) 55%, var(--plume-accent)));
+  box-shadow: 0 18px 38px -14px color-mix(in srgb, var(--plume-accent-deep) 55%, transparent);
+}
+.desktop-nav .nav-link {
+  min-height: 40px;
+  padding: 8px 16px 11px;
+  border-radius: 999px;
+  color: rgba(255,255,255,.86);
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+.desktop-nav .nav-link:hover { background: rgba(255,255,255,.16); color: #fff; }
+.desktop-nav .nav-link.active {
+  color: #fff;
+  background: rgba(255,255,255,.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.28);
+}
+.header-actions .button,
+.button-primary {
+  border: 1px solid color-mix(in srgb, var(--plume-accent-light) 35%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--plume-accent-deep), var(--plume-accent));
+  color: #fff;
+  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--plume-accent) 65%, transparent);
+}
+.button-quiet, .button-outline {
+  border-radius: 999px;
+  border-color: var(--plume-border);
+  background: var(--plume-surface);
+  color: var(--plume-text);
+}
+.container { width: min(100% - 32px, 990px); }
+main:not(.editor-only-shell) { color: var(--plume-text); }
+.section-heading h2, .page-hero h1, .workspace-title-row h1,
+.results-heading h2, .section-heading p, .page-hero p, .workspace-title-row p { color: var(--plume-text); }
+.eyebrow, .card-meta, .work-card-foot small, .copyright { color: var(--plume-muted); }
+.work-card, .empty-state, .editor-panel, .workspace-panel, .panel, .form-panel,
+.video-workspace > *, .workspace-header + section > *, .discover-intro, .library-results {
+  border-color: var(--plume-border);
+}
+.work-card, .empty-state, .editor-panel, .workspace-panel, .panel, .form-panel {
+  border-radius: var(--plume-radius);
+  box-shadow: var(--plume-shadow);
+}
+.work-card {
+  overflow: hidden;
+  background: var(--plume-surface);
+  border: 1px solid var(--plume-border);
+  transition: transform .2s var(--plume-ease), border-color .2s ease, box-shadow .2s ease;
+}
+.work-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--plume-accent) 48%, var(--plume-border));
+  box-shadow: 0 22px 48px color-mix(in srgb, var(--plume-accent) 12%, rgba(0,0,0,.28));
+}
+.work-card-body { background: var(--plume-surface); color: var(--plume-text); }
+.work-card-body h3, .author-copy strong { color: var(--plume-text); }
+.work-summary, .work-subtitle { color: var(--plume-muted); }
+.work-cover { border-bottom: 1px solid var(--plume-border); }
+.empty-state {
+  background: var(--plume-surface);
+  color: var(--plume-text);
+  border: 1px solid var(--plume-border);
+}
+.empty-state h3 { color: var(--plume-text); }
+.empty-state p { color: var(--plume-muted); }
+.search-field, input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+  border-color: var(--plume-border);
+}
+.search-field { border-radius: 999px; background: var(--plume-surface); }
+.search-field input { color: var(--plume-text); }
+.site-footer {
+  border-top: 1px solid var(--plume-border);
+  background: color-mix(in srgb, var(--plume-bg) 88%, transparent);
+  color: var(--plume-muted);
+}
+.mobile-nav {
+  background: var(--plume-surface);
+  border-color: var(--plume-border);
+}
+.mobile-nav .nav-link { color: var(--plume-text); }
+@media (max-width: 760px) {
+  .header-inner { min-height: 66px; }
+  .desktop-nav { display: none; }
+  .header-actions .header-cta { display: none; }
+  .mobile-nav { border-radius: 0 0 22px 22px; box-shadow: var(--plume-shadow); }
+  .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+@media (max-width: 420px) {
+  .container { width: min(100% - 24px, 990px); }
+  .work-grid { gap: 10px; }
+  .work-card-body { padding: 14px; }
+}
+/* Important : ne pas cibler .editor-page, .document-page, .paper ou les feuilles du PDF.
+   La couleur et la typographie du document appartiennent à l’auteur, pas au thème du site. */
