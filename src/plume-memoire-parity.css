@@ -522,3 +522,56 @@ html[data-theme="dark"] .download-progress-toast {
   color: #fff;
 }
 #modal-root .modal-close { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.13); color: #fff; }
+
+
+/* Étape 5 — atelier : les outils reprennent les capsules de Mémoire, le papier reste le papier. */
+#app .editor-paper-desk {
+  border-color: var(--plume-border);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 36%),
+    var(--plume-bg);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+#app :is(.editor-commandbar,.editor-actionbar) {
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
+  color: #fff;
+  box-shadow: 0 18px 38px -14px color-mix(in srgb, var(--accent-deep) 70%, rgba(0,0,0,.55)), 0 3px 8px rgba(0,0,0,.18);
+}
+#app :is(.editor-commandbar,.editor-actionbar) :is(button,.editor-command,.editor-tool) {
+  border-color: rgba(255,255,255,.24);
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+#app :is(.editor-commandbar,.editor-actionbar) :is(button,.editor-command,.editor-tool):hover,
+#app :is(.editor-commandbar,.editor-actionbar) :is(button,.editor-command,.editor-tool)[aria-pressed="true"] {
+  border-color: rgba(255,255,255,.42);
+  background: rgba(255,255,255,.23);
+  color: #fff;
+}
+#app :is(.editor-cover-panel,.editor-preview-panel,.plume-elements-page,.plume-elements-panel,.manuscript-tools,.editor-meta-grid>label,.editor-summary-field) {
+  border-color: var(--plume-border);
+  border-radius: 24px;
+  background: var(--plume-surface-raised);
+  color: var(--plume-ink);
+  box-shadow: var(--plume-shadow);
+}
+#app :is(.editor-cover-panel,.editor-preview-panel,.plume-elements-page,.plume-elements-panel,.manuscript-tools) :is(h2,h3,h4,strong,label,.eyebrow) {
+  color: var(--plume-ink);
+}
+#app :is(.editor-cover-panel,.editor-preview-panel,.plume-elements-page,.plume-elements-panel,.manuscript-tools) :is(p,small,.hint,.description) {
+  color: var(--plume-muted);
+}
+#app :is(.editor-meta-grid>label,.editor-summary-field) :is(input,select,textarea) {
+  border-color: var(--plume-border);
+  border-radius: 14px;
+  background: var(--plume-bg);
+  color: var(--plume-ink);
+}
+/* Ne pas recolorer la feuille réelle : ses polices, ses marges et sa mise en page sont conservées. */
+#app :is(.editor-paper-sheet,.editor-preview-paper,.editor-print-cover,.editor-print-cover-stage) {
+  color: initial;
+}
