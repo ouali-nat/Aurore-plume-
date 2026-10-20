@@ -11,7 +11,7 @@
           var dark=choice==='sombre'||(choice==='systeme'&&!window.matchMedia('(prefers-color-scheme: light)').matches);
           document.documentElement.setAttribute('data-theme',dark?'dark':'light');
           document.documentElement.setAttribute('data-theme-choix',choice);
-          var colors=['violet','rouge','vert','bleu','orange','rose','lime','bordeaux','azur','jaune','olive','chocolat','sauge','magenta','petrole-cuivre','prune-rouge','rose-sable','sarcelle-creme'];
+          var colors=['violet','rouge','vert','bleu','orange','rose','indigo','emeraude','lime','corail','bordeaux','azur','petrole-cuivre','nuit-peche','prune-rouge','terre-orange','rose-sable','sarcelle-creme','jaune','olive','chocolat','sauge','magenta'];
           var color=localStorage.getItem('auraster-color-theme')||'violet';
           document.documentElement.setAttribute('data-color-theme',colors.indexOf(color)>=0?color:'violet');
         } catch(e) {}
