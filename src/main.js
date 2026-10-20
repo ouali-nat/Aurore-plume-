@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
 import './editorial-studio.css';
+import './plume-editor-fixes.css';
 import './aurore-pdf-reader.css';
 import './aurore-science-keyboard.css';
 import './plume-latex-flow.css';
@@ -1393,8 +1394,11 @@ async function buildWorkPdfBlob(work) {
           await math.typesetPromise(latexNodes);
           if(surface.querySelector('.mjx-merror,.MathJax_Error'))throw new Error('Une formule LaTeX ne peut pas être convertie pour le PDF. Corrige-la puis réessaie.');
           for(const node of latexNodes){
-            const outputs=[...node.querySelectorAll('mjx-container')];
-            outputs.slice(1).forEach((duplicate)=>duplicate.remove());
+            // Un bloc LaTeX exporté ne doit contenir qu’un seul rendu MathJax.
+            // Garder uniquement le premier conteneur visible élimine les rendus
+            // résiduels que MathJax peut laisser dans un clone destiné au PDF.
+            const output=node.querySelector('mjx-container');
+            if(output) node.replaceChildren(output);
           }
           fitLatexMath(surface);
         }
