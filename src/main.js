@@ -7,6 +7,7 @@ import './aurore-science-keyboard.css';
 import './plume-latex-flow.css';
 import './plume-pill-bar.css';
 import './plume-theme.css';
+import './plume-dossier-design.css';
 import './plume-theme.js';
 import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
