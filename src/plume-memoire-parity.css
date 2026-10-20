@@ -1,0 +1,324 @@
+/* Aurore Plume × Aurore Mémoire — parité visuelle, étape 2.
+   Reprend le système de surfaces en capsules, la barre vitrée et les contrôles de Mémoire.
+   Ne modifie pas les données, les événements, l'authentification ni le rendu du papier éditorial. */
+
+:root {
+  --accent: var(--theme-primary, #8B5CF6);
+  --accent-light: var(--theme-secondary, #C084FC);
+  --accent-deep: var(--theme-strong, #6D28D9);
+  --plume-bg: #09080F;
+  --plume-surface: #12101A;
+  --plume-surface-raised: #181523;
+  --plume-surface-soft: #211B30;
+  --plume-ink: #F8F7FF;
+  --plume-muted: #A9A3B8;
+  --plume-border: #2A2438;
+  --plume-shadow: 0 12px 34px rgba(0,0,0,.26);
+  --plume-folder-radius: 30px;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --plume-bg: #09080F;
+  --plume-surface: #12101A;
+  --plume-surface-raised: #181523;
+  --plume-surface-soft: #211B30;
+  --plume-ink: #F8F7FF;
+  --plume-muted: #A9A3B8;
+  --plume-border: #2A2438;
+  --plume-shadow: 0 12px 34px rgba(0,0,0,.26);
+}
+html[data-theme="light"] {
+  color-scheme: light;
+  --plume-bg: #F3F1F8;
+  --plume-surface: #FFFFFF;
+  --plume-surface-raised: #F0EBF8;
+  --plume-surface-soft: #E9E1F3;
+  --plume-ink: #17131F;
+  --plume-muted: #5F5970;
+  --plume-border: #DAD2E5;
+  --plume-shadow: 0 8px 26px rgba(55,36,82,.10);
+}
+html[data-color-theme] {
+  --ink: var(--plume-ink);
+  --paper: var(--plume-bg);
+  --theme-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --theme-border: color-mix(in srgb, var(--accent) 40%, var(--plume-border));
+}
+html[data-color-theme] body {
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%),
+    radial-gradient(circle at 96% 12%, color-mix(in srgb, var(--accent-light) 11%, transparent), transparent 30%),
+    var(--plume-bg) !important;
+  color: var(--plume-ink);
+}
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%),
+    radial-gradient(circle at 96% 12%, color-mix(in srgb, var(--accent-light) 11%, transparent), transparent 30%),
+    #09080F !important;
+}
+#app { color: var(--plume-ink); }
+#app :is(.site-header, .site-footer, .mobile-nav) {
+  border-color: color-mix(in srgb, var(--accent-light) 14%, var(--plume-border));
+}
+#app .site-header {
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--plume-bg) 84%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-light) 14%, var(--plume-border));
+  box-shadow: none;
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+}
+#app .site-header::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 70%, transparent), transparent);
+  opacity: .65;
+  pointer-events: none;
+}
+#app .header-inner {
+  min-height: 70px;
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+#app .brand { color: var(--plume-ink); gap: 11px; }
+#app .brand-sigil {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  background: #fff;
+  color: var(--accent-deep);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+#app .brand-name { color: var(--plume-ink); font-weight: 750; }
+#app .brand-name b { color: var(--accent-light); }
+#app .brand-name small { color: var(--plume-muted); letter-spacing: 1.7px; }
+#app .desktop-nav {
+  padding: 5px;
+  gap: 2px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
+  box-shadow: 0 18px 38px -14px color-mix(in srgb, var(--accent-deep) 70%, rgba(0,0,0,.55)), 0 3px 8px rgba(0,0,0,.18);
+}
+#app .desktop-nav .nav-link {
+  position: relative;
+  min-height: 40px;
+  padding: 8px 15px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255,255,255,.86);
+}
+#app .desktop-nav .nav-link:hover { background: rgba(255,255,255,.16); color: #fff; }
+#app .desktop-nav .nav-link.active {
+  color: #fff;
+  background: rgba(255,255,255,.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.28);
+}
+#app .desktop-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 4px;
+  width: 4px; height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #fff;
+}
+#app .header-actions { gap: 8px; }
+#app .user-chip {
+  border: 1px solid var(--plume-border);
+  background: var(--plume-surface);
+  border-radius: 999px;
+  color: var(--plume-ink);
+}
+#app .avatar-mini {
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
+#app :is(.button, .icon-button, .nav-link, .mobile-menu, .editor-tool, .plume-smart-button, .editor-actionbar button, .editor-tabs button, .plume-elements-filters button, .plume-elements-page button[data-add-shape]) {
+  border-radius: 999px;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+#app .button-primary,
+#app :is(.deposer-btn, .creative-primary, .form-submit) {
+  border-color: rgba(255,255,255,.2);
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
+  color: #fff;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-deep) 34%, transparent);
+}
+#app .button-primary:hover,
+#app :is(.deposer-btn, .creative-primary, .form-submit):hover {
+  filter: brightness(1.12);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+#app .button-quiet,
+#app .button-outline {
+  border-color: var(--plume-border);
+  background: color-mix(in srgb, var(--plume-surface) 86%, transparent);
+  color: var(--plume-ink);
+}
+#app .button-quiet:hover,
+#app .button-outline:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--plume-border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--plume-surface));
+}
+#app .icon-button {
+  border-color: rgba(255,255,255,.3);
+  background: rgba(255,255,255,.14);
+  color: inherit;
+}
+#app .mobile-nav {
+  background: color-mix(in srgb, var(--plume-bg) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+#app .mobile-nav .nav-link { border-radius: 999px; }
+#app .mobile-nav .nav-link.active {
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
+  color: #fff;
+}
+#app :is(.section-heading h2, .results-heading h2, .page-hero h1, .workspace-header h1, .panel-top h2) {
+  color: var(--plume-ink);
+}
+#app :is(.section-heading p, .page-hero p, .workspace-header p, .panel-top p) { color: var(--plume-muted); }
+#app :is(.eyebrow, .page-hero .eyebrow) { color: var(--accent-light); }
+#app :is(.text-link, .workspace-header a) { color: var(--accent-light); }
+#app :is(.page-hero, .workspace-header, .my-works-panel, .plume-published-panel, .creation-list-panel, .video-list-panel, .panel, .feature-card, .editor-panel, .editor-tab-panel, .draft-create-card, .auth-modal, .read-modal, .r2-storage-panel, .r2-picker-block, .r2-diagnostic, .empty-state) {
+  border: 1px solid var(--plume-border);
+  border-radius: var(--plume-folder-radius);
+  background:
+    radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+    linear-gradient(145deg, var(--plume-surface-raised), var(--plume-surface));
+  color: var(--plume-ink);
+  box-shadow: var(--plume-shadow);
+}
+#app :is(.my-works-panel, .plume-published-panel, .creation-list-panel, .video-list-panel, .panel, .editor-panel, .editor-tab-panel, .draft-create-card, .auth-modal, .read-modal, .r2-storage-panel, .r2-picker-block, .r2-diagnostic, .empty-state) { padding: clamp(18px, 3vw, 28px); }
+#app :is(.work-card, .feature-card) {
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 32px 22px 30px 42px / 38px 28px 36px 30px;
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
+  color: #fff;
+  box-shadow: 0 18px 38px -14px color-mix(in srgb, var(--accent-deep) 70%, rgba(0,0,0,.55)), 0 3px 8px rgba(0,0,0,.18);
+}
+#app :is(.work-card, .feature-card):hover {
+  border-color: rgba(255,255,255,.42);
+  box-shadow: 0 26px 48px -14px color-mix(in srgb, var(--accent) 75%, rgba(0,0,0,.5)), 0 4px 10px rgba(0,0,0,.22);
+}
+#app .work-card::before { display: none; }
+#app .work-cover {
+  border-radius: 25px 18px 22px 30px / 28px 21px 27px 22px;
+  border-color: rgba(255,255,255,.22);
+  background: linear-gradient(135deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+}
+#app .work-cover::before { border-color: rgba(255,255,255,.2); }
+#app .work-cover::after { background: rgba(255,255,255,.12); }
+#app .work-cover.cover-lilac,
+#app .work-cover.cover-sand,
+#app .work-cover.cover-rose {
+  background: linear-gradient(135deg, rgba(255,255,255,.23), rgba(255,255,255,.06));
+}
+#app .cover-mark {
+  background: #fff;
+  color: var(--accent-deep);
+  box-shadow: 0 8px 18px -8px rgba(0,0,0,.5);
+}
+#app .cover-category {
+  border-color: rgba(255,255,255,.38);
+  background: rgba(255,255,255,.16);
+  color: #fff;
+}
+#app :is(.work-card-body h3, .author-copy strong, .work-subtitle) { color: #fff; }
+#app :is(.card-meta, .work-summary, .author-copy small) { color: rgba(255,255,255,.84); }
+#app .card-meta span:first-child { color: #fff; }
+#app .author-avatar {
+  border: 0;
+  background: #fff;
+  color: var(--accent-deep);
+}
+#app .work-card .icon-button {
+  border-color: rgba(255,255,255,.3);
+  background: rgba(255,255,255,.14);
+  color: #fff;
+}
+#app .work-card .icon-button:hover { background: rgba(255,255,255,.26); }
+#app :is(.status-pill, .count-pill, .result-count, .user-chip) { border-radius: 999px; }
+#app .count-pill {
+  border-color: rgba(255,255,255,.3);
+  background: color-mix(in srgb, var(--accent) 16%, var(--plume-surface));
+  color: var(--plume-ink);
+}
+#app :is(input, select, textarea) {
+  border-color: var(--plume-border);
+  border-radius: 15px;
+  background-color: var(--plume-surface);
+  color: var(--plume-ink);
+}
+#app :is(input, select, textarea):focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+#app .empty-state {
+  background:
+    radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 55%),
+    linear-gradient(145deg, var(--plume-surface-raised), var(--plume-surface));
+}
+#app .site-footer {
+  background: color-mix(in srgb, var(--plume-bg) 88%, transparent);
+  color: var(--plume-muted);
+  border-top: 1px solid var(--plume-border);
+}
+#app .site-footer :is(p, small, a) { color: var(--plume-muted); }
+#app .site-footer .footer-brand b { color: var(--plume-ink); }
+
+/* L'interface de commande reprend la palette et les contrôles de Mémoire,
+   mais la feuille et le contenu du manuscrit restent intacts. */
+#app :is(.editor-only-shell, .text-editor-shell) {
+  --atelier-ink: var(--plume-ink);
+  --atelier-muted: var(--plume-muted);
+  --atelier-border: var(--plume-border);
+  --atelier-violet: var(--accent);
+  --atelier-violet-deep: var(--accent-deep);
+  color: var(--plume-ink);
+  background:
+    radial-gradient(ellipse at 7% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 31rem),
+    radial-gradient(ellipse at 94% 5%, color-mix(in srgb, var(--accent-light) 9%, transparent), transparent 28rem),
+    var(--plume-bg);
+}
+#app :is(.text-editor-top, .editor-commandbar, .plume-editor-smart-tools, .plume-typography-bar, .plume-elements-panel, .plume-block-actions-menu, .plume-color-popover, .plume-palette-scroll) {
+  border-color: var(--plume-border);
+  background: color-mix(in srgb, var(--plume-surface-raised) 94%, transparent);
+  color: var(--plume-ink);
+  box-shadow: var(--plume-shadow);
+}
+#app :is(.editor-command, .editor-history-nav, .editor-page-nav, .plume-smart-button, .plume-template-picker select, .editor-exit-button) {
+  border-color: var(--plume-border);
+  background: var(--plume-surface);
+  color: var(--plume-ink);
+}
+#app :is(.editor-command:hover, .editor-command:focus-visible, .editor-command[aria-pressed=true], .editor-command.is-active, .plume-smart-button:hover, .plume-smart-button[aria-pressed=true]) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--plume-border));
+  background: color-mix(in srgb, var(--accent) 20%, var(--plume-surface));
+  color: var(--plume-ink);
+}
+#app :is(.text-editor-heading, .editor-document-title, .plume-smart-tools-heading, .plume-elements-page-top, .editor-panel-intro) { color: var(--plume-ink); }
+#app :is(.editor-save-state, .plume-smart-hint, .plume-smart-shortcuts) { color: var(--plume-muted); }
+#app :is(.editor-save-state, .editor-history-nav, .editor-page-nav) { border-color: var(--plume-border); }
+#app :is(.editor-save-state.is-dirty) { border-color: #b98535; background: color-mix(in srgb, #b98535 15%, var(--plume-surface)); color: #f4cb84; }
+@media (max-width: 760px) {
+  #app .header-inner { gap: 10px; padding-left: 14px; padding-right: 14px; }
+  #app .desktop-nav { display: none; }
+  #app .mobile-nav { border-top: 1px solid var(--plume-border); }
+  #app .header-actions { gap: 6px; }
+  #app .user-chip { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
+  #app .work-card { border-radius: 26px 20px 24px 34px / 32px 24px 30px 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app *, #app *::before, #app *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
