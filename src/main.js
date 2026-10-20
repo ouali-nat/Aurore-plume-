@@ -24,26 +24,35 @@ const state = { user: null, view: 'discover', publicWorks: [], publicWorksError:
 const MAX_LATEX_SOURCE_LENGTH = 3000;
 
 function sanitizePdfColorFunctions(clonedDocument) {
-  // html2canvas ne sait pas parser color(srgb ...). Neutraliser ces déclarations
-  // dans le document de capture sans modifier l'apparence normale de l'éditeur.
+  // html2canvas 1.x ne comprend pas les fonctions CSS Color 4 (color(srgb ...)).
+  // Les déclarations peuvent être dans des règles imbriquées (@media, @supports)
+  // ou dans des styles inline : on parcourt donc toute la feuille clonée.
   const safeColor = 'rgb(82, 76, 94)';
   const sanitizeStyle = (style) => {
     if (!style) return;
     for (let index = style.length - 1; index >= 0; index--) {
       const property = style.item(index);
       const value = style.getPropertyValue(property);
-      if (/color\s*\(/i.test(value)) style.setProperty(property, value.replace(/color\s*\([^)]*\)/gi, safeColor), style.getPropertyPriority(property));
+      if (/color\\s*\\(/i.test(value)) {
+        const sanitized = value.replace(/color\\s*\\([^)]*\\)/gi, safeColor);
+        style.setProperty(property, sanitized, style.getPropertyPriority(property));
+      }
+    }
+  };
+  const sanitizeRules = (rules) => {
+    for (const rule of Array.from(rules || [])) {
+      if (rule.style) sanitizeStyle(rule.style);
+      // Les règles CSS imbriquées sont souvent la source oubliée du problème.
+      try { if (rule.cssRules) sanitizeRules(rule.cssRules); } catch {}
     }
   };
   try {
     for (const sheet of Array.from(clonedDocument.styleSheets || [])) {
-      let rules;
-      try { rules = sheet.cssRules; } catch { continue; }
-      for (const rule of Array.from(rules || [])) {
-        if (rule.style) sanitizeStyle(rule.style);
-      }
+      try { sanitizeRules(sheet.cssRules); } catch {}
     }
-  } catch (error) { console.warn('Nettoyage des couleurs PDF partiel', error); }
+  } catch (error) {
+    console.warn('Nettoyage des couleurs PDF partiel', error);
+  }
   clonedDocument.querySelectorAll('[style]').forEach((node) => sanitizeStyle(node.style));
 }
 
