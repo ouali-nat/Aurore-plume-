@@ -33,7 +33,7 @@ function sanitizePdfColorFunctions(clonedDocument) {
     for (let index = style.length - 1; index >= 0; index--) {
       const property = style.item(index);
       const value = style.getPropertyValue(property);
-      if (/color\s*\(/i.test(value)) {
+      if (new RegExp('color\\s*\\(', 'i').test(value)) {
         const sanitized = value.replace(/color\s*\([^)]*\)/gi, safeColor);
         style.setProperty(property, sanitized, style.getPropertyPriority(property));
       }
