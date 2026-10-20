@@ -25,3 +25,16 @@
  .plume-nudge{min-width:280px;max-width:calc(100vw - 20px)}
  .plume-nudge-toggle{padding-inline:10px!important}
 }
+
+
+/* Menu contextuel directement sur la page sélectionnée */
+#plume-editor-canvas{cursor:pointer;outline:2px solid transparent;outline-offset:3px;transition:outline-color .15s ease,aspect-ratio .18s ease}
+#plume-editor-canvas.plume-page-selected{outline-color:var(--atelier-accent,#8b78d8)}
+.plume-page-context{position:absolute!important;top:8px!important;right:8px!important;z-index:1000!important;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:auto}
+.plume-page-menu-toggle{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(120,110,150,.35);border-radius:11px;background:rgba(255,255,255,.96);color:#373044;box-shadow:0 3px 12px rgba(25,20,45,.15);font-size:23px;line-height:1;cursor:pointer}
+.plume-page-menu{width:220px;max-width:calc(100vw - 40px);padding:6px;border:1px solid rgba(120,110,150,.25);border-radius:13px;background:rgba(255,255,255,.98);box-shadow:0 10px 30px rgba(25,20,45,.2);display:flex;flex-direction:column;gap:3px}
+.plume-page-menu[hidden]{display:none!important}
+.plume-page-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border:0;border-radius:8px;background:transparent;color:#302a3b;text-align:left;font:inherit;font-size:13px;cursor:pointer}
+.plume-page-menu button:hover,.plume-page-menu button:focus-visible{background:#f0edf8;outline:none}
+#plume-editor-canvas.plume-page-landscape{max-width:100%;width:100%}
+.plume-page-cover-image{user-select:none}
