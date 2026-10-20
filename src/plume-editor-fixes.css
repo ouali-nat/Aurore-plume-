@@ -38,3 +38,31 @@
 .plume-page-menu button:hover,.plume-page-menu button:focus-visible{background:#f0edf8;outline:none}
 #plume-editor-canvas.plume-page-landscape{max-width:100%;width:100%}
 .plume-page-cover-image{user-select:none}
+
+
+/* Correctif de détachement : le panneau sort du bloc et reste ancré à la fenêtre */
+.plume-nudge.is-floating{
+  position:fixed!important;
+  width:min(340px,calc(100vw - 16px))!important;
+  min-width:min(286px,calc(100vw - 16px))!important;
+  max-width:calc(100vw - 16px)!important;
+  max-height:calc(100vh - 16px)!important;
+  overflow:auto!important;
+  z-index:2147483000!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  transform:none;
+  background:var(--atelier-panel,#fff);
+  border:1px solid rgba(120,110,150,.32);
+  border-radius:14px;
+  padding:8px;
+  box-shadow:0 12px 34px rgba(20,15,35,.24);
+}
+.plume-nudge.is-floating .plume-nudge-drag-handle{touch-action:none;cursor:grab;flex:0 0 32px;min-width:32px;white-space:nowrap;overflow-wrap:normal}
+.plume-nudge.is-floating .plume-nudge-drag-handle:active{cursor:grabbing}
+.plume-nudge.is-floating .plume-nudge-head{flex-wrap:nowrap!important}
+.plume-nudge.is-floating .plume-nudge-title{white-space:nowrap!important;overflow-wrap:normal!important}
+.plume-nudge.is-floating .plume-nudge-toggle{flex:0 0 auto!important;min-width:max-content!important;white-space:nowrap!important;overflow-wrap:normal!important}
+.plume-nudge.is-floating .plume-nudge-controls{flex-wrap:nowrap!important}
+#plume-editor-canvas .plume-page-context{touch-action:manipulation}
+.plume-page-menu-toggle{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
