@@ -2,16 +2,19 @@
 const THEME_KEY='auraster-theme', COLOR_KEY='auraster-color-theme';
 const systemLight=window.matchMedia('(prefers-color-scheme: light)');
 const PALETTES=[
-{id:'violet',name:'Violet',color:'#6D28D9'},{id:'rouge',name:'Rouge',color:'#B91C1C'},
-{id:'vert',name:'Vert',color:'#15803D'},{id:'bleu',name:'Bleu',color:'#1D4ED8'},
+{id:'violet',name:'Violet',color:'#6D28D9'},{id:'rouge',name:'Rouge',color:'#C93648'},
+{id:'vert',name:'Vert',color:'#198754'},{id:'bleu',name:'Bleu',color:'#1D4ED8'},
 {id:'orange',name:'Orange',color:'#C85C0D'},{id:'rose',name:'Rose',color:'#BE185D'},
-{id:'lime',name:'Citron vert',color:'#65A30D'},{id:'bordeaux',name:'Bordeaux',color:'#8B1E3F'},
-{id:'azur',name:'Azur',color:'#0369A1'},{id:'jaune',name:'Jaune',color:'#D9A406'},
-{id:'olive',name:'Olive',color:'#4A5520'},{id:'chocolat',name:'Chocolat',color:'#5C300F'},
-{id:'sauge',name:'Sauge',color:'#4A7A5C'},{id:'magenta',name:'Magenta',color:'#A21CAF'},
-{id:'petrole-cuivre',name:'Pétrole',color:'#104C64'},{id:'prune-rouge',name:'Prune',color:'#341A2C'},
-{id:'rose-sable',name:'Rose poudré',color:'#EFC1B5'},{id:'sarcelle-creme',name:'Sarcelle',color:'#0D6B70'}
-];
+{id:'indigo',name:'Indigo',color:'#4338CA'},{id:'emeraude',name:'Émeraude',color:'#047857'},
+{id:'lime',name:'Citron vert',color:'#4D7C0F'},{id:'corail',name:'Corail',color:'#C2412D'},
+{id:'bordeaux',name:'Bordeaux',color:'#881337'},{id:'azur',name:'Azur',color:'#0369A1'},
+{id:'petrole-cuivre',name:'Pétrole & cuivre',color:'#104C64'},{id:'nuit-peche',name:'Nuit & pêche',color:'#343E62'},
+{id:'prune-rouge',name:'Prune & rouge',color:'#5B203F'},{id:'terre-orange',name:'Terre & orange',color:'#8C4221'},
+{id:'rose-sable',name:'Rose sable',color:'#8B5451'},{id:'sarcelle-creme',name:'Sarcelle & crème',color:'#0D5058'},
+{id:'jaune',name:'Jaune',color:'#8A6100'},{id:'olive',name:'Olive',color:'#4A5520'},
+{id:'chocolat',name:'Chocolat',color:'#5C300F'},{id:'sauge',name:'Sauge',color:'#4A7A5C'},
+{id:'magenta',name:'Magenta',color:'#A21CAF'}
+];;
 const allowed=new Set(PALETTES.map(p=>p.id));
 const get=(k,f)=>{try{return localStorage.getItem(k)||f}catch{return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
