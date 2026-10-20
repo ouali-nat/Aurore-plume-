@@ -7,9 +7,7 @@ import './aurore-science-keyboard.css';
 import './plume-latex-flow.css';
 import './plume-pill-bar.css';
 import './plume-theme.css';
-import './plume-dossier-design.css';
-import './plume-memoire-parity.css';
-import './plume-memoire-foundation.css';
+import './plume-rebuild.css';
 import './plume-theme.js';
 import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -156,21 +154,45 @@ function renderDiscover() {
     ? `<div class="work-grid">${works.slice(0, 9).map((work) => workCard(work)).join('')}</div>`
     : state.publicWorksError
       ? `<div class="empty-state"><span>!</span><h3>Les œuvres sont momentanément indisponibles.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
-      : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Écrire la première œuvre <span aria-hidden="true">↗</span></button></div>`;
+      : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Publier la première œuvre <span aria-hidden="true">↗</span></button></div>`;
   shell(`
-    <section class="discover-intro container discover-intro-minimal">
-      <button class="button button-quiet discover-write-button" data-view="atelier">Écrire une œuvre <span aria-hidden="true">↗</span></button>
+    <section class="container discover-intro">
+      <div class="plume-home-hero">
+        <div class="plume-home-hero-grid">
+          <div>
+            <span class="plume-home-kicker">Écrire · partager · grandir</span>
+            <h1>Les mots trouvent <em>leur place.</em></h1>
+            <p>Un espace pour écrire librement, garder ses brouillons en sécurité et faire découvrir ses textes, ses images, sa musique ou ses projets au monde.</p>
+            <div class="plume-home-actions">
+              <button class="button button-primary button-large" data-view="atelier">Entrer dans mon atelier <span aria-hidden="true">↗</span></button>
+              <button class="button button-quiet button-large" data-view="library">Découvrir les œuvres</button>
+            </div>
+          </div>
+          <div class="plume-home-orbit" aria-hidden="true">
+            <div class="plume-home-orbit-ring"></div>
+            <div class="plume-home-note">
+              <div class="note-label">CARNET · AURORE PLUME</div>
+              <h2>Une idée mérite une page.</h2>
+              <p>Écrivez à votre rythme. Votre voix n’a pas besoin de ressembler à une autre.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="plume-home-features">
+        <article class="plume-feature-tile"><div class="plume-feature-icon" aria-hidden="true">✎</div><h3>Créer à son rythme</h3><p>Des brouillons privés et un atelier pour donner forme à vos idées, sans pression.</p></article>
+        <article class="plume-feature-tile"><div class="plume-feature-icon" aria-hidden="true">◈</div><h3>Explorer plusieurs formes</h3><p>Textes, vidéos, arts visuels, dessins, musique et projets numériques.</p></article>
+        <article class="plume-feature-tile"><div class="plume-feature-icon" aria-hidden="true">↗</div><h3>Partager avec intention</h3><p>Choisissez quand une œuvre est prête à être publiée et découverte.</p></article>
+      </div>
     </section>
     <section class="section container home-library" id="library-section">
       <div class="section-heading">
-        <div><div class="eyebrow">À LIRE · À DÉCOUVRIR</div><h2>Les œuvres publiées</h2><p>Retrouvez ici les œuvres réellement rendues publiques, des plus récentes aux plus anciennes.</p></div>
+        <div><div class="eyebrow">À LIRE · À DÉCOUVRIR</div><h2>Les œuvres publiées</h2><p>Les créations réellement publiques, réunies dans un espace simple à parcourir.</p></div>
         <button class="text-link" data-view="library">Toutes les œuvres <span>↗</span></button>
       </div>
       ${worksMarkup}
     </section>
   `);
 }
-
 function renderLibrary() {
   const works = state.publicWorks;
   const filtered = works.filter((work) => [work.title, work.subtitle, work.summary, work.genre, authorOf(work)?.display_name].join(' ').toLowerCase().includes(state.search.toLowerCase()));
