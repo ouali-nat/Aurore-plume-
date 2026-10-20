@@ -1,0 +1,27 @@
+/* Aurore Plume — socle visuel aligné sur Aurore Mémoire (fond, surfaces, textes, bordures, palettes, police).
+   Valeurs reprises de style.css d'Aurore Mémoire. Sélecteurs volontairement plus spécifiques que plume-theme.css :
+   ils l'emportent quel que soit l'ordre de chargement. */
+
+/* Sombre — identique à Mémoire */
+html:root[data-theme="dark"]{--plume-bg:#09080F;--plume-surface:#12101A;--plume-surface-raised:#181523;--plume-surface-soft:color-mix(in srgb,var(--theme-primary,#8B5CF6) 14%,#12101A);--plume-ink:#F8F7FF;--plume-muted:#A9A3B8;--plume-border:color-mix(in srgb,var(--theme-primary,#8B5CF6) 22%,#2A2438);--plume-shadow:0 12px 34px rgba(0,0,0,.26);--ink:var(--plume-ink);--paper:var(--plume-bg)}
+
+/* Clair — identique à Mémoire */
+html:root[data-theme="light"]{--plume-bg:#F3F1F8;--plume-surface:#FFFFFF;--plume-surface-raised:#F0EBF8;--plume-surface-soft:color-mix(in srgb,var(--theme-primary,#8B5CF6) 10%,#fff);--plume-ink:#17131F;--plume-muted:#5F5970;--plume-border:color-mix(in srgb,var(--theme-primary,#8B5CF6) 24%,#DAD2E5);--plume-shadow:0 8px 26px rgba(55,36,82,.10);--ink:var(--plume-ink);--paper:var(--plume-bg)}
+
+/* Palettes de couleur : mêmes valeurs que Mémoire (primary = accent, secondary = accent-light, strong = accent-deep) */
+html:root[data-theme][data-color-theme="bordeaux"]{--theme-primary:#C12B55;--theme-secondary:#FB7185;--theme-strong:#881337}
+html:root[data-theme][data-color-theme="petrole-cuivre"]{--theme-primary:#3E8399;--theme-secondary:#D59D80;--theme-strong:#104C64;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
+html:root[data-theme][data-color-theme="prune-rouge"]{--theme-primary:#B51A52;--theme-secondary:#D78BAD;--theme-strong:#5B203F;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
+html:root[data-theme][data-color-theme="rose-sable"]{--theme-primary:#D98E89;--theme-secondary:#EFC1B5;--theme-strong:#8B5451;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
+html:root[data-theme][data-color-theme="sarcelle-creme"]{--theme-primary:#0D9A9A;--theme-secondary:#8DD5C7;--theme-strong:#0D5058;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
+
+/* Fond ambiant : lueurs d'accent de Mémoire, fixes au défilement */
+html:root[data-theme][data-color-theme] body{background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--theme-primary) 16%,transparent),transparent 34%),radial-gradient(circle at 96% 12%,color-mix(in srgb,var(--theme-secondary) 11%,transparent),transparent 30%),var(--plume-bg)!important;background-attachment:fixed!important;color:var(--plume-ink)!important;min-height:100vh}
+
+/* Police : même pile système que Mémoire (le contenu des pages éditées garde ses polices) */
+html body,#app{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app :is(button,input,textarea,select){font-family:inherit}
+#app :is(.site-header,.site-footer,.page-hero,.section-heading,.work-card,.feature-card,.my-works-panel,.closing-band,.workspace-header) :is(h1,h2,h3,h4,strong,.brand-sigil){font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+/* En-tête vitré, comme la barre du haut de Mémoire */
+html:root[data-theme][data-color-theme] #app .site-header{background:color-mix(in srgb,var(--plume-bg) 84%,transparent)!important;border-bottom:1px solid color-mix(in srgb,var(--theme-secondary) 14%,var(--plume-border))!important;backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25)}

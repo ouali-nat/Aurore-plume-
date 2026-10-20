@@ -15,15 +15,15 @@ const PALETTES=[
 const allowed=new Set(PALETTES.map(p=>p.id));
 const get=(k,f)=>{try{return localStorage.getItem(k)||f}catch{return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
-let dock,trigger,panel,modes,swatches,colorName,colorChoice='violet',themeChoice='systeme';
+let dock,trigger,panel,modes,swatches,colorName,colorChoice='violet',themeChoice='sombre';
 function displayTheme(choice){return choice==='systeme'?(systemLight.matches?'clair':'sombre'):choice}
 function metaColor(){
  const meta=document.querySelector('meta[name="theme-color"]');
  const item=PALETTES.find(p=>p.id===colorChoice)||PALETTES[0];
- if(meta)meta.setAttribute('content',displayTheme(themeChoice)==='sombre'?'#11101a':item.color);
+ if(meta)meta.setAttribute('content',displayTheme(themeChoice)==='sombre'?'#09080F':item.color);
 }
 function applyTheme(choice,save=true){
- themeChoice=['clair','sombre','systeme'].includes(choice)?choice:'systeme';
+ themeChoice=['clair','sombre','systeme'].includes(choice)?choice:'sombre';
  const light=displayTheme(themeChoice)==='clair';
  document.documentElement.setAttribute('data-theme',light?'light':'dark');
  document.documentElement.setAttribute('data-theme-choix',themeChoice);
@@ -73,7 +73,7 @@ function initThemeDock(){
  swatches.forEach(b=>b.addEventListener('click',()=>{applyColor(b.dataset.colorChoice);togglePanel(false)}));
  document.addEventListener('click',e=>{if(!dock.contains(e.target))togglePanel(false)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')togglePanel(false)});
- systemLight.addEventListener?.('change',()=>{if(get(THEME_KEY,'systeme')==='systeme')applyTheme('systeme',false)});
- applyTheme(get(THEME_KEY,'systeme'),false);applyColor(get(COLOR_KEY,'violet'),false);
+ systemLight.addEventListener?.('change',()=>{if(get(THEME_KEY,'sombre')==='systeme')applyTheme('systeme',false)});
+ applyTheme(get(THEME_KEY,'sombre'),false);applyColor(get(COLOR_KEY,'violet'),false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initThemeDock,{once:true});else initThemeDock();
