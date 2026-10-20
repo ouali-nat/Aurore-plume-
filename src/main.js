@@ -2147,7 +2147,30 @@ app.addEventListener('change',(event)=>{
 });
 app.addEventListener('click',(event)=>{
   const nudgeToggle=event.target.closest('[data-toggle-nudge-float]');
-  if(nudgeToggle){const panel=nudgeToggle.closest('.plume-nudge');if(!panel)return;const floating=!panel.classList.contains('is-floating');if(floating){panel.classList.add('is-floating');panel.style.left=Math.max(8,window.innerWidth-Math.min(340,window.innerWidth-16)-16)+'px';panel.style.top=Math.max(8,Math.min(96,window.innerHeight-180))+'px';panel.style.right='auto';panel.style.bottom='auto';}else{panel.classList.remove('is-floating');panel.style.left='';panel.style.top='';panel.style.right='';panel.style.bottom='';}nudgeToggle.textContent=floating?'Fixer':'Détacher';nudgeToggle.setAttribute('aria-pressed',String(floating));nudgeToggle.setAttribute('aria-label',floating?'Fixer le panneau Déplacer':'Détacher le panneau Déplacer');return;}
+  if(nudgeToggle){
+    const panel=nudgeToggle.closest('.plume-nudge');if(!panel)return;
+    const floating=!panel.classList.contains('is-floating');
+    if(floating){
+      panel._plumeNudgePlaceholder=document.createComment('position originale du panneau Déplacer');
+      panel.parentNode?.insertBefore(panel._plumeNudgePlaceholder,panel);
+      app.appendChild(panel);
+      panel.classList.add('is-floating');
+      panel.style.position='fixed';
+      panel.style.left=Math.max(8,window.innerWidth-Math.min(340,window.innerWidth-16)-16)+'px';
+      panel.style.top=Math.max(8,Math.min(96,window.innerHeight-180))+'px';
+      panel.style.right='auto';panel.style.bottom='auto';panel.style.transform='none';
+    }else{
+      panel.classList.remove('is-floating');
+      const placeholder=panel._plumeNudgePlaceholder;
+      if(placeholder?.parentNode)placeholder.parentNode.insertBefore(panel,placeholder);
+      placeholder?.remove();delete panel._plumeNudgePlaceholder;
+      panel.style.position='';panel.style.left='';panel.style.top='';panel.style.right='';panel.style.bottom='';panel.style.transform='';
+    }
+    nudgeToggle.textContent=floating?'Fixer':'Détacher';
+    nudgeToggle.setAttribute('aria-pressed',String(floating));
+    nudgeToggle.setAttribute('aria-label',floating?'Fixer le panneau Déplacer':'Détacher le panneau Déplacer');
+    return;
+  }
   const textChip=event.target.closest('[data-open-text-color]');
   if(textChip){const input=textChip.parentElement?.querySelector('[data-text-style="color"]');input?.click();return;}
   const customChip=event.target.closest('[data-open-custom-color]');
