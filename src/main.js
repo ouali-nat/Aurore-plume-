@@ -32,7 +32,7 @@ function sanitizePdfColorFunctions(clonedDocument) {
     for (let index = style.length - 1; index >= 0; index--) {
       const property = style.item(index);
       const value = style.getPropertyValue(property);
-      if (/color\\s*\\(/i.test(value)) style.setProperty(property, safeColor, style.getPropertyPriority(property));
+      if (/color\s*\(/i.test(value)) style.setProperty(property, value.replace(/color\s*\([^)]*\)/gi, safeColor), style.getPropertyPriority(property));
     }
   };
   try {
@@ -55,6 +55,16 @@ const authorOf = (work) => Array.isArray(work.plume_profiles) ? work.plume_profi
 const formatDate = (value) => value ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : 'Récemment';
 const words = (value = '') => (String(value).trim().match(/\S+/g) || []).length;
 const initials = (value = '') => value.trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase() || 'A';
+
+// Premier rendu anticipé : une erreur dans un module secondaire ne doit pas laisser
+// l’écran « Aurore Plume se prépare… » bloqué indéfiniment.
+try {
+  render();
+} catch (startupError) {
+  console.error('Démarrage initial Aurore Plume', startupError);
+  const boot = document.querySelector('.boot-screen');
+  if (boot) boot.innerHTML = '<span class="brand-sigil">a.</span><p>Le démarrage a rencontré un problème. Rechargez la page ; si cela persiste, transmettez le message de console.</p>';
+}
 
 function toast(message, kind = 'success') {
   toastRoot.innerHTML = '<div class="toast toast-' + e(kind) + '">' + e(message) + '</div>';
