@@ -571,7 +571,4 @@ html[data-theme="dark"] .download-progress-toast {
   background: var(--plume-bg);
   color: var(--plume-ink);
 }
-/* Ne pas recolorer la feuille réelle : ses polices, ses marges et sa mise en page sont conservées. */
-#app :is(.editor-paper-sheet,.editor-preview-paper,.editor-print-cover,.editor-print-cover-stage) {
-  color: initial;
-}
+/* Les règles typographiques et les couleurs des pages éditoriales restent intactes. */
