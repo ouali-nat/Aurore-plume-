@@ -1,0 +1,27 @@
+/* Corrections ciblées de l’espace éditorial Aurore Plume. */
+#plume-editor-canvas{position:relative;isolation:isolate}
+.plume-page-cover-image{
+  position:absolute!important;inset:0!important;display:block!important;
+  width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:center center!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  z-index:0!important;pointer-events:none!important;
+}
+#plume-editor-canvas .plume-canvas-block{z-index:1}
+.editor-page-actions-card{margin:0 0 16px}
+.editor-page-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+.editor-page-cover-upload{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.editor-page-actions-card>small{display:block;color:var(--atelier-muted,#777287);font-size:12px;line-height:1.55}
+.editor-page-delete-button{border-color:#ead3d5!important;color:#9a3948!important}
+.plume-nudge{min-width:286px;width:max-content;max-width:calc(100vw - 24px)}
+.plume-nudge-head{display:flex!important;align-items:center!important;gap:8px!important;min-width:0}
+.plume-nudge-title{flex:1 1 auto;white-space:nowrap}
+.plume-nudge-drag-handle{flex:0 0 32px}
+.plume-nudge-toggle{flex:0 0 auto!important;width:auto!important;min-width:max-content!important;white-space:nowrap!important;padding:7px 12px!important;writing-mode:horizontal-tb!important;word-break:normal!important;overflow-wrap:normal!important}
+.plume-nudge.is-floating{width:max-content;min-width:286px;max-width:calc(100vw - 24px)}
+@media(max-width:560px){
+ .editor-page-actions{align-items:stretch;flex-direction:column}
+ .editor-page-actions>*{width:100%;text-align:center}
+ .plume-nudge{min-width:280px;max-width:calc(100vw - 20px)}
+ .plume-nudge-toggle{padding-inline:10px!important}
+}
