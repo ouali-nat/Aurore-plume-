@@ -26,6 +26,30 @@
   </head>
   <body>
     <div id="app"><div class="boot-screen"><span class="brand-sigil">a.</span><p>Aurore Plume se prépare…</p></div></div>
+    <script id="aurore-plume-boot-guard">
+      (function () {
+        var app = document.getElementById('app');
+        if (!app) return;
+        var finished = false;
+        function showFailure(detail) {
+          if (finished || !app.querySelector('.boot-screen')) return;
+          finished = true;
+          app.innerHTML = '<main style="max-width:620px;margin:12vh auto;padding:28px 22px;font:16px/1.6 system-ui,sans-serif;color:var(--text,#272333)"><div style="font-size:28px;font-weight:800;color:#7c3aed">a.</div><h1 style="font-size:25px">Aurore Plume n’a pas démarré</h1><p>Le chargement du site s’est interrompu avant l’affichage. Vos brouillons ne sont pas supprimés.</p><p id="boot-error-detail" style="padding:12px;border-radius:10px;background:rgba(127,127,127,.12);overflow-wrap:anywhere;font-size:13px"></p><button id="boot-retry" type="button" style="padding:12px 18px;border:0;border-radius:10px;background:#6d28d9;color:white;font-weight:700">Réessayer le chargement</button></main>';
+          var detailNode = document.getElementById('boot-error-detail');
+          if (detailNode) detailNode.textContent = String(detail || 'Le module principal ne répond pas.').slice(0, 240);
+          document.getElementById('boot-retry')?.addEventListener('click', function () { window.location.reload(); });
+        }
+        window.addEventListener('error', function (event) {
+          if (app.querySelector('.boot-screen')) showFailure(event.message || 'Erreur JavaScript au démarrage. Consultez la console du navigateur.');
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          if (app.querySelector('.boot-screen')) showFailure(event.reason && (event.reason.message || String(event.reason)) || 'Une promesse a échoué au démarrage.');
+        });
+        window.setTimeout(function () {
+          if (app.querySelector('.boot-screen')) showFailure('Le module JavaScript principal ne s’est pas initialisé dans le délai prévu. Rechargez une fois la page ; si le problème persiste, transmettez le détail affiché.');
+        }, 7000);
+      })();
+    </script>
     <div id="modal-root"></div>
     <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="/src/main.js"></script>
