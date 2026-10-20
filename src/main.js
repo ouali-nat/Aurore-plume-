@@ -317,7 +317,11 @@ function updateEditorCanvas() {
   const canvas=document.querySelector('#plume-editor-canvas'); if(canvas) {
     const settings=editorialSettingsFromForm();
     const page=state.editorPages[state.editorPageIndex]||{};
-    canvas.style.aspectRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210';
+    const pageRotated=Number(page.rotation||0)%180!==0;
+    const portraitRatio=settings.page_format==='A4'?'210 / 297':settings.page_format==='Letter'?'8.5 / 11':'148 / 210';
+    const landscapeRatio=settings.page_format==='A4'?'297 / 210':settings.page_format==='Letter'?'11 / 8.5':'210 / 148';
+    canvas.style.aspectRatio=pageRotated?landscapeRatio:portraitRatio;
+    canvas.classList.toggle('plume-page-landscape',pageRotated);
     canvas.style.backgroundColor=page.background||'#ffffff';
     const pageColor=page.background||'#ffffff';
     const customPageColor=document.querySelector('#editor-page-color-custom');
@@ -326,6 +330,11 @@ function updateEditorCanvas() {
     const measuredWidth=Math.round(canvas.getBoundingClientRect().width||0);
     if(measuredWidth>=120&&measuredWidth<=2400)state.editorRenderWidth=measuredWidth;
     canvas.innerHTML=editorCanvasMarkup();
+    const pageTools=document.createElement('div');
+    pageTools.className='plume-page-context';
+    pageTools.innerHTML='<button type="button" class="plume-page-menu-toggle" data-page-menu-toggle aria-label="Options de la page" aria-expanded="false">⋮</button><div class="plume-page-menu" data-page-menu hidden><button type="button" data-page-rotate>↻ Rotation / orientation</button><button type="button" data-page-import>▧ Importer une image</button><button type="button" data-page-cover>★ Définir comme couverture</button><button type="button" data-page-delete>Supprimer la page</button></div>';
+    canvas.appendChild(pageTools);
+    canvas.setAttribute('aria-label','Page '+(state.editorPageIndex+1)+', toucher pour sélectionner');
     applyEditorUiPreferences();
     if(canvas.querySelector('[data-latex-render]')){void ensureMathJax().then(async(math)=>{const nodes=[...canvas.querySelectorAll('[data-latex-render]')];await math.typesetPromise(nodes);fitLatexMath(canvas);}).catch((error)=>console.warn('Rendu LaTeX indisponible',error.message));}
     void hydrateR2Images(canvas);
@@ -447,6 +456,8 @@ function normalizeEditorPages(pages) {
     // La couleur de fond appartient à la page et doit survivre au chargement,
     // à l'historique, à la récupération locale et à l'export PDF.
     background: /^#[0-9a-f]{6}$/i.test(String(page?.background || '')) ? String(page.background) : '#ffffff',
+    rotation: Number(page?.rotation)===90 ? 90 : 0,
+    isCover: page?.isCover===true,
     coverImage: typeof page?.coverImage === 'string' && page.coverImage.startsWith('data:image/') ? page.coverImage : '',
     blocks: (Array.isArray(page?.blocks) ? page.blocks : []).map((block) => {
       const normalized = { ...block };
@@ -1709,6 +1720,22 @@ app.addEventListener('click', async (event) => {
       finally{button.disabled=false;button.textContent='Valider et insérer';}
     })();
     return;
+  }
+  const pageMenuToggle=event.target.closest('[data-page-menu-toggle]');
+  if(pageMenuToggle){const menu=pageMenuToggle.parentElement?.querySelector('[data-page-menu]');if(menu){menu.hidden=!menu.hidden;pageMenuToggle.setAttribute('aria-expanded',String(!menu.hidden));}return;}
+  const pageImport=event.target.closest('[data-page-import]');
+  if(pageImport){document.querySelector('#editor-page-cover-file')?.click();return;}
+  const pageRotate=event.target.closest('[data-page-rotate]');
+  if(pageRotate){const page=state.editorPages[state.editorPageIndex];if(page){page.rotation=(Number(page.rotation||0)+90)%180;updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();toast(page.rotation?'Page en orientation paysage.':'Page en orientation portrait.');}return;}
+  const pageCover=event.target.closest('[data-page-cover]');
+  if(pageCover){state.editorPages.forEach((page,index)=>{page.isCover=index===state.editorPageIndex;});updateEditorCanvas();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();toast('Cette page est définie comme couverture.');return;}
+  const pageDelete=event.target.closest('[data-page-delete]');
+  if(pageDelete){const deleteButton=document.querySelector('[data-editor-delete-page]');deleteButton?.click();return;}
+  const canvasBlank=event.target.closest('#plume-editor-canvas');
+  if(canvasBlank&&!event.target.closest('.plume-canvas-block,.plume-page-context')){
+    state.editorSelectedBlock=null;
+    document.querySelectorAll('.plume-canvas-block.is-selected').forEach((node)=>node.classList.remove('is-selected'));
+    canvasBlank.classList.add('plume-page-selected');
   }
   const pageColorButton=event.target.closest('[data-page-color]');if(pageColorButton){const p=state.editorPages[state.editorPageIndex];if(p){p.background=pageColorButton.dataset.pageColor;const c=document.querySelector('#plume-editor-canvas');if(c)c.style.backgroundColor=p.background;const custom=document.querySelector('#editor-page-color-custom');if(custom)custom.value=p.background;updateEditorPreviews();syncEditorCanvas();recordEditorHistory();saveEditorRecovery();}return;}
   const rotateButton=event.target.closest('[data-rotate-delta]');
