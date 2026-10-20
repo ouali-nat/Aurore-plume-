@@ -351,7 +351,7 @@ html[data-theme="dark"] body {
 #aurore-plume-theme-dock .plume-theme-mode[aria-pressed="true"] {
   border-color: rgba(255,255,255,.24);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent));
+  background: linear-gradient(135deg, var(--accent-deep), color-mix(in srgb, var(--accent-deep) 55%, var(--accent)));
 }
 #aurore-plume-theme-dock .plume-theme-close {
   border-color: var(--plume-border);
