@@ -294,7 +294,8 @@ async function hydrateR2Images(root) {
 function editorCanvasMarkup(pageOverride = null, settingsOverride = null) {
   const page = pageOverride || state.editorPages[state.editorPageIndex] || { blocks: [] };
   const settings = settingsOverride || editorialSettingsFromForm();
-  return page.blocks.map((b) => {
+  const pageCover = page.coverImage ? '<img class="plume-page-cover-image" src="'+e(page.coverImage)+'" alt="Image de couverture de la page">' : '';
+  return pageCover + page.blocks.map((b) => {
     const useEditorialFont = b.type === 'text' && b.editorialFont !== false;
     const useEditorialSize = b.type === 'text' && b.editorialSize !== false;
     const useEditorialLeading = b.type === 'text' && b.editorialLineHeight !== false;
@@ -331,6 +332,7 @@ function updateEditorCanvas() {
   }
   const thumbs=document.querySelector('#plume-page-thumbnails');
   if(thumbs) thumbs.innerHTML=state.editorPages.map((page,index)=>'<button type="button" class="plume-page-thumb'+(index===state.editorPageIndex?' is-current':'')+'" data-select-page="'+index+'" aria-label="Ouvrir la page '+(index+1)+'"><span class="plume-page-thumb-preview">'+(page.blocks||[]).slice(0,5).map((block)=>'<i class="thumb-block thumb-'+e(block.type||'text')+'"></i>').join('')+'</span><b>Page '+(index+1)+'</b><small>'+((page.blocks||[]).length)+' élément'+((page.blocks||[]).length===1?'':'s')+'</small></button>').join('');
+  const selectedPageNumber=document.getElementById('editor-selected-page-number'); if(selectedPageNumber) selectedPageNumber.textContent=String(state.editorPageIndex+1);
   const count=document.getElementById('editor-page-count'); if(count&&state.editorTab==='manuscript') count.textContent=String(state.editorPageIndex+1).padStart(2,'0')+' / '+String(state.editorPages.length).padStart(2,'0');
   const prev=document.querySelector('[data-editor-page-prev]'); const next=document.querySelector('[data-editor-page-next]');
   if(prev&&state.editorTab==='manuscript') prev.disabled=state.editorPageIndex===0;
@@ -445,6 +447,7 @@ function normalizeEditorPages(pages) {
     // La couleur de fond appartient à la page et doit survivre au chargement,
     // à l'historique, à la récupération locale et à l'export PDF.
     background: /^#[0-9a-f]{6}$/i.test(String(page?.background || '')) ? String(page.background) : '#ffffff',
+    coverImage: typeof page?.coverImage === 'string' && page.coverImage.startsWith('data:image/') ? page.coverImage : '',
     blocks: (Array.isArray(page?.blocks) ? page.blocks : []).map((block) => {
       const normalized = { ...block };
       if (normalized.type === 'text') {
@@ -748,7 +751,7 @@ function renderTextEditor() {
           </div>
         </section>
         <section class="editor-tab-panel layout-panel" id="editor-panel-layout" role="tabpanel" ${state.editorTab === 'layout' ? '' : 'hidden'}>
-          <div class="editor-panel-intro"><div><span class="eyebrow">PRÉPARATION DU LIVRE</span><h2>Une page qui vous ressemble.</h2><p>Ces réglages sont enregistrés avec votre œuvre et utilisés dans l’aperçu avant impression PDF.</p></div></div><section class="editor-page-color-card"><h3>Couleur de la page sélectionnée</h3><p>Sélectionne une page dans les miniatures, puis choisis sa couleur de fond.</p><div class="editor-page-color-swatches"><button type="button" data-page-color="#ffffff" style="--page-swatch:#ffffff" aria-label="Blanc"></button><button type="button" data-page-color="#fff3df" style="--page-swatch:#fff3df" aria-label="Crème"></button><button type="button" data-page-color="#f7e8ee" style="--page-swatch:#f7e8ee" aria-label="Rose"></button><button type="button" data-page-color="#e9f2ff" style="--page-swatch:#e9f2ff" aria-label="Bleu"></button><button type="button" data-page-color="#e9f5e9" style="--page-swatch:#e9f5e9" aria-label="Vert"></button><button type="button" data-page-color="#eee7f7" style="--page-swatch:#eee7f7" aria-label="Lavande"></button><button type="button" data-page-color="#272433" style="--page-swatch:#272433" aria-label="Charbon"></button><label class="editor-page-custom-color">Personnalisée <input type="color" id="editor-page-color-custom" value="#ffffff" aria-label="Couleur personnalisée"></label></div></section>
+          <div class="editor-panel-intro"><div><span class="eyebrow">PRÉPARATION DU LIVRE</span><h2>Une page qui vous ressemble.</h2><p>Ces réglages sont enregistrés avec votre œuvre et utilisés dans l’aperçu avant impression PDF.</p></div></div><section class="editor-page-color-card editor-page-actions-card"><h3>Page sélectionnée</h3><p>Page <span id="editor-selected-page-number">${state.editorPageIndex + 1}</span> sur ${state.editorPages.length || 1}. Vous pouvez importer une image ou supprimer cette page.</p><div class="editor-page-actions"><label class="button button-outline editor-page-cover-upload">▧ Importer une image pour cette page<input type="file" id="editor-page-cover-file" accept="image/*" hidden></label><button type="button" class="button button-outline editor-page-delete-button" data-editor-delete-page>Supprimer la page sélectionnée</button></div><small>L’image conserve ses proportions et ses détails : elle est ajustée à la feuille sans zoom ni recadrage forcé. Taille maximale : 5 Mo.</small></section><section class="editor-page-color-card"><h3>Couleur de la page sélectionnée</h3><p>Sélectionne une page dans les miniatures, puis choisis sa couleur de fond.</p><div class="editor-page-color-swatches"><button type="button" data-page-color="#ffffff" style="--page-swatch:#ffffff" aria-label="Blanc"></button><button type="button" data-page-color="#fff3df" style="--page-swatch:#fff3df" aria-label="Crème"></button><button type="button" data-page-color="#f7e8ee" style="--page-swatch:#f7e8ee" aria-label="Rose"></button><button type="button" data-page-color="#e9f2ff" style="--page-swatch:#e9f2ff" aria-label="Bleu"></button><button type="button" data-page-color="#e9f5e9" style="--page-swatch:#e9f5e9" aria-label="Vert"></button><button type="button" data-page-color="#eee7f7" style="--page-swatch:#eee7f7" aria-label="Lavande"></button><button type="button" data-page-color="#272433" style="--page-swatch:#272433" aria-label="Charbon"></button><label class="editor-page-custom-color">Personnalisée <input type="color" id="editor-page-color-custom" value="#ffffff" aria-label="Couleur personnalisée"></label></div></section>
           <div class="editor-layout-grid">
             <label>Format de page<select name="page_format"><option value="A5" ${settings.page_format === 'A5' ? 'selected' : ''}>A5 — livre</option><option value="A4" ${settings.page_format === 'A4' ? 'selected' : ''}>A4 — document</option><option value="Letter" ${settings.page_format === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
             <label>Police du corps<select name="body_font"><option value="Georgia" ${settings.body_font === 'Georgia' ? 'selected' : ''}>Georgia — littéraire</option><option value="Arial" ${settings.body_font === 'Arial' ? 'selected' : ''}>Arial — moderne</option><option value="Times New Roman" ${settings.body_font === 'Times New Roman' ? 'selected' : ''}>Times New Roman — classique</option><option value="system-ui" ${settings.body_font === 'system-ui' ? 'selected' : ''}>Sans sérif — système</option></select></label>
@@ -789,6 +792,24 @@ function renderTextEditor() {
   `);
   state.editorPages = parseEditorPages(work.body || '', work); state.editorPageIndex = Math.max(0, Math.min(state.editorPageIndex, state.editorPages.length - 1)); state.editorSelectedBlock = null; state.editorHistory = []; state.editorHistoryIndex = -1;
   updateEditorCanvas(); updateEditorPreviews(); recordEditorHistory();
+  const pageCoverInput = document.querySelector('#editor-page-cover-file');
+  pageCoverInput?.addEventListener('change', () => {
+    const file = pageCoverInput.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('Choisissez un fichier image valide.', 'error'); pageCoverInput.value = ''; return; }
+    if (file.size > 5 * 1024 * 1024) { toast('L’image de page doit faire 5 Mo maximum.', 'error'); pageCoverInput.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const page = state.editorPages[state.editorPageIndex];
+      if (!page || typeof reader.result !== 'string') return;
+      page.coverImage = reader.result;
+      updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
+      toast('Image appliquée à la page en conservant ses proportions.');
+      pageCoverInput.value = '';
+    };
+    reader.onerror = () => toast('Impossible de lire cette image.', 'error');
+    reader.readAsDataURL(file);
+  });
   const workForm = document.querySelector('#work-form');
   const markEditorDirty = () => {
     updateEditorPreviews();
@@ -1367,6 +1388,12 @@ async function buildWorkPdfBlob(work) {
         surface.style.height = renderHeight + 'px';
         surface.style.backgroundColor = page.background || '#ffffff';
         surface.innerHTML = editorCanvasMarkup(page, settings);
+        const seenExportBlockIds = new Set();
+        surface.querySelectorAll('.plume-canvas-block[data-block-id]').forEach((blockNode) => {
+          const id = blockNode.getAttribute('data-block-id');
+          if (!id) return;
+          if (seenExportBlockIds.has(id)) blockNode.remove(); else seenExportBlockIds.add(id);
+        });
         const latexNodes=[...surface.querySelectorAll('[data-latex-render]')];
         if(latexNodes.length){
           const math=await ensureMathJax();
@@ -1706,6 +1733,14 @@ app.addEventListener('click', async (event) => {
     updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
     toast('Élément supprimé. Vous pouvez annuler avec ↶.');
     return;
+  }
+  const deletePageButton = event.target.closest('[data-editor-delete-page]');
+  if (deletePageButton) {
+    if (!window.confirm('Supprimer la page sélectionnée ? Cette action peut être annulée avec ↶.')) return;
+    if (state.editorPages.length > 1) { state.editorPages.splice(state.editorPageIndex, 1); state.editorPageIndex = Math.min(state.editorPageIndex, state.editorPages.length - 1); }
+    else { state.editorPages[0] = { ...state.editorPages[0], coverImage: '', blocks: [] }; }
+    state.editorSelectedBlock = null; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery();
+    toast('Page supprimée.'); return;
   }
   const pageThumb = event.target.closest('[data-select-page]');
   if (pageThumb) { state.editorPageIndex = Math.max(0, Math.min(Number(pageThumb.dataset.selectPage)||0, state.editorPages.length-1)); state.editorSelectedBlock = null; updateEditorCanvas(); syncEditorCanvas(); recordEditorHistory(); saveEditorRecovery(); return; }
