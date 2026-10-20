@@ -22,6 +22,31 @@ const state = { user: null, view: 'discover', publicWorks: [], publicWorksError:
 
 // Limite par formule pour préserver la lisibilité et éviter des compositions excessives.
 const MAX_LATEX_SOURCE_LENGTH = 3000;
+
+function sanitizePdfColorFunctions(clonedDocument) {
+  // html2canvas ne sait pas parser color(srgb ...). Neutraliser ces déclarations
+  // dans le document de capture sans modifier l'apparence normale de l'éditeur.
+  const safeColor = 'rgb(82, 76, 94)';
+  const sanitizeStyle = (style) => {
+    if (!style) return;
+    for (let index = style.length - 1; index >= 0; index--) {
+      const property = style.item(index);
+      const value = style.getPropertyValue(property);
+      if (/color\\s*\\(/i.test(value)) style.setProperty(property, safeColor, style.getPropertyPriority(property));
+    }
+  };
+  try {
+    for (const sheet of Array.from(clonedDocument.styleSheets || [])) {
+      let rules;
+      try { rules = sheet.cssRules; } catch { continue; }
+      for (const rule of Array.from(rules || [])) {
+        if (rule.style) sanitizeStyle(rule.style);
+      }
+    }
+  } catch (error) { console.warn('Nettoyage des couleurs PDF partiel', error); }
+  clonedDocument.querySelectorAll('[style]').forEach((node) => sanitizeStyle(node.style));
+}
+
 let plumeScienceKeyboard = null;
 const plumeSciencePreviewVersions = new WeakMap();
 
@@ -1371,7 +1396,8 @@ async function buildWorkPdfBlob(work) {
         width: renderWidth,
         height: renderHeight,
         windowWidth: Math.max(window.innerWidth, renderWidth),
-        windowHeight: Math.max(window.innerHeight, renderHeight)
+        windowHeight: Math.max(window.innerHeight, renderHeight),
+        onclone: (clonedDocument) => sanitizePdfColorFunctions(clonedDocument)
       });
       doc.addImage(coverCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
     } finally {
@@ -1463,7 +1489,8 @@ async function buildWorkPdfBlob(work) {
           width: renderWidth,
           height: renderHeight,
           windowWidth: Math.max(window.innerWidth, renderWidth),
-          windowHeight: Math.max(window.innerHeight, Math.round(renderWidth * pageHeight / pageWidth))
+          windowHeight: Math.max(window.innerHeight, Math.round(renderWidth * pageHeight / pageWidth)),
+          onclone: (clonedDocument) => sanitizePdfColorFunctions(clonedDocument)
         });
         // La couverture occupe déjà la première page du PDF.
         doc.addPage(formatConfig.format, 'portrait');
@@ -1681,7 +1708,7 @@ app.addEventListener('click', async (event) => {
   if (editorTabButton) { activateEditorTab(editorTabButton.dataset.editorTab); return; }
   if (event.target.closest('[data-editor-undo]')) { travelEditorHistory(-1); return; }
   if (event.target.closest('[data-editor-redo]')) { travelEditorHistory(1); return; }
-  if (event.target.closest('#plume-editor-canvas') && !event.target.closest('.plume-canvas-block')) { state.editorSelectedBlock = null; const pop=document.querySelector('#plume-color-popover'); if(pop)pop.hidden=true; document.activeElement?.blur?.(); updateEditorCanvas(); return; }
+  if (event.target.closest('#plume-editor-canvas') && !event.target.closest('.plume-canvas-block,.plume-page-context')) { state.editorSelectedBlock = null; const pop=document.querySelector('#plume-color-popover'); if(pop)pop.hidden=true; document.activeElement?.blur?.(); updateEditorCanvas(); return; }
   if (event.target.closest('[data-editor-page-prev]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(-1);return; }
   if (event.target.closest('[data-editor-page-next]')) { if(state.editorTab!=='manuscript')activateEditorTab('manuscript');navigateCanvasPage(1);return; }
   const editorTool = event.target.closest('[data-editor-tool]');
