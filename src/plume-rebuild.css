@@ -272,3 +272,13 @@ body {
   #app .plume-elements-grid { grid-template-columns:1fr; }
   #app .plume-elements-results { flex-direction:column; }
 }
+
+/* Écran de démarrage et d'erreur du point d'entrée reconstruit. */
+#app .boot-screen { min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);color:var(--muted); }
+#app .boot-screen .brand-sigil,#app .boot-failure-mark { display:grid;place-items:center;width:54px;height:54px;border-radius:19px;background:linear-gradient(135deg,var(--accent-deep),var(--accent),var(--accent-light));box-shadow:0 12px 30px color-mix(in srgb,var(--accent) 28%,transparent);font-size:1.35rem;font-weight:850;color:white; }
+#app .boot-screen p { margin:0;color:var(--muted);font-size:.9rem; }
+#app .boot-failure { max-width:620px;margin:10vh auto;padding:clamp(22px,5vw,40px);border:1px solid var(--border);border-radius:28px;background:var(--surface);box-shadow:var(--plume-shadow);color:var(--text); }
+#app .boot-failure h1 { margin:20px 0 10px;font-size:clamp(1.6rem,5vw,2.3rem);letter-spacing:-.05em; }
+#app .boot-failure p { color:var(--muted);line-height:1.7; }
+#app .boot-failure-detail { padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--bg);overflow-wrap:anywhere;font-size:.8rem; }
+@media(max-width:700px){#app .boot-failure{margin:6vh 14px;padding:22px;border-radius:22px}}
