@@ -25,26 +25,31 @@ function header(){ return `<header class="topbar"><div class="wrap topbar-inner"
     ${[['violet','Violet'],['rouge','Rouge'],['vert','Vert'],['bleu','Bleu'],['orange','Orange'],['rose','Rose'],['indigo','Indigo'],['emeraude','Émeraude'],['lime','Lime'],['corail','Corail'],['bordeaux','Bordeaux'],['azur','Azur'],['petrole-cuivre','Pétrole'],['nuit-peche','Nuit pêche'],['prune-rouge','Prune'],['terre-orange','Terre'],['rose-sable','Rose sable'],['sarcelle-creme','Sarcelle']].map(([v,l])=>`<button class="color-theme-choice" type="button" data-color-choice="${v}" aria-pressed="false"><span></span><b>${l}</b></button>`).join('')}
     </div></div></div></div></div></div></header>`; }
 function home(){ const drafts=readDrafts(); return `<main class="wrap main-content plume-main">
-<section class="plume-section"><div class="plume-section-heading"><div><p class="plume-kicker">LES ESPACES DE CRÉATION</p><h2>À chacun sa manière de créer</h2></div></div>
-<div class="plume-work-grid">
-<button class="plume-work-card" data-view="atelier" data-kind="Texte"><span class="plume-work-icon">✎</span><strong>Textes & écriture</strong><small>Récits, poèmes, journaux, essais et idées.</small></button>
-<button class="plume-work-card" data-view="atelier" data-kind="Dessin"><span class="plume-work-icon">▧</span><strong>Arts visuels & dessins</strong><small>Prépare tes projets visuels et conserve tes notes.</small></button>
-<button class="plume-work-card" data-view="atelier" data-kind="Musique"><span class="plume-work-icon">♫</span><strong>Musique & sons</strong><small>Paroles, idées, compositions et projets sonores.</small></button>
-<button class="plume-work-card" data-view="atelier" data-kind="Vidéo"><span class="plume-work-icon">▷</span><strong>Vidéos & scène</strong><small>Scénarios, concepts, répétitions et projets.</small></button>
-<button class="plume-work-card" data-view="atelier" data-kind="Projet numérique"><span class="plume-work-icon">⌘</span><strong>Projets numériques</strong><small>Conçois et organise tes idées numériques.</small></button>
-<button class="plume-work-card" data-view="creations"><span class="plume-work-icon">⌕</span><strong>Bibliothèque</strong><small>Retrouve les projets que tu as enregistrés ici.</small></button>
-</div></section>
+<section class="plume-space-section" aria-label="Les espaces de création">
+  <div class="plume-space-heading"><strong>LES ESPACES DE CRÉATION</strong><span>Glisse pour découvrir&nbsp; ↔</span></div>
+  <nav class="plume-space-capsule" aria-label="Choisir un univers créatif">
+    <a class="plume-space-mark" href="#" data-view="home" aria-label="Aurore Plume, accueil"><span>a.</span></a>
+    <div class="plume-space-scroll">
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Texte"><span class="plume-space-icon">✎</span><small>Textes</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Arts visuels"><span class="plume-space-icon">▧</span><small>Visuels</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Musique"><span class="plume-space-icon">♫</span><small>Musique</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Vidéo"><span class="plume-space-icon">▷</span><small>Vidéos</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Projet numérique"><span class="plume-space-icon">⌘</span><small>Numérique</small></button>
+      <button class="plume-space-item" type="button" data-view="creations"><span class="plume-space-icon">⌕</span><small>Bibliothèque</small></button>
+    </div>
+  </nav>
+  <div class="plume-space-intro"><strong>À chacun sa manière de créer</strong><span>Textes, poèmes, dessins, musiques et projets : choisis ton univers pour commencer.</span></div>
+</section>
 <section class="plume-mini-hero"><p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER CRÉATIF</p><h1>Donne forme à ce que <em>tu imagines.</em></h1><p>Écris, compose, dessine, expérimente. Un espace à toi pour créer librement, garder tes projets et choisir ce que tu souhaites partager.</p>
 <div class="plume-toolbar"><button class="plume-btn plume-btn-primary" data-view="atelier">＋ Ouvrir mon atelier</button><button class="plume-btn" data-view="creations">Mes créations <span>↗</span></button></div></section>
-
 <section class="plume-section"><div class="plume-section-heading"><div><p class="plume-kicker">ESPACE PERSONNEL</p><h2>Retrouver mon univers</h2></div></div>
 <div class="plume-card-grid">
 <a class="plume-card" href="#" data-view="creations"><span class="plume-card-symbol">▤</span><span class="plume-card-copy"><strong>Mes créations</strong><small>Retrouve tes brouillons et poursuis tes idées là où tu les as laissées.</small><small><b>${drafts.length}</b> projet${drafts.length>1?'s':''} enregistré${drafts.length>1?'s':''} sur cet appareil</small></span><span class="plume-card-arrow">↗</span></a>
-<a class="plume-card" href="#" data-view="atelier"><span class="plume-card-symbol">✎</span><span class="plume-card-copy"><strong>Créer quelque chose</strong><small>Commence par un texte, une idée de projet ou une page à construire.</small><small>Ton espace de création t’attend.</small></span><span class="plume-card-arrow">↗</span></a>
+<a class="plume-card" href="#" data-view="atelier" data-kind="Texte"><span class="plume-card-symbol">✎</span><span class="plume-card-copy"><strong>Créer quelque chose</strong><small>Commence par un texte, une idée de projet ou une page à construire.</small><small>Ton espace de création t’attend.</small></span><span class="plume-card-arrow">↗</span></a>
 </div></section>
 <button class="plume-create-banner" data-view="atelier"><span class="plume-create-plus">＋</span><span class="plume-create-copy"><strong>Commencer un nouveau projet</strong><small>Un titre, quelques lignes, une idée : tu peux commencer simplement et continuer plus tard.</small></span><span class="plume-create-arrow">→</span></button>
 <footer class="plume-footer"><strong>Aurore Plume</strong><span>Un espace pour créer, apprendre et partager à ton rythme.</span></footer></main>`; }
-function atelier(){ const d=readDrafts().find(x=>x.id===state.editingId); const draft=d||{title:'',kind:'Texte',content:''}; return `<main class="wrap main-content plume-main"><section class="plume-mini-hero"><p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER PERSONNEL</p><h1>${d?'Reprendre ton projet.':'Tout commence par une idée.'}</h1><p>Écris librement, sauvegarde ton brouillon sur cet appareil et reviens le poursuivre quand tu le souhaites.</p><div class="plume-toolbar"><button class="plume-btn" data-view="home">← Accueil</button><button class="plume-btn" data-view="creations">Mes créations</button></div></section>
+function atelier(){ const d=readDrafts().find(x=>x.id===state.editingId); const draft=d||{title:'',kind:state.nextKind||'Texte',content:''}; return `<main class="wrap main-content plume-main"><section class="plume-mini-hero"><p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER PERSONNEL</p><h1>${d?'Reprendre ton projet.':'Tout commence par une idée.'}</h1><p>Écris librement, sauvegarde ton brouillon sur cet appareil et reviens le poursuivre quand tu le souhaites.</p><div class="plume-toolbar"><button class="plume-btn" data-view="home">← Accueil</button><button class="plume-btn" data-view="creations">Mes créations</button></div></section>
 <form id="plumeEditor" class="plume-editor-card"><div class="plume-field"><label for="draftTitle">Titre du projet</label><input id="draftTitle" name="title" maxlength="180" required placeholder="Donne un nom à ton idée" value="${escapeHtml(draft.title)}"></div>
 <div class="plume-field"><label for="draftKind">Univers créatif</label><select id="draftKind" name="kind">${['Texte','Vidéo','Arts visuels','Dessin','Musique','Projet numérique','Scène & autres'].map(k=>`<option ${draft.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>
 <div class="plume-field"><label for="draftContent">Ton contenu</label><textarea id="draftContent" name="content" placeholder="Pose ici tes premières idées…">${escapeHtml(draft.content)}</textarea></div>
