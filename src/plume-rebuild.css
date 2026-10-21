@@ -139,3 +139,11 @@
 @media(max-width:380px){.plume-space-mark{flex-basis:40px;width:40px;height:40px}.plume-space-capsule{padding:6px;gap:4px}.plume-space-item{flex-basis:60px;min-height:51px}.plume-space-item[data-view="creations"]{flex-basis:75px}.plume-space-heading{font-size:.61rem}}
 /* Les univers sont des éléments de navigation, jamais de grandes cartes. */
 .plume-main>.plume-space-section+.plume-mini-hero{margin-top:18px!important}
+
+/* Logo en capsule allongée, comme la première pastille de la référence */
+.plume-space-mark{flex:0 0 58px!important;width:58px!important;height:44px!important;border-radius:999px!important}
+:root[data-theme="light"] .plume-space-capsule{background:#fff!important}
+:root[data-theme="dark"] .plume-space-capsule{background:#19171d!important}
+.plume-space-item small{letter-spacing:-.01em}
+.plume-space-item:focus-visible{background:color-mix(in srgb,var(--accent) 14%,transparent);outline:1px solid color-mix(in srgb,var(--accent) 56%,transparent)}
+@media(max-width:380px){.plume-space-mark{flex-basis:52px!important;width:52px!important;height:42px!important}}
