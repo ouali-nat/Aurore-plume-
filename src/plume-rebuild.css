@@ -57,3 +57,33 @@
 .plume-toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:720px){.plume-work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.plume-card-grid,.plume-draft-list{grid-template-columns:1fr}.plume-mini-hero{padding-top:30px}.plume-card{padding:16px}.plume-footer{flex-direction:column}}
 @media(max-width:430px){.plume-work-grid{grid-template-columns:1fr}.plume-mini-hero h1{font-size:2.5rem}.plume-create-banner{padding:15px}.plume-work-card{min-height:130px}}
+
+/* Cartes saturées et barre capsule noire, dans l'esprit des références */
+:root{--plume-grad:linear-gradient(128deg,#6624d8 0%,#8037ed 54%,#9b54f5 100%);--plume-glow:0 16px 36px rgba(108,39,218,.22)}
+.plume-main{padding-bottom:110px}
+.plume-mini-hero{position:relative;overflow:hidden;padding:clamp(25px,5vw,42px);margin:18px 0 28px;border:1px solid rgba(255,255,255,.2);border-radius:30px;background:var(--plume-grad);color:#fff;box-shadow:var(--plume-glow)}
+.plume-mini-hero:after{content:"";position:absolute;width:230px;height:230px;right:-70px;top:-125px;border:1px solid rgba(255,255,255,.22);border-radius:50%;box-shadow:0 0 0 22px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025);pointer-events:none}
+.plume-mini-hero .eyebrow,.plume-mini-hero .plume-kicker{color:#f0dfff}
+.plume-mini-hero>p:last-of-type{color:rgba(255,255,255,.82)}
+.plume-mini-hero h1 em{color:#f2dfff}
+.plume-mini-hero .plume-btn{background:rgba(255,255,255,.13);color:#fff;border-color:rgba(255,255,255,.3);backdrop-filter:blur(12px)}
+.plume-mini-hero .plume-btn-primary{background:#fff;color:#6727ce;border-color:#fff}
+.plume-card,.plume-create-banner,.plume-work-card{color:#fff;background:var(--plume-grad);border:1px solid rgba(255,255,255,.22);box-shadow:var(--plume-glow);border-radius:27px;overflow:hidden}
+.plume-card{min-height:142px;padding:22px 18px}
+.plume-card-copy small,.plume-work-card small,.plume-create-copy small{color:rgba(255,255,255,.82)}
+.plume-card-symbol,.plume-work-icon,.plume-create-plus{background:#fff;color:#7834d7;border:0;border-radius:50%;box-shadow:0 5px 15px rgba(35,12,68,.12)}
+.plume-card:hover,.plume-work-card:hover{background:linear-gradient(135deg,#7026dc,#8f4de9);transform:translateY(-2px);border-color:rgba(255,255,255,.65)}
+.plume-create-banner{padding:18px 20px}.plume-create-plus{background:#fff;color:#7936d8}
+.plume-work-grid{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;padding:5px 2px 18px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.plume-work-grid::-webkit-scrollbar{display:none}
+.plume-work-card{position:relative;flex:0 0 clamp(225px,72vw,285px);min-height:180px;padding:20px;scroll-snap-align:start;text-align:left}
+.plume-work-icon{width:44px;height:44px;flex:0 0 44px;font-size:1.25rem}.plume-work-card strong{font-size:.98rem}
+.plume-section .plume-kicker{color:var(--accent-light)}
+.plume-bottom-nav{position:fixed;z-index:90;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 26px));display:flex;align-items:center;justify-content:space-around;gap:4px;padding:8px 10px;border:1px solid rgba(255,255,255,.1);border-radius:28px;background:#17161b;color:#f7f5fa;box-shadow:0 12px 40px rgba(0,0,0,.34)}
+.plume-bottom-nav button{flex:1;min-width:0;min-height:55px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:18px;background:transparent;color:#d0cbd7;font:inherit;cursor:pointer}
+.plume-bottom-nav button span{font-size:1.25rem;line-height:1.1}.plume-bottom-nav button small{font-size:.62rem;font-weight:650;white-space:nowrap}
+.plume-bottom-nav button[aria-current="page"]{color:#fff;background:linear-gradient(145deg,#33243f,#26222e);box-shadow:inset 0 -2px 0 #a84cff}
+.plume-bottom-nav button[aria-current="page"] span{color:#d38aff}
+:root[data-theme="light"] .plume-bottom-nav{background:#201d27;border-color:rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(42,25,60,.25)}
+:root[data-theme="light"] .plume-card,:root[data-theme="light"] .plume-work-card,:root[data-theme="light"] .plume-create-banner{color:#fff}
+@media(max-width:520px){.plume-card-grid{grid-template-columns:1fr}.plume-card{min-height:125px}.plume-mini-hero{border-radius:25px}.plume-work-card{flex-basis:78vw;min-height:160px}.plume-main{padding-bottom:105px}.plume-bottom-nav{bottom:max(10px,env(safe-area-inset-bottom))}}
