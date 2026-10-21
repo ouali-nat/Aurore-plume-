@@ -1,0 +1,59 @@
+/* Aurore Plume — extension de l'identité visuelle d'Aurore Mémoire.
+   La base style.css est copiée du dépôt Aurore Mémoire ; ce fichier ajoute les vues propres à Plume. */
+.plume-shell{padding-bottom:42px}
+.plume-main{padding-top:26px}
+.plume-mini-hero{padding:clamp(28px,5vw,54px) 0 28px;max-width:800px}
+.plume-mini-hero .eyebrow{display:flex;align-items:center;gap:9px;color:var(--accent-light);font-size:.7rem;font-weight:800;letter-spacing:.16em}
+.plume-mini-hero .eyebrow-mark{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 16px var(--accent)}
+.plume-mini-hero h1{max-width:760px;margin:12px 0 14px;font-size:clamp(2.2rem,6.5vw,4.6rem);line-height:1.03;letter-spacing:-.065em}
+.plume-mini-hero h1 em{font-family:Georgia,serif;font-weight:400;color:var(--accent-light)}
+.plume-mini-hero>p:last-child{max-width:610px;color:var(--muted);font-size:1rem;line-height:1.8;margin:0}
+.plume-section{margin:26px 0 34px}
+.plume-section-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.plume-section-heading h2{margin:3px 0 0;font-size:clamp(1.2rem,3vw,1.55rem);letter-spacing:-.04em}
+.plume-kicker{margin:0;color:var(--accent-light);font-size:.67rem;font-weight:800;letter-spacing:.15em}
+.plume-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.plume-card{position:relative;display:flex;align-items:flex-start;gap:14px;min-width:0;padding:19px;text-decoration:none;text-align:left;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .18s var(--ease),border-color .18s,background .18s;cursor:pointer}
+.plume-card:hover{transform:translateY(-2px);border-color:var(--accent);background:var(--surface-raised)}
+.plume-card-symbol{flex:0 0 43px;height:43px;display:grid;place-items:center;border-radius:15px;background:var(--soft);color:var(--accent-light);font-size:1.25rem;border:1px solid var(--soft-border)}
+.plume-card-copy{display:flex;flex-direction:column;gap:6px;min-width:0;padding-right:15px}
+.plume-card-copy strong{font-size:.96rem;letter-spacing:-.025em}
+.plume-card-copy small{color:var(--muted);font-size:.79rem;line-height:1.65}
+.plume-card-arrow{position:absolute;right:16px;top:16px;color:var(--accent-light)}
+.plume-create-banner{width:100%;display:flex;align-items:center;gap:14px;margin:24px 0 34px;padding:18px 20px;text-align:left;text-decoration:none;color:var(--text);background:linear-gradient(115deg,var(--soft),var(--surface));border:1px solid var(--soft-border);border-radius:20px;box-shadow:var(--shadow);cursor:pointer}
+.plume-create-plus{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:14px;background:var(--accent);color:#fff;font-size:1.6rem}
+.plume-create-copy{display:flex;flex:1;flex-direction:column;gap:4px}
+.plume-create-copy strong{font-size:.92rem}
+.plume-create-copy small{color:var(--muted);font-size:.77rem;line-height:1.55}
+.plume-create-arrow{font-size:1.3rem;color:var(--accent-light)}
+.plume-work-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.plume-work-card{display:flex;flex-direction:column;gap:10px;min-height:170px;padding:17px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:20px;text-decoration:none;cursor:pointer;transition:transform .18s,border-color .18s}
+.plume-work-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.plume-work-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--soft);color:var(--accent-light);font-size:1.1rem}
+.plume-work-card strong{font-size:.88rem}
+.plume-work-card small{color:var(--muted);font-size:.75rem;line-height:1.6}
+.plume-view[hidden]{display:none!important}
+.plume-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.plume-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:10px 15px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--text);font-weight:700;font-size:.8rem;text-decoration:none;cursor:pointer}
+.plume-btn:hover{border-color:var(--accent);background:var(--soft)}
+.plume-btn-primary{background:var(--accent-deep,var(--accent));color:white;border-color:var(--accent)}
+.plume-btn-primary:hover{background:var(--accent);color:white}
+.plume-editor-card{padding:clamp(15px,3vw,26px);background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow)}
+.plume-field{display:flex;flex-direction:column;gap:7px;margin-bottom:15px}
+.plume-field label{font-size:.77rem;color:var(--muted);font-weight:700}
+.plume-field input,.plume-field select,.plume-field textarea{width:100%;padding:12px 13px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none}
+.plume-field input:focus,.plume-field select:focus,.plume-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+.plume-field textarea{min-height:300px;resize:vertical;line-height:1.8;font-family:Georgia,serif;font-size:1rem}
+.plume-empty{padding:30px 20px;text-align:center;background:var(--surface);border:1px dashed var(--line);border-radius:20px;color:var(--muted)}
+.plume-empty strong{display:block;color:var(--text);margin-bottom:7px}
+.plume-draft-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.plume-draft{padding:17px;border:1px solid var(--border);border-radius:18px;background:var(--surface)}
+.plume-draft h3{margin:0 0 8px;font-size:1rem}
+.plume-draft p{color:var(--muted);font-size:.8rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.plume-draft-actions{display:flex;gap:8px;flex-wrap:wrap}
+.plume-footer{display:flex;justify-content:space-between;gap:12px;padding:20px 0;border-top:1px solid var(--border);color:var(--muted);font-size:.72rem}
+.plume-footer strong{color:var(--text)}
+.plume-toast{position:fixed;left:50%;bottom:22px;z-index:100;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:12px 17px;background:var(--surface-raised);border:1px solid var(--soft-border);border-radius:14px;box-shadow:var(--shadow);color:var(--text);font-size:.82rem;transition:opacity .18s,transform .18s;max-width:calc(100vw - 28px)}
+.plume-toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:720px){.plume-work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.plume-card-grid,.plume-draft-list{grid-template-columns:1fr}.plume-mini-hero{padding-top:30px}.plume-card{padding:16px}.plume-footer{flex-direction:column}}
+@media(max-width:430px){.plume-work-grid{grid-template-columns:1fr}.plume-mini-hero h1{font-size:2.5rem}.plume-create-banner{padding:15px}.plume-work-card{min-height:130px}}
