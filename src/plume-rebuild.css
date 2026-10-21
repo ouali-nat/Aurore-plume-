@@ -87,3 +87,29 @@
 :root[data-theme="light"] .plume-bottom-nav{background:#201d27;border-color:rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(42,25,60,.25)}
 :root[data-theme="light"] .plume-card,:root[data-theme="light"] .plume-work-card,:root[data-theme="light"] .plume-create-banner{color:#fff}
 @media(max-width:520px){.plume-card-grid{grid-template-columns:1fr}.plume-card{min-height:125px}.plume-mini-hero{border-radius:25px}.plume-work-card{flex-basis:78vw;min-height:160px}.plume-main{padding-bottom:105px}.plume-bottom-nav{bottom:max(10px,env(safe-area-inset-bottom))}}
+
+/* Ajustement final : rangée d'univers en tête, cartes compactes type navigation capsule */
+.plume-main{padding-bottom:105px!important}
+.plume-main>.plume-section:first-child{margin:14px 0 22px!important}
+.plume-main>.plume-section:first-child .plume-section-heading{margin-bottom:10px!important}
+.plume-main>.plume-section:first-child .plume-section-heading h2{font-size:clamp(1.15rem,4vw,1.5rem)!important;line-height:1.25!important}
+.plume-work-grid{display:flex!important;flex-flow:row nowrap!important;gap:10px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:5px 2px 12px!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch!important}
+.plume-work-grid::-webkit-scrollbar{display:none!important}
+.plume-work-card{box-sizing:border-box!important;display:flex!important;flex:0 0 142px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;gap:8px!important;min-width:0!important;min-height:124px!important;height:auto!important;padding:13px!important;border-radius:19px!important;scroll-snap-align:start!important;text-align:left!important}
+.plume-work-icon{display:flex!important;align-items:center!important;justify-content:center!important;width:33px!important;height:33px!important;flex:0 0 33px!important;font-size:1rem!important}
+.plume-work-card strong{display:block!important;font-size:.82rem!important;line-height:1.25!important}
+.plume-work-card small{display:block!important;font-size:.68rem!important;line-height:1.35!important}
+.plume-mini-hero{padding:22px!important;margin:12px 0 22px!important;border-radius:24px!important}
+.plume-mini-hero h1{font-size:clamp(1.8rem,7vw,3rem)!important;line-height:1.08!important}
+.plume-mini-hero>p:last-of-type{font-size:.88rem!important;line-height:1.5!important}
+.plume-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+.plume-card{min-height:100px!important;padding:12px!important;border-radius:19px!important;gap:9px!important}
+.plume-card-symbol{width:32px!important;height:32px!important;flex:0 0 32px!important}
+.plume-card-copy strong{font-size:.82rem!important}
+.plume-card-copy small{font-size:.69rem!important;line-height:1.35!important}
+.plume-create-banner{padding:13px!important;border-radius:18px!important}
+.plume-bottom-nav{width:calc(100% - 24px)!important;max-width:480px!important;padding:7px 9px!important;border-radius:28px!important;background:#19171d!important;box-shadow:0 10px 30px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.09)!important}
+.plume-bottom-nav button{min-height:49px!important;border-radius:20px!important}
+.plume-bottom-nav button[aria-current="page"]{background:#2a242f!important;box-shadow:inset 0 -2px #e34a65!important}
+.plume-bottom-nav button[aria-current="page"] span{color:#ef526a!important}
+@media(max-width:390px){.plume-work-card{flex-basis:136px!important}.plume-card-grid{grid-template-columns:1fr!important}}
