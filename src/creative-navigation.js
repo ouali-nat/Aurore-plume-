@@ -114,6 +114,8 @@ function enhance() {
   if (!root) return;
   const main = root.querySelector('main');
   if (!main) return;
+  // L’accueil reconstruit possède sa propre navigation et ne reçoit plus l’ancien rail horizontal.
+  if (main.querySelector('.plume-home-reset')) return;
   // Give the existing home page a lifted, editorial feel without changing its content.
   main.querySelectorAll('.feature-card, .work-card, .closing-band, .hero-art, .paper-card, .floating-note').forEach((el, index) => {
     if (!el.classList.contains('plume-float-ready')) {
