@@ -2,6 +2,7 @@ import '../style.css';
 import './plume-memoire-theme.css';
 import './plume-memoire-parity.css';
 import './plume-rebuild.css';
+import './plume-space-pill.css';
 
 const app = document.querySelector('#app');
 const STORE = 'aurore-plume-projects-v1';
@@ -64,6 +65,14 @@ function render(){ app.innerHTML=header()+({home,atelier,creations}[state.view]|
 <button type="button" data-view="atelier" aria-current="${state.view==='atelier'?'page':'false'}"><span>＋</span><small>Créer</small></button>
 <button type="button" data-view="creations" aria-current="false"><span>♡</span><small>Enregistrés</small></button>
 </nav>`+'<div class="plume-toast" id="plumeToast" role="status" aria-live="polite"></div>';
+ const activeKind = state.nextKind || null;
+ const activeView = state.view;
+ app.querySelectorAll('.plume-space-item').forEach(item => {
+   const active = (item.dataset.view === 'creations' && activeView === 'creations') ||
+     (item.dataset.kind && item.dataset.kind === activeKind && activeView === 'atelier');
+   item.classList.toggle('is-active', Boolean(active));
+   item.setAttribute('aria-pressed', active ? 'true' : 'false');
+ });
  bind(); }
 function bind(){
  app.querySelectorAll('[data-view]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault(); if(el.dataset.kind) state.nextKind=el.dataset.kind; state.editingId=null; go(el.dataset.view);}));
