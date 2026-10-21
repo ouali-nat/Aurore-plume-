@@ -30,12 +30,12 @@ function home(){ const drafts=readDrafts(); return `<main class="wrap main-conte
   <nav class="plume-space-capsule" aria-label="Choisir un univers créatif">
     <a class="plume-space-mark" href="#" data-view="home" aria-label="Aurore Plume, accueil"><span>a.</span></a>
     <div class="plume-space-scroll">
-      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Texte"><span class="plume-space-icon">✎</span><small>Textes</small></button>
-      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Arts visuels"><span class="plume-space-icon">▧</span><small>Visuels</small></button>
-      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Musique"><span class="plume-space-icon">♫</span><small>Musique</small></button>
-      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Vidéo"><span class="plume-space-icon">▷</span><small>Vidéos</small></button>
-      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Projet numérique"><span class="plume-space-icon">⌘</span><small>Numérique</small></button>
-      <button class="plume-space-item" type="button" data-view="creations"><span class="plume-space-icon">⌕</span><small>Bibliothèque</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Texte" aria-label="Textes et écriture : récits, poèmes, journaux, essais et idées" title="Récits, poèmes, journaux, essais et idées"><span class="plume-space-icon">✎</span><small>Textes</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Arts visuels" aria-label="Arts visuels et dessins : projets visuels et notes" title="Prépare tes projets visuels et conserve tes notes"><span class="plume-space-icon">▧</span><small>Visuels</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Musique" aria-label="Musique et sons : paroles, idées, compositions et projets sonores" title="Paroles, idées, compositions et projets sonores"><span class="plume-space-icon">♫</span><small>Musique</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Vidéo" aria-label="Vidéos et scène : scénarios, concepts et répétitions" title="Scénarios, concepts, répétitions et projets"><span class="plume-space-icon">▷</span><small>Vidéos</small></button>
+      <button class="plume-space-item" type="button" data-view="atelier" data-kind="Projet numérique" aria-label="Projets numériques : conçois et organise tes idées" title="Conçois et organise tes idées numériques"><span class="plume-space-icon">⌘</span><small>Numérique</small></button>
+      <button class="plume-space-item" type="button" data-view="creations" aria-label="Bibliothèque : retrouver les projets enregistrés" title="Retrouve les projets que tu as enregistrés ici"><span class="plume-space-icon">⌕</span><small>Bibliothèque</small></button>
     </div>
   </nav>
   <div class="plume-space-intro"><strong>À chacun sa manière de créer</strong><span>Textes, poèmes, dessins, musiques et projets : choisis ton univers pour commencer.</span></div>
