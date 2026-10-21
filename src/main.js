@@ -9,6 +9,7 @@ import './plume-pill-bar.css';
 import './plume-theme.css';
 import './plume-dossier-design.css';
 import './plume-memoire-parity.css';
+import './plume-home-reset.css';
 // Styles du lecteur repris d’Aurore Archives et présents à la racine du dépôt.
 import '../pdf-reader.css';
 import '../aurore-pdf-reader-refonte.css';
@@ -154,26 +155,46 @@ function workCard(work, compact = false) {
 }
 
 function renderDiscover() {
-  const works = state.publicWorks;
-  const worksMarkup = works.length
-    ? `<div class="work-grid">${works.slice(0, 9).map((work) => workCard(work)).join('')}</div>`
-    : state.publicWorksError
-      ? `<div class="empty-state"><span>!</span><h3>Les œuvres sont momentanément indisponibles.</h3><p>Actualisez la page dans un instant. Vos brouillons restent dans votre atelier.</p></div>`
-      : `<div class="empty-state"><span>✳</span><h3>Les premières œuvres arrivent.</h3><p>Les textes apparaîtront ici dès qu’ils seront publiés en mode public. Aucun exemple fictif n’est affiché.</p><button class="button button-primary" data-view="atelier">Écrire la première œuvre <span aria-hidden="true">↗</span></button></div>`;
+  // Nouvelle page d’accueil : aucune ancienne barre d’univers ni liste de démonstration.
   shell(`
-    <section class="discover-intro container discover-intro-minimal">
-      <button class="button button-quiet discover-write-button" data-view="atelier">Écrire une œuvre <span aria-hidden="true">↗</span></button>
-    </section>
-    <section class="section container home-library" id="library-section">
-      <div class="section-heading">
-        <div><div class="eyebrow">À LIRE · À DÉCOUVRIR</div><h2>Les œuvres publiées</h2><p>Retrouvez ici les œuvres réellement rendues publiques, des plus récentes aux plus anciennes.</p></div>
-        <button class="text-link" data-view="library">Toutes les œuvres <span>↗</span></button>
+    <section class="plume-home-reset">
+      <div class="plume-home-orb plume-home-orb-one" aria-hidden="true"></div>
+      <div class="plume-home-orb plume-home-orb-two" aria-hidden="true"></div>
+      <div class="plume-home-inner">
+        <div class="plume-home-kicker"><span></span> ATELIER CRÉATIF AURORE</div>
+        <h1>Donne forme à<br><em>ce que tu imagines.</em></h1>
+        <p class="plume-home-lead">Écris, compose, dessine, expérimente. Un espace à toi pour créer librement, garder tes projets et choisir ce que tu souhaites partager.</p>
+        <div class="plume-home-actions">
+          <button class="plume-home-primary" data-view="atelier">Ouvrir mon atelier <span aria-hidden="true">↗</span></button>
+          <button class="plume-home-secondary" data-view="library">Découvrir les œuvres <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="plume-home-rule"></div>
+        <div class="plume-home-workspaces">
+          <button class="plume-home-tile plume-home-tile-main" data-view="atelier">
+            <span class="plume-home-tile-index">01 / CRÉER</span>
+            <span class="plume-home-tile-symbol" aria-hidden="true">✳</span>
+            <strong>Mon espace de création</strong>
+            <span>Reprendre un brouillon ou commencer un nouveau projet.</span>
+            <span class="plume-home-tile-arrow" aria-hidden="true">↗</span>
+          </button>
+          <button class="plume-home-tile" data-view="library">
+            <span class="plume-home-tile-index">02 / LIRE</span>
+            <span class="plume-home-tile-symbol" aria-hidden="true">Aa</span>
+            <strong>La bibliothèque</strong>
+            <span>Parcourir les œuvres réellement publiées par la communauté.</span>
+            <span class="plume-home-tile-arrow" aria-hidden="true">↗</span>
+          </button>
+          <div class="plume-home-note">
+            <span class="plume-home-note-mark">a.</span>
+            <p>Les idées n’ont pas besoin d’être parfaites pour commencer.</p>
+            <span class="plume-home-note-caption">ÉCRIRE · EXPLORER · GRANDIR</span>
+          </div>
+        </div>
+        <div class="plume-home-bottom"><span>TON ESPACE. TON RYTHME.</span><span>AURORE PLUME <b>✳</b></span></div>
       </div>
-      ${worksMarkup}
     </section>
   `);
 }
-
 function renderLibrary() {
   const works = state.publicWorks;
   const filtered = works.filter((work) => [work.title, work.subtitle, work.summary, work.genre, authorOf(work)?.display_name].join(' ').toLowerCase().includes(state.search.toLowerCase()));
