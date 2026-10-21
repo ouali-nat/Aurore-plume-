@@ -25,8 +25,6 @@ function header(){ return `<header class="topbar"><div class="wrap topbar-inner"
     ${[['violet','Violet'],['rouge','Rouge'],['vert','Vert'],['bleu','Bleu'],['orange','Orange'],['rose','Rose'],['indigo','Indigo'],['emeraude','Émeraude'],['lime','Lime'],['corail','Corail'],['bordeaux','Bordeaux'],['azur','Azur'],['petrole-cuivre','Pétrole'],['nuit-peche','Nuit pêche'],['prune-rouge','Prune'],['terre-orange','Terre'],['rose-sable','Rose sable'],['sarcelle-creme','Sarcelle']].map(([v,l])=>`<button class="color-theme-choice" type="button" data-color-choice="${v}" aria-pressed="false"><span></span><b>${l}</b></button>`).join('')}
     </div></div></div></div></div></div></header>`; }
 function home(){ const drafts=readDrafts(); return `<main class="wrap main-content plume-main">
-<section class="plume-mini-hero"><p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER CRÉATIF</p><h1>Donne forme à ce que <em>tu imagines.</em></h1><p>Écris, compose, dessine, expérimente. Un espace à toi pour créer librement, garder tes projets et choisir ce que tu souhaites partager.</p>
-<div class="plume-toolbar"><button class="plume-btn plume-btn-primary" data-view="atelier">＋ Ouvrir mon atelier</button><button class="plume-btn" data-view="creations">Mes créations <span>↗</span></button></div></section>
 <section class="plume-section"><div class="plume-section-heading"><div><p class="plume-kicker">LES ESPACES DE CRÉATION</p><h2>À chacun sa manière de créer</h2></div></div>
 <div class="plume-work-grid">
 <button class="plume-work-card" data-view="atelier" data-kind="Texte"><span class="plume-work-icon">✎</span><strong>Textes & écriture</strong><small>Récits, poèmes, journaux, essais et idées.</small></button>
@@ -35,7 +33,11 @@ function home(){ const drafts=readDrafts(); return `<main class="wrap main-conte
 <button class="plume-work-card" data-view="atelier" data-kind="Vidéo"><span class="plume-work-icon">▷</span><strong>Vidéos & scène</strong><small>Scénarios, concepts, répétitions et projets.</small></button>
 <button class="plume-work-card" data-view="atelier" data-kind="Projet numérique"><span class="plume-work-icon">⌘</span><strong>Projets numériques</strong><small>Conçois et organise tes idées numériques.</small></button>
 <button class="plume-work-card" data-view="creations"><span class="plume-work-icon">⌕</span><strong>Bibliothèque</strong><small>Retrouve les projets que tu as enregistrés ici.</small></button>
-</div></section><section class="plume-section"><div class="plume-section-heading"><div><p class="plume-kicker">ESPACE PERSONNEL</p><h2>Retrouver mon univers</h2></div></div>
+</div></section>
+<section class="plume-mini-hero"><p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER CRÉATIF</p><h1>Donne forme à ce que <em>tu imagines.</em></h1><p>Écris, compose, dessine, expérimente. Un espace à toi pour créer librement, garder tes projets et choisir ce que tu souhaites partager.</p>
+<div class="plume-toolbar"><button class="plume-btn plume-btn-primary" data-view="atelier">＋ Ouvrir mon atelier</button><button class="plume-btn" data-view="creations">Mes créations <span>↗</span></button></div></section>
+
+<section class="plume-section"><div class="plume-section-heading"><div><p class="plume-kicker">ESPACE PERSONNEL</p><h2>Retrouver mon univers</h2></div></div>
 <div class="plume-card-grid">
 <a class="plume-card" href="#" data-view="creations"><span class="plume-card-symbol">▤</span><span class="plume-card-copy"><strong>Mes créations</strong><small>Retrouve tes brouillons et poursuis tes idées là où tu les as laissées.</small><small><b>${drafts.length}</b> projet${drafts.length>1?'s':''} enregistré${drafts.length>1?'s':''} sur cet appareil</small></span><span class="plume-card-arrow">↗</span></a>
 <a class="plume-card" href="#" data-view="atelier"><span class="plume-card-symbol">✎</span><span class="plume-card-copy"><strong>Créer quelque chose</strong><small>Commence par un texte, une idée de projet ou une page à construire.</small><small>Ton espace de création t’attend.</small></span><span class="plume-card-arrow">↗</span></a>
