@@ -9,6 +9,10 @@ import './plume-pill-bar.css';
 import './plume-theme.css';
 import './plume-dossier-design.css';
 import './plume-memoire-parity.css';
+// Styles du lecteur repris d’Aurore Archives et présents à la racine du dépôt.
+import '../pdf-reader.css';
+import '../aurore-pdf-reader-refonte.css';
+import '../aurore-pdf-menu.css';
 import './plume-theme.js';
 import './aurore-science-keyboard.js';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
