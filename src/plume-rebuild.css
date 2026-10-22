@@ -194,3 +194,28 @@
  .plume-toolbar>.plume-btn{flex:1 1 auto}
 }
 @media(prefers-reduced-motion:reduce){.plume-btn,.plume-field input,.plume-field select,.plume-field textarea,.plume-bottom-nav button{transition:none!important}}
+
+
+/* Atelier neumorphique — mode sombre : fond légèrement gris, moins noir.
+   Les surfaces gardent assez de contraste pour distinguer les champs et les cartes. */
+:root[data-theme="dark"] .plume-main{
+  --plume-bg:#24242A;
+  --plume-surface:#2B2B32;
+  --plume-surface-raised:#32323A;
+}
+:root[data-theme="dark"] body{background-color:#24242A}
+:root[data-theme="dark"] .plume-main>.plume-mini-hero,
+:root[data-theme="dark"] .plume-main>.plume-editor-card,
+:root[data-theme="dark"] .plume-main>.plume-draft,
+:root[data-theme="dark"] .plume-main>.plume-empty{
+  background:#2B2B32!important;
+  border-color:#393941!important;
+  box-shadow:8px 8px 18px rgba(0,0,0,.24),-4px -4px 12px rgba(255,255,255,.025)!important;
+}
+:root[data-theme="dark"] .plume-field input,
+:root[data-theme="dark"] .plume-field select,
+:root[data-theme="dark"] .plume-field textarea{
+  background:#222228!important;
+  border-color:#3A3A43!important;
+  box-shadow:inset 3px 3px 7px rgba(0,0,0,.25),inset -2px -2px 6px rgba(255,255,255,.025)!important;
+}
