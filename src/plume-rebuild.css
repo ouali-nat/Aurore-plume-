@@ -246,3 +246,29 @@ html:root[data-theme="dark"][data-color-theme] .plume-field textarea{
   background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 20%,#1D1A24)!important;
   border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 34%,#3A3A43)!important;
 }
+
+
+/* Atelier — bloc de champ teinté avec la couleur exacte de la palette utilisateur.
+   Le libellé « Titre du projet » reste dans un panneau de couleur primaire lisible. */
+html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle){
+  padding:18px;
+  border-radius:22px;
+  background:var(--theme-primary,var(--accent,#7562D9))!important;
+  border:1px solid color-mix(in srgb,var(--theme-primary,var(--accent,#7562D9)) 82%,white)!important;
+  box-shadow:6px 6px 14px rgba(0,0,0,.12),-3px -3px 10px rgba(255,255,255,.08)!important;
+}
+html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) label{
+  color:#fff!important;
+  font-weight:750;
+}
+html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) input{
+  background:color-mix(in srgb,var(--theme-primary,var(--accent,#7562D9)) 12%,white)!important;
+  color:#211B2B!important;
+  border-color:rgba(255,255,255,.5)!important;
+  box-shadow:inset 2px 2px 5px rgba(0,0,0,.08),inset -2px -2px 5px rgba(255,255,255,.24)!important;
+}
+html:root[data-theme="dark"][data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) input{
+  background:color-mix(in srgb,var(--theme-primary,#7562D9) 20%,#18151F)!important;
+  color:#fff!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#7562D9) 50%,#555)!important;
+}
