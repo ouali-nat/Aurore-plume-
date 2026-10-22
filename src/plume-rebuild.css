@@ -219,3 +219,30 @@
   border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 18%,#3A3A43)!important;
   box-shadow:inset 3px 3px 7px rgba(0,0,0,.25),inset -2px -2px 6px rgba(255,255,255,.025)!important;
 }
+
+
+/* Correctif demandé : le fond sombre reprend la couleur sélectionnée dans la palette,
+   au lieu de rester gris. On assombrit cette couleur pour garder le texte lisible. */
+html:root[data-theme="dark"][data-color-theme]{
+  --plume-bg:color-mix(in srgb,var(--theme-primary,#8B5CF6) 48%,#17131F);
+  --plume-surface:color-mix(in srgb,var(--theme-primary,#8B5CF6) 28%,#211D29);
+  --plume-surface-raised:color-mix(in srgb,var(--theme-primary,#8B5CF6) 34%,#292431);
+}
+html:root[data-theme="dark"][data-color-theme] body{
+  background:var(--plume-bg)!important;
+  background-image:none!important;
+  color:var(--plume-ink)!important;
+}
+html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-mini-hero,
+html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-editor-card,
+html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-draft,
+html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-empty{
+  background:var(--plume-surface)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 38%,#393941)!important;
+}
+html:root[data-theme="dark"][data-color-theme] .plume-field input,
+html:root[data-theme="dark"][data-color-theme] .plume-field select,
+html:root[data-theme="dark"][data-color-theme] .plume-field textarea{
+  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 20%,#1D1A24)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 34%,#3A3A43)!important;
+}
