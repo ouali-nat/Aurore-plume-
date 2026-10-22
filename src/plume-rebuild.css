@@ -196,79 +196,59 @@
 @media(prefers-reduced-motion:reduce){.plume-btn,.plume-field input,.plume-field select,.plume-field textarea,.plume-bottom-nav button{transition:none!important}}
 
 
-/* Atelier neumorphique — mode sombre : fond gris teinté selon la couleur choisie.
-   La couleur utilisateur reste visible subtilement dans le fond, les cartes et les champs. */
-:root[data-theme="dark"]{
-  --plume-bg:color-mix(in srgb,var(--theme-primary,#8B5CF6) 12%,#24242A);
-  --plume-surface:color-mix(in srgb,var(--theme-primary,#8B5CF6) 10%,#2B2B32);
-  --plume-surface-raised:color-mix(in srgb,var(--theme-primary,#8B5CF6) 14%,#32323A);
+/* Atelier neumorphique — surfaces colorées par la palette utilisateur.
+   Règle essentielle : la palette colore les composants, jamais le fond général de la page. */
+:root[data-theme="light"] .plume-main>.plume-mini-hero,
+:root[data-theme="light"] .plume-main>.plume-editor-card,
+:root[data-theme="light"] .plume-main>.plume-draft,
+:root[data-theme="light"] .plume-main>.plume-empty{
+  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 13%,#FFFFFF)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 30%,#FFFFFF)!important;
+  box-shadow:7px 7px 18px rgba(40,30,55,.12),-4px -4px 12px rgba(255,255,255,.8)!important;
 }
-:root[data-theme="dark"] body{background-color:var(--plume-bg)}
 :root[data-theme="dark"] .plume-main>.plume-mini-hero,
 :root[data-theme="dark"] .plume-main>.plume-editor-card,
 :root[data-theme="dark"] .plume-main>.plume-draft,
 :root[data-theme="dark"] .plume-main>.plume-empty{
-  background:var(--plume-surface)!important;
-  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 20%,#393941)!important;
-  box-shadow:8px 8px 18px rgba(0,0,0,.24),-4px -4px 12px rgba(255,255,255,.025)!important;
+  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 22%,#12101A)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 35%,#2A2438)!important;
+  box-shadow:7px 7px 18px rgba(0,0,0,.32),-3px -3px 10px rgba(255,255,255,.025)!important;
+}
+/* Les champs restent distincts des panneaux, avec un relief enfoncé. */
+:root[data-theme="light"] .plume-field input,
+:root[data-theme="light"] .plume-field select,
+:root[data-theme="light"] .plume-field textarea{
+  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 5%,#FFFFFF)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 24%,#DAD2E5)!important;
+  box-shadow:inset 3px 3px 7px rgba(40,30,55,.09),inset -2px -2px 6px rgba(255,255,255,.75)!important;
 }
 :root[data-theme="dark"] .plume-field input,
 :root[data-theme="dark"] .plume-field select,
 :root[data-theme="dark"] .plume-field textarea{
-  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 7%,#222228)!important;
-  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 18%,#3A3A43)!important;
-  box-shadow:inset 3px 3px 7px rgba(0,0,0,.25),inset -2px -2px 6px rgba(255,255,255,.025)!important;
+  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 12%,#09080F)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 30%,#2A2438)!important;
+  box-shadow:inset 3px 3px 7px rgba(0,0,0,.32),inset -2px -2px 6px rgba(255,255,255,.025)!important;
 }
-
-
-/* Correctif demandé : le fond sombre reprend la couleur sélectionnée dans la palette,
-   au lieu de rester gris. On assombrit cette couleur pour garder le texte lisible. */
-html:root[data-theme="dark"][data-color-theme]{
-  --plume-bg:color-mix(in srgb,var(--theme-primary,#8B5CF6) 48%,#17131F);
-  --plume-surface:color-mix(in srgb,var(--theme-primary,#8B5CF6) 28%,#211D29);
-  --plume-surface-raised:color-mix(in srgb,var(--theme-primary,#8B5CF6) 34%,#292431);
-}
-html:root[data-theme="dark"][data-color-theme] body{
-  background:var(--plume-bg)!important;
-  background-image:none!important;
-  color:var(--plume-ink)!important;
-}
-html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-mini-hero,
-html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-editor-card,
-html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-draft,
-html:root[data-theme="dark"][data-color-theme] .plume-main>.plume-empty{
-  background:var(--plume-surface)!important;
-  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 38%,#393941)!important;
-}
-html:root[data-theme="dark"][data-color-theme] .plume-field input,
-html:root[data-theme="dark"][data-color-theme] .plume-field select,
-html:root[data-theme="dark"][data-color-theme] .plume-field textarea{
-  background:color-mix(in srgb,var(--theme-primary,#8B5CF6) 20%,#1D1A24)!important;
-  border-color:color-mix(in srgb,var(--theme-primary,#8B5CF6) 34%,#3A3A43)!important;
-}
-
-
-/* Atelier — bloc de champ teinté avec la couleur exacte de la palette utilisateur.
-   Le libellé « Titre du projet » reste dans un panneau de couleur primaire lisible. */
+/* Le bloc « Titre du projet » est un composant coloré, pas un fond de page. */
 html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle){
   padding:18px;
   border-radius:22px;
   background:var(--theme-primary,var(--accent,#7562D9))!important;
-  border:1px solid color-mix(in srgb,var(--theme-primary,var(--accent,#7562D9)) 82%,white)!important;
-  box-shadow:6px 6px 14px rgba(0,0,0,.12),-3px -3px 10px rgba(255,255,255,.08)!important;
+  border:1px solid color-mix(in srgb,var(--theme-primary,var(--accent,#7562D9)) 78%,white)!important;
+  box-shadow:6px 6px 14px rgba(0,0,0,.14),-3px -3px 10px rgba(255,255,255,.07)!important;
 }
 html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) label{
   color:#fff!important;
   font-weight:750;
 }
-html:root[data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) input{
-  background:color-mix(in srgb,var(--theme-primary,var(--accent,#7562D9)) 12%,white)!important;
+html:root[data-theme="light"][data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) input{
+  background:color-mix(in srgb,var(--theme-primary,#7562D9) 7%,#FFFFFF)!important;
   color:#211B2B!important;
-  border-color:rgba(255,255,255,.5)!important;
-  box-shadow:inset 2px 2px 5px rgba(0,0,0,.08),inset -2px -2px 5px rgba(255,255,255,.24)!important;
+  border-color:rgba(255,255,255,.65)!important;
+  box-shadow:inset 2px 2px 5px rgba(0,0,0,.08),inset -2px -2px 5px rgba(255,255,255,.35)!important;
 }
 html:root[data-theme="dark"][data-color-theme] .plume-editor-card .plume-field:has(#draftTitle) input{
-  background:color-mix(in srgb,var(--theme-primary,#7562D9) 20%,#18151F)!important;
+  background:color-mix(in srgb,var(--theme-primary,#7562D9) 12%,#09080F)!important;
   color:#fff!important;
-  border-color:color-mix(in srgb,var(--theme-primary,#7562D9) 50%,#555)!important;
+  border-color:color-mix(in srgb,var(--theme-primary,#7562D9) 50%,#2A2438)!important;
 }
