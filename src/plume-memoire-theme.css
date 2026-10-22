@@ -8,12 +8,31 @@ html:root[data-theme="dark"]{--plume-bg:#09080F;--plume-surface:#12101A;--plume-
 /* Clair — identique à Mémoire */
 html:root[data-theme="light"]{--plume-bg:#F3F1F8;--plume-surface:#FFFFFF;--plume-surface-raised:#F0EBF8;--plume-surface-soft:color-mix(in srgb,var(--theme-primary,#8B5CF6) 10%,#fff);--plume-ink:#17131F;--plume-muted:#5F5970;--plume-border:color-mix(in srgb,var(--theme-primary,#8B5CF6) 24%,#DAD2E5);--plume-shadow:0 8px 26px rgba(55,36,82,.10);--ink:var(--plume-ink);--paper:var(--plume-bg)}
 
-/* Palettes de couleur : mêmes valeurs que Mémoire (primary = accent, secondary = accent-light, strong = accent-deep) */
+/* Palette complète : mêmes correspondances que la feuille principale.
+   Chaque choix définit une couleur primaire cohérente pour tous les composants. */
+html:root[data-theme][data-color-theme="violet"]{--theme-primary:#8B5CF6;--theme-secondary:#C084FC;--theme-strong:#6D28D9}
+html:root[data-theme][data-color-theme="rouge"]{--theme-primary:#E05260;--theme-secondary:#FF8A96;--theme-strong:#C93648}
+html:root[data-theme][data-color-theme="vert"]{--theme-primary:#2FA66A;--theme-secondary:#75D89C;--theme-strong:#198754}
+html:root[data-theme][data-color-theme="bleu"]{--theme-primary:#3B82F6;--theme-secondary:#7DB3FF;--theme-strong:#1D4ED8}
+html:root[data-theme][data-color-theme="orange"]{--theme-primary:#E8791A;--theme-secondary:#FFB36B;--theme-strong:#C85C0D}
+html:root[data-theme][data-color-theme="rose"]{--theme-primary:#DB2777;--theme-secondary:#F9A8D4;--theme-strong:#BE185D}
+html:root[data-theme][data-color-theme="indigo"]{--theme-primary:#6366F1;--theme-secondary:#A5B4FC;--theme-strong:#4338CA}
+html:root[data-theme][data-color-theme="emeraude"]{--theme-primary:#10B981;--theme-secondary:#6EE7B7;--theme-strong:#047857}
+html:root[data-theme][data-color-theme="corail"]{--theme-primary:#F06A57;--theme-secondary:#FFB4A8;--theme-strong:#C2412D}
+html:root[data-theme][data-color-theme="nuit-peche"]{--theme-primary:#8799CC;--theme-secondary:#FFA586;--theme-strong:#343E62}
+html:root[data-theme][data-color-theme="terre-orange"]{--theme-primary:#E57A2D;--theme-secondary:#F5C078;--theme-strong:#8C4221}
+html:root[data-theme][data-color-theme="lime"]{--theme-primary:#84CC16;--theme-secondary:#BEF264;--theme-strong:#4D7C0F}
 html:root[data-theme][data-color-theme="bordeaux"]{--theme-primary:#C12B55;--theme-secondary:#FB7185;--theme-strong:#881337}
-html:root[data-theme][data-color-theme="petrole-cuivre"]{--theme-primary:#3E8399;--theme-secondary:#D59D80;--theme-strong:#104C64;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
-html:root[data-theme][data-color-theme="prune-rouge"]{--theme-primary:#B51A52;--theme-secondary:#D78BAD;--theme-strong:#5B203F;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
-html:root[data-theme][data-color-theme="rose-sable"]{--theme-primary:#D98E89;--theme-secondary:#EFC1B5;--theme-strong:#8B5451;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
-html:root[data-theme][data-color-theme="sarcelle-creme"]{--theme-primary:#0D9A9A;--theme-secondary:#8DD5C7;--theme-strong:#0D5058;--theme-extra-1:initial;--theme-extra-2:initial;--theme-extra-3:initial}
+html:root[data-theme][data-color-theme="azur"]{--theme-primary:#0EA5E9;--theme-secondary:#7DD3FC;--theme-strong:#0369A1}
+html:root[data-theme][data-color-theme="jaune"]{--theme-primary:#D9A406;--theme-secondary:#FCD34D;--theme-strong:#8A6100}
+html:root[data-theme][data-color-theme="olive"]{--theme-primary:#6B7A2A;--theme-secondary:#A7B85F;--theme-strong:#4A5520}
+html:root[data-theme][data-color-theme="chocolat"]{--theme-primary:#8A4A1C;--theme-secondary:#D49A6A;--theme-strong:#5C300F}
+html:root[data-theme][data-color-theme="sauge"]{--theme-primary:#6E9A7E;--theme-secondary:#B5D3BF;--theme-strong:#4A7A5C}
+html:root[data-theme][data-color-theme="magenta"]{--theme-primary:#D946EF;--theme-secondary:#F0ABFC;--theme-strong:#A21CAF}
+html:root[data-theme][data-color-theme="petrole-cuivre"]{--theme-primary:#3E8399;--theme-secondary:#D59D80;--theme-strong:#104C64;--theme-extra-1:#C6C6D0;--theme-extra-2:#C0754D;--theme-extra-3:#B6410F}
+html:root[data-theme][data-color-theme="prune-rouge"]{--theme-primary:#B51A52;--theme-secondary:#D78BAD;--theme-strong:#5B203F;--theme-extra-1:#242F49;--theme-extra-2:#384358;--theme-extra-3:#FFA586}
+html:root[data-theme][data-color-theme="rose-sable"]{--theme-primary:#D98E89;--theme-secondary:#EFC1B5;--theme-strong:#8B5451;--theme-extra-1:#B0B4C4;--theme-extra-2:#E57A2D;--theme-extra-3:#0D6B70}
+html:root[data-theme][data-color-theme="sarcelle-creme"]{--theme-primary:#0D9A9A;--theme-secondary:#8DD5C7;--theme-strong:#0D5058;--theme-extra-1:#B0B4C4;--theme-extra-2:#EFC1B5;--theme-extra-3:#E57A2D}
 
 /* Fond ambiant : lueurs d'accent de Mémoire, fixes au défilement */
 html:root[data-theme][data-color-theme] body{background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--theme-primary) 16%,transparent),transparent 34%),radial-gradient(circle at 96% 12%,color-mix(in srgb,var(--theme-secondary) 11%,transparent),transparent 30%),var(--plume-bg)!important;background-attachment:fixed!important;color:var(--plume-ink)!important;min-height:100vh}
